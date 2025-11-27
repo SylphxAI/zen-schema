@@ -21,6 +21,10 @@ export interface ExtendedSchema<TInput, TOutput> extends BaseSchema<TInput, TOut
 		check: (value: TOutput) => boolean,
 		message?: string | { message: string }
 	): ExtendedSchema<TInput, TOutput>
+	/** Advanced refinement with context */
+	superRefine(
+		check: (value: TOutput, ctx: RefinementCtx) => void
+	): ExtendedSchema<TInput, TOutput>
 	/** Transform output */
 	transform<TNew>(fn: (value: TOutput) => TNew): ExtendedSchema<TInput, TNew>
 	/** Catch errors and return default */
@@ -31,8 +35,28 @@ export interface ExtendedSchema<TInput, TOutput> extends BaseSchema<TInput, TOut
 	or<T extends BaseSchema<unknown, unknown>>(
 		schema: T
 	): ExtendedSchema<TInput | T['_input'], TOutput | T['_output']>
+	/** Intersection shorthand */
+	and<T extends BaseSchema<unknown, unknown>>(
+		schema: T
+	): ExtendedSchema<TInput & T['_input'], TOutput & T['_output']>
+	/** Pipe to another schema */
+	pipe<T extends BaseSchema<TOutput, unknown>>(
+		schema: T
+	): ExtendedSchema<TInput, T['_output']>
+	/** Brand the type */
+	brand<B extends string | symbol>(brand?: B): ExtendedSchema<TInput, TOutput & { [K in B]: true }>
+	/** Make output readonly */
+	readonly(): ExtendedSchema<TInput, Readonly<TOutput>>
+	/** Alias for safeParseAsync */
+	spa(data: unknown): Promise<Result<TOutput>>
 	/** Description (Zod compat) */
 	readonly description?: string
+}
+
+/** Refinement context for superRefine */
+export interface RefinementCtx {
+	addIssue(issue: Issue): void
+	path: (string | number)[]
 }
 
 // ============================================================
@@ -337,6 +361,136 @@ export function extendSchema<TInput, TOutput>(
 				safeParseAsync: async (data: unknown) => orSchema.safeParse(data),
 			}
 			return extendSchema(orSchema)
+		},
+
+		and<T extends BaseSchema<unknown, unknown>>(other: T) {
+			type CombinedInput = TInput & T['_input']
+			type CombinedOutput = TOutput & T['_output']
+
+			const andSchema: BaseSchema<CombinedInput, CombinedOutput> = {
+				_input: undefined as CombinedInput,
+				_output: undefined as CombinedOutput,
+				_checks: [],
+				'~standard': {
+					version: 1,
+					vendor: VENDOR,
+					validate: (v: unknown) => {
+						const result = andSchema.safeParse(v)
+						if (result.success) return { value: result.data }
+						return { issues: result.issues }
+					},
+					types: undefined as unknown as { input: CombinedInput; output: CombinedOutput },
+				},
+				parse(data: unknown): CombinedOutput {
+					const result = this.safeParse(data)
+					if (result.success) return result.data
+					throw new SchemaError(result.issues)
+				},
+				safeParse(data: unknown): Result<CombinedOutput> {
+					const result1 = schema.safeParse(data)
+					if (!result1.success) return result1 as Result<CombinedOutput>
+					const result2 = other.safeParse(data)
+					if (!result2.success) return result2 as Result<CombinedOutput>
+					// Merge the results for object types
+					if (typeof result1.data === 'object' && typeof result2.data === 'object') {
+						return {
+							success: true,
+							data: { ...result1.data, ...result2.data } as CombinedOutput,
+						}
+					}
+					return result1 as Result<CombinedOutput>
+				},
+				parseAsync: async (data: unknown) => andSchema.parse(data),
+				safeParseAsync: async (data: unknown) => andSchema.safeParse(data),
+			}
+			return extendSchema(andSchema)
+		},
+
+		pipe<T extends BaseSchema<TOutput, unknown>>(next: T) {
+			type PipedOutput = T['_output']
+
+			const pipeSchema: BaseSchema<TInput, PipedOutput> = {
+				_input: undefined as TInput,
+				_output: undefined as PipedOutput,
+				_checks: [],
+				'~standard': {
+					version: 1,
+					vendor: VENDOR,
+					validate: (v: unknown) => {
+						const result = pipeSchema.safeParse(v)
+						if (result.success) return { value: result.data }
+						return { issues: result.issues }
+					},
+					types: undefined as unknown as { input: TInput; output: PipedOutput },
+				},
+				parse(data: unknown): PipedOutput {
+					const result = this.safeParse(data)
+					if (result.success) return result.data
+					throw new SchemaError(result.issues)
+				},
+				safeParse(data: unknown): Result<PipedOutput> {
+					const result1 = schema.safeParse(data)
+					if (!result1.success) return result1 as Result<PipedOutput>
+					return next.safeParse(result1.data) as Result<PipedOutput>
+				},
+				parseAsync: async (data: unknown) => pipeSchema.parse(data),
+				safeParseAsync: async (data: unknown) => pipeSchema.safeParse(data),
+			}
+			return extendSchema(pipeSchema)
+		},
+
+		superRefine(check: (value: TOutput, ctx: RefinementCtx) => void) {
+			const superRefineSchema: BaseSchema<TInput, TOutput> = {
+				_input: undefined as TInput,
+				_output: undefined as TOutput,
+				_checks: schema._checks,
+				'~standard': {
+					version: 1,
+					vendor: VENDOR,
+					validate: (v: unknown) => {
+						const result = superRefineSchema.safeParse(v)
+						if (result.success) return { value: result.data }
+						return { issues: result.issues }
+					},
+					types: undefined as unknown as { input: TInput; output: TOutput },
+				},
+				parse(data: unknown): TOutput {
+					const result = this.safeParse(data)
+					if (result.success) return result.data
+					throw new SchemaError(result.issues)
+				},
+				safeParse(data: unknown): Result<TOutput> {
+					const result = schema.safeParse(data)
+					if (!result.success) return result
+					const issues: Issue[] = []
+					const ctx: RefinementCtx = {
+						addIssue: (issue) => issues.push(issue),
+						path: [],
+					}
+					check(result.data, ctx)
+					if (issues.length > 0) {
+						return { success: false, issues }
+					}
+					return result
+				},
+				parseAsync: async (data: unknown) => superRefineSchema.parse(data),
+				safeParseAsync: async (data: unknown) => superRefineSchema.safeParse(data),
+			}
+			return extendSchema(superRefineSchema)
+		},
+
+		brand<B extends string | symbol>(_brand?: B) {
+			// Brand is purely a type-level operation
+			return extended as ExtendedSchema<TInput, TOutput & { [K in B]: true }>
+		},
+
+		readonly() {
+			// Readonly is purely a type-level operation
+			return extended as ExtendedSchema<TInput, Readonly<TOutput>>
+		},
+
+		spa(data: unknown) {
+			return extended.safeParseAsync(data)
 		},
 	}
 

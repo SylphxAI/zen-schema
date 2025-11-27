@@ -30,8 +30,16 @@ export interface StringSchema extends ExtendedSchema<string, string> {
 	toUpperCase(): StringSchema
 	nonempty(message?: string): StringSchema
 	ip(message?: string): StringSchema
+	ipv4(message?: string): StringSchema
+	ipv6(message?: string): StringSchema
 	emoji(message?: string): StringSchema
 	datetime(message?: string): StringSchema
+	date(message?: string): StringSchema
+	time(message?: string): StringSchema
+	duration(message?: string): StringSchema
+	base64(message?: string): StringSchema
+	nanoid(message?: string): StringSchema
+	cidr(message?: string): StringSchema
 }
 
 // ============================================================
@@ -45,8 +53,16 @@ const CUID_REGEX = /^c[^\s-]{8,}$/i
 const CUID2_REGEX = /^[a-z][a-z0-9]{23}$/
 const ULID_REGEX = /^[0-9A-HJKMNP-TV-Z]{26}$/
 const IP_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/
+const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+const IPV6_REGEX = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/
 const EMOJI_REGEX = /\p{Emoji}/u
 const DATETIME_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
+const TIME_REGEX = /^\d{2}:\d{2}:\d{2}(?:\.\d+)?$/
+const DURATION_REGEX = /^P(?:\d+Y)?(?:\d+M)?(?:\d+D)?(?:T(?:\d+H)?(?:\d+M)?(?:\d+S)?)?$/
+const BASE64_REGEX = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
+const NANOID_REGEX = /^[A-Za-z0-9_-]{21}$/
+const CIDR_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:3[0-2]|[12]?[0-9])$/
 
 // ============================================================
 // Implementation
@@ -284,6 +300,70 @@ function createStringSchema(checks: StringCheck[] = []): StringSchema {
 				name: 'datetime',
 				check: (v) => DATETIME_REGEX.test(v),
 				message: message ?? 'Invalid datetime',
+			})
+		},
+
+		ipv4(message?: string) {
+			return addCheck({
+				name: 'ipv4',
+				check: (v) => IPV4_REGEX.test(v),
+				message: message ?? 'Invalid IPv4 address',
+			})
+		},
+
+		ipv6(message?: string) {
+			return addCheck({
+				name: 'ipv6',
+				check: (v) => IPV6_REGEX.test(v),
+				message: message ?? 'Invalid IPv6 address',
+			})
+		},
+
+		date(message?: string) {
+			return addCheck({
+				name: 'date',
+				check: (v) => DATE_REGEX.test(v),
+				message: message ?? 'Invalid date (expected YYYY-MM-DD)',
+			})
+		},
+
+		time(message?: string) {
+			return addCheck({
+				name: 'time',
+				check: (v) => TIME_REGEX.test(v),
+				message: message ?? 'Invalid time (expected HH:MM:SS)',
+			})
+		},
+
+		duration(message?: string) {
+			return addCheck({
+				name: 'duration',
+				check: (v) => DURATION_REGEX.test(v),
+				message: message ?? 'Invalid ISO 8601 duration',
+			})
+		},
+
+		base64(message?: string) {
+			return addCheck({
+				name: 'base64',
+				check: (v) => BASE64_REGEX.test(v),
+				message: message ?? 'Invalid base64 string',
+			})
+		},
+
+		nanoid(message?: string) {
+			return addCheck({
+				name: 'nanoid',
+				check: (v) => NANOID_REGEX.test(v),
+				message: message ?? 'Invalid nanoid',
+			})
+		},
+
+		cidr(message?: string) {
+			return addCheck({
+				name: 'cidr',
+				check: (v) => CIDR_REGEX.test(v),
+				message: message ?? 'Invalid CIDR notation',
 			})
 		},
 	})

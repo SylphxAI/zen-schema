@@ -45,8 +45,22 @@ export {
 	discriminatedUnion,
 	instanceof_ as instanceof,
 	preprocess,
+	nativeEnum,
+	set,
+	map,
+	promise,
+	function_ as function,
+	custom,
+	intersection,
+	pipeline,
 	type DateSchema,
+	type SetSchema,
+	type MapSchema,
+	type FunctionSchema,
 } from './primitives'
+
+// Schema methods
+export { type RefinementCtx } from './schema-methods'
 
 // Schemas
 export {
@@ -105,6 +119,14 @@ import {
 	discriminatedUnion,
 	instanceof_,
 	preprocess,
+	nativeEnum,
+	set,
+	map,
+	promise,
+	function_,
+	custom,
+	intersection,
+	pipeline,
 } from './primitives'
 import { coerceNumber, coerceString, coerceBoolean } from './transforms'
 
@@ -136,6 +158,14 @@ export const z = {
 	discriminatedUnion,
 	instanceof: instanceof_,
 	preprocess,
+	nativeEnum,
+	set,
+	map,
+	promise,
+	function: function_,
+	custom,
+	intersection,
+	pipeline,
 	// Coercion
 	coerce: {
 		string: () => coerceString(string()),
