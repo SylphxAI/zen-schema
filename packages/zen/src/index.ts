@@ -16,7 +16,10 @@ export type {
 	StandardSchemaV1,
 } from './types'
 
-// Transforms
+// Schema methods
+export { extendSchema, type ExtendedSchema } from './schema-methods'
+
+// Transforms (standalone functions)
 export {
 	refine,
 	transform,
@@ -25,6 +28,25 @@ export {
 	coerceString,
 	coerceBoolean,
 } from './transforms'
+
+// Primitives
+export {
+	any,
+	unknown,
+	never,
+	void_ as void,
+	null_ as null,
+	undefined_ as undefined,
+	nan,
+	bigint,
+	symbol,
+	date,
+	lazy,
+	discriminatedUnion,
+	instanceof_ as instanceof,
+	preprocess,
+	type DateSchema,
+} from './primitives'
 
 // Schemas
 export {
@@ -52,7 +74,10 @@ export {
 	type RecordSchema,
 } from './schemas'
 
-// Convenience namespace (like zod's `z`)
+// ============================================================
+// z namespace (Zod-compatible API)
+// ============================================================
+
 import {
 	array,
 	boolean,
@@ -66,16 +91,25 @@ import {
 	record,
 } from './schemas'
 import {
-	refine,
-	transform,
-	withDefault,
-	coerceNumber,
-	coerceString,
-	coerceBoolean,
-} from './transforms'
+	any,
+	unknown,
+	never,
+	void_,
+	null_,
+	undefined_,
+	nan,
+	bigint,
+	symbol,
+	date,
+	lazy,
+	discriminatedUnion,
+	instanceof_,
+	preprocess,
+} from './primitives'
+import { coerceNumber, coerceString, coerceBoolean } from './transforms'
 
 export const z = {
-	// Schema creators
+	// Schema creators with chainable methods
 	string,
 	number,
 	boolean,
@@ -86,10 +120,22 @@ export const z = {
 	enum: enumSchema,
 	tuple,
 	record,
-	// Transform utilities
-	refine,
-	transform,
-	default: withDefault,
+	// Primitives
+	any,
+	unknown,
+	never,
+	void: void_,
+	null: null_,
+	undefined: undefined_,
+	nan,
+	bigint,
+	symbol,
+	date,
+	// Advanced
+	lazy,
+	discriminatedUnion,
+	instanceof: instanceof_,
+	preprocess,
 	// Coercion
 	coerce: {
 		string: () => coerceString(string()),

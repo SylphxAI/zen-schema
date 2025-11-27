@@ -339,36 +339,80 @@ describe('record', () => {
 // Transform Utilities
 // ============================================================
 
-describe('refine', () => {
+describe('refine (chainable)', () => {
 	it('should add custom validation', () => {
-		const password = z.refine(z.string(), (val) => val.length >= 8, 'Password must be at least 8 characters')
+		const password = z.string().refine((val) => val.length >= 8, 'Password must be at least 8 characters')
 		expect(password.parse('longpassword')).toBe('longpassword')
 		expect(() => password.parse('short')).toThrow()
 	})
+
+	it('should work with message object', () => {
+		const positive = z.number().refine((val) => val > 0, { message: 'Must be positive' })
+		expect(positive.parse(1)).toBe(1)
+		expect(() => positive.parse(-1)).toThrow()
+	})
 })
 
-describe('transform', () => {
+describe('transform (chainable)', () => {
 	it('should transform output', () => {
-		const upper = z.transform(z.string(), (val) => val.toUpperCase())
+		const upper = z.string().transform((val) => val.toUpperCase())
 		expect(upper.parse('hello')).toBe('HELLO')
 	})
 
 	it('should chain with validation', () => {
-		const parsed = z.transform(z.string(), (val) => parseInt(val, 10))
+		const parsed = z.string().transform((val) => parseInt(val, 10))
 		expect(parsed.parse('42')).toBe(42)
 	})
 })
 
-describe('default', () => {
+describe('default (chainable)', () => {
 	it('should provide default for undefined', () => {
-		const name = z.default(z.string(), 'Anonymous')
+		const name = z.string().default('Anonymous')
 		expect(name.parse(undefined)).toBe('Anonymous')
 		expect(name.parse('John')).toBe('John')
 	})
 
 	it('should work with factory function', () => {
-		const arr = z.default(z.array(z.number()), () => [])
+		const arr = z.array(z.number()).default(() => [])
 		expect(arr.parse(undefined)).toEqual([])
+	})
+})
+
+describe('optional/nullable/nullish (chainable)', () => {
+	it('should make optional', () => {
+		const schema = z.string().optional()
+		expect(schema.parse(undefined)).toBe(undefined)
+		expect(schema.parse('hello')).toBe('hello')
+	})
+
+	it('should make nullable', () => {
+		const schema = z.string().nullable()
+		expect(schema.parse(null)).toBe(null)
+		expect(schema.parse('hello')).toBe('hello')
+	})
+
+	it('should make nullish', () => {
+		const schema = z.string().nullish()
+		expect(schema.parse(undefined)).toBe(undefined)
+		expect(schema.parse(null)).toBe(null)
+		expect(schema.parse('hello')).toBe('hello')
+	})
+})
+
+describe('or (chainable)', () => {
+	it('should create union with or()', () => {
+		const schema = z.string().or(z.number())
+		expect(schema.parse('hello')).toBe('hello')
+		expect(schema.parse(42)).toBe(42)
+		expect(() => schema.parse(true)).toThrow()
+	})
+})
+
+describe('catch (chainable)', () => {
+	it('should return default on error', () => {
+		const schema = z.string().catch('fallback')
+		expect(schema.parse('hello')).toBe('hello')
+		expect(schema.parse(123)).toBe('fallback')
 	})
 })
 
