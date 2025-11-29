@@ -5,28 +5,10 @@
 // Core
 export { SchemaError } from './errors'
 
-// Functional API (pure functions, composable) - Primary API
+// Functional API (pure functions, composable)
+// For tree-shaking, import directly: import { pipe, str, email } from '@sylphx/zen-full/fn'
 export * as fn from './fn'
-export {
-	// Type validators (aliased to avoid conflicts with schema exports)
-	str, num, bool, arr, obj,
-	bigInt as fnBigInt, date as fnDate,
-	// String validators
-	min as fnMin, max as fnMax, len, nonempty,
-	email as fnEmail, url as fnUrl, uuid as fnUuid,
-	pattern, startsWith, endsWith, includes,
-	// Number validators
-	int as fnInt, positive, negative, finite, gte, lte, gt, lt, multipleOf as fnMultipleOf,
-	// Composition
-	pipe as fnPipe, tryParse, safeParse as fnSafeParse, optional as fnOptional, nullable as fnNullable, withDefault as fnWithDefault,
-	// Object/Array
-	object as fnObject, array as fnArray,
-	// Transforms
-	trim, lower, upper, toInt, toFloat, toDate,
-	// Types
-	type Validator, type Parser, ValidationError,
-	type Result as FnResult,
-} from './fn'
+export { ValidationError, type Validator, type Parser, type Result as FnResult } from './fn'
 export { toJSONSchema, type JSONSchemaOptions, type JSONSchemaType } from './jsonSchema'
 export { globalRegistry, type SchemaRegistry } from './registry'
 
