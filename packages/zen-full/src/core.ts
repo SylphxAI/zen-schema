@@ -7,6 +7,7 @@ const VENDOR = 'zen'
 // Pre-allocated error objects for common cases (avoid allocation in hot path)
 const TYPE_ERRORS: Record<string, { success: false; issues: Issue[] }> = {}
 
+
 function getTypeError(typeName: string): { success: false; issues: Issue[] } {
 	let error = TYPE_ERRORS[typeName]
 	if (!error) {

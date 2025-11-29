@@ -4,6 +4,12 @@
 
 // Core
 export { SchemaError } from './errors'
+
+// Fluent Builder (zero-allocation chaining)
+export { $, createFluentString, createFluentNumber, type FluentString, type FluentNumber } from './fluent'
+
+// Functional API (pure functions, composable)
+export * as fn from './fn'
 export { toJSONSchema, type JSONSchemaOptions, type JSONSchemaType } from './jsonSchema'
 export { globalRegistry, type SchemaRegistry } from './registry'
 
