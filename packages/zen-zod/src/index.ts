@@ -7,9 +7,11 @@ import {
 	type ArraySchema,
 	type BaseSchema,
 	type BooleanSchema,
+	type DiscriminatedUnionSchema,
 	type EnumSchema,
 	type Infer,
 	type Input,
+	type LazySchema,
 	type LiteralSchema,
 	type NumberSchema,
 	type ObjectSchema,
@@ -20,19 +22,35 @@ import {
 	type StringSchema,
 	type TupleSchema,
 	type UnionSchema,
+	// Core schemas
 	array as zenArray,
 	boolean as zenBoolean,
-	coerce as zenCoerce,
 	enum_ as zenEnum,
 	literal as zenLiteral,
 	number as zenNumber,
 	object as zenObject,
 	record as zenRecord,
-	refine as zenRefine,
 	string as zenString,
-	transform as zenTransform,
 	tuple as zenTuple,
 	union as zenUnion,
+	// Advanced schemas
+	discriminatedUnion as zenDiscriminatedUnion,
+	lazy as zenLazy,
+	// Primitive types
+	any as zenAny,
+	unknown as zenUnknown,
+	null_ as zenNull,
+	undefined_ as zenUndefined,
+	void_ as zenVoid,
+	never as zenNever,
+	nan as zenNan,
+	date as zenDate,
+	bigint as zenBigint,
+	symbol as zenSymbol,
+	// Modifiers
+	coerce as zenCoerce,
+	refine as zenRefine,
+	transform as zenTransform,
 	withDefault as zenDefault,
 } from '@sylphx/zen'
 
@@ -44,6 +62,9 @@ export type ZodTypeName =
 	| 'ZodString'
 	| 'ZodNumber'
 	| 'ZodBoolean'
+	| 'ZodBigInt'
+	| 'ZodSymbol'
+	| 'ZodDate'
 	| 'ZodObject'
 	| 'ZodArray'
 	| 'ZodTuple'
@@ -51,10 +72,17 @@ export type ZodTypeName =
 	| 'ZodOptional'
 	| 'ZodNullable'
 	| 'ZodUnion'
+	| 'ZodDiscriminatedUnion'
 	| 'ZodLiteral'
 	| 'ZodEnum'
+	| 'ZodLazy'
 	| 'ZodAny'
 	| 'ZodUnknown'
+	| 'ZodNull'
+	| 'ZodUndefined'
+	| 'ZodVoid'
+	| 'ZodNever'
+	| 'ZodNaN'
 	| 'ZodEffects'
 	| 'ZodDefault'
 
@@ -128,7 +156,7 @@ function addZodCompat<T extends BaseSchema<unknown, unknown>>(
 }
 
 // ============================================================
-// Wrapped Schema Creators
+// Core Schema Creators
 // ============================================================
 
 export function string(): ZodCompatSchema<StringSchema> {
@@ -177,6 +205,73 @@ export function record<TValue extends AnySchema>(
 	return addZodCompat(zenRecord(valueSchema), 'ZodRecord')
 }
 
+// ============================================================
+// Advanced Schema Creators
+// ============================================================
+
+interface ObjectSchemaWithDiscriminator extends AnySchema {
+	shape: Record<string, AnySchema>
+}
+
+export function discriminatedUnion<
+	K extends string,
+	T extends readonly ObjectSchemaWithDiscriminator[],
+>(discriminator: K, options: T): ZodCompatSchema<DiscriminatedUnionSchema<K, T>> {
+	return addZodCompat(zenDiscriminatedUnion(discriminator, options), 'ZodDiscriminatedUnion')
+}
+
+export function lazy<T extends AnySchema>(getter: () => T): ZodCompatSchema<LazySchema<T>> {
+	return addZodCompat(zenLazy(getter), 'ZodLazy')
+}
+
+// ============================================================
+// Primitive Types
+// ============================================================
+
+export function any(): ZodCompatSchema<BaseSchema<unknown, unknown>> {
+	return addZodCompat(zenAny(), 'ZodAny')
+}
+
+export function unknown(): ZodCompatSchema<BaseSchema<unknown, unknown>> {
+	return addZodCompat(zenUnknown(), 'ZodUnknown')
+}
+
+export function null_(): ZodCompatSchema<BaseSchema<null, null>> {
+	return addZodCompat(zenNull(), 'ZodNull')
+}
+
+export function undefined_(): ZodCompatSchema<BaseSchema<undefined, undefined>> {
+	return addZodCompat(zenUndefined(), 'ZodUndefined')
+}
+
+export function void_(): ZodCompatSchema<BaseSchema<void, void>> {
+	return addZodCompat(zenVoid(), 'ZodVoid')
+}
+
+export function never(): ZodCompatSchema<BaseSchema<never, never>> {
+	return addZodCompat(zenNever(), 'ZodNever')
+}
+
+export function nan(): ZodCompatSchema<BaseSchema<number, number>> {
+	return addZodCompat(zenNan(), 'ZodNaN')
+}
+
+export function date(): ZodCompatSchema<BaseSchema<Date, Date>> {
+	return addZodCompat(zenDate(), 'ZodDate')
+}
+
+export function bigint(): ZodCompatSchema<BaseSchema<bigint, bigint>> {
+	return addZodCompat(zenBigint(), 'ZodBigInt')
+}
+
+export function symbol(): ZodCompatSchema<BaseSchema<symbol, symbol>> {
+	return addZodCompat(zenSymbol(), 'ZodSymbol')
+}
+
+// ============================================================
+// Modifiers
+// ============================================================
+
 export function refine<TInput, TOutput>(
 	schema: BaseSchema<TInput, TOutput>,
 	check: (data: TOutput) => boolean,
@@ -203,7 +298,7 @@ export const coerce = {
 	string: () => addZodCompat(zenCoerce.string(), 'ZodString'),
 	number: () => addZodCompat(zenCoerce.number(), 'ZodNumber'),
 	boolean: () => addZodCompat(zenCoerce.boolean(), 'ZodBoolean'),
-	date: () => addZodCompat(zenCoerce.date(), 'ZodAny'),
+	date: () => addZodCompat(zenCoerce.date(), 'ZodDate'),
 }
 
 // ============================================================
@@ -225,8 +320,10 @@ export type {
 	TupleSchema,
 	RecordSchema,
 	UnionSchema,
+	DiscriminatedUnionSchema,
 	LiteralSchema,
 	EnumSchema,
+	LazySchema,
 	RefinedSchema,
 }
 
@@ -239,6 +336,17 @@ export const z = {
 	string,
 	number,
 	boolean,
+	bigint,
+	symbol,
+	date,
+	// Special types
+	any,
+	unknown,
+	null: null_,
+	undefined: undefined_,
+	void: void_,
+	never,
+	nan,
 	// Complex types
 	object,
 	array,
@@ -246,8 +354,11 @@ export const z = {
 	record,
 	// Union & literal
 	union,
+	discriminatedUnion,
 	literal,
 	enum: enum_,
+	// Recursion
+	lazy,
 	// Modifiers
 	refine,
 	transform,
