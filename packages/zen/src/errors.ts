@@ -13,8 +13,9 @@ export class SchemaError extends Error {
 		this.issues = issues
 
 		// Maintains proper stack trace in V8
-		if (Error.captureStackTrace) {
-			Error.captureStackTrace(this, SchemaError)
+		const errorCtor = Error as unknown as { captureStackTrace?: (err: Error, ctor: unknown) => void }
+		if (errorCtor.captureStackTrace) {
+			errorCtor.captureStackTrace(this, SchemaError)
 		}
 	}
 

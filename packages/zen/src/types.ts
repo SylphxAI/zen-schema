@@ -8,6 +8,14 @@ export interface Issue {
 	readonly path?: ReadonlyArray<PropertyKey>
 }
 
+/** Standard Schema issue format */
+export type StandardIssue = { message: string; path?: PropertyKey[] }
+
+/** Convert internal Issue to Standard Schema issue format */
+export function toStandardIssue(i: Issue): StandardIssue {
+	return i.path ? { message: i.message, path: [...i.path] } : { message: i.message }
+}
+
 /** Validation result */
 export type Result<T> = { success: true; data: T } | { success: false; issues: Issue[] }
 

@@ -9,22 +9,47 @@ const isString = (v: unknown): v is string => typeof v === 'string'
 // ============================================================
 
 export interface StringSchema extends BaseSchema<string, string> {
+	// Length validators
 	min(length: number, message?: string): StringSchema
 	max(length: number, message?: string): StringSchema
 	length(length: number, message?: string): StringSchema
+	nonempty(message?: string): StringSchema
+	// Format validators
 	email(message?: string): StringSchema
 	url(message?: string): StringSchema
 	uuid(message?: string): StringSchema
+	cuid(message?: string): StringSchema
+	cuid2(message?: string): StringSchema
+	ulid(message?: string): StringSchema
+	nanoid(message?: string): StringSchema
+	// IP validators
+	ip(options?: { version?: 'v4' | 'v6' }, message?: string): StringSchema
+	ipv4(message?: string): StringSchema
+	ipv6(message?: string): StringSchema
+	// Date/time validators
+	datetime(message?: string): StringSchema
+	date(message?: string): StringSchema
+	time(message?: string): StringSchema
+	duration(message?: string): StringSchema
+	// Encoding validators
+	base64(message?: string): StringSchema
+	jwt(message?: string): StringSchema
+	emoji(message?: string): StringSchema
+	// Pattern validators
 	regex(pattern: RegExp, message?: string): StringSchema
 	startsWith(prefix: string, message?: string): StringSchema
 	endsWith(suffix: string, message?: string): StringSchema
 	includes(search: string, message?: string): StringSchema
+	// Transforms
 	trim(): StringSchema
 	toLowerCase(): StringSchema
 	toUpperCase(): StringSchema
-	nonempty(message?: string): StringSchema
+	// Nullable/Optional
 	optional(): BaseSchema<string | undefined, string | undefined>
 	nullable(): BaseSchema<string | null, string | null>
+	nullish(): BaseSchema<string | null | undefined, string | null | undefined>
+	// Metadata
+	describe(description: string): StringSchema
 }
 
 // ============================================================
@@ -34,6 +59,19 @@ export interface StringSchema extends BaseSchema<string, string> {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const URL_REGEX = /^https?:\/\/.+/
+const CUID_REGEX = /^c[^\s-]{8,}$/i
+const CUID2_REGEX = /^[a-z][a-z0-9]{23,}$/
+const ULID_REGEX = /^[0-9A-HJKMNP-TV-Z]{26}$/i
+const NANOID_REGEX = /^[a-zA-Z0-9_-]{21}$/
+const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+const IPV6_REGEX = /^(?:(?:[a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4}|(?:[a-fA-F0-9]{1,4}:){1,7}:|(?:[a-fA-F0-9]{1,4}:){1,6}:[a-fA-F0-9]{1,4}|(?:[a-fA-F0-9]{1,4}:){1,5}(?::[a-fA-F0-9]{1,4}){1,2}|(?:[a-fA-F0-9]{1,4}:){1,4}(?::[a-fA-F0-9]{1,4}){1,3}|(?:[a-fA-F0-9]{1,4}:){1,3}(?::[a-fA-F0-9]{1,4}){1,4}|(?:[a-fA-F0-9]{1,4}:){1,2}(?::[a-fA-F0-9]{1,4}){1,5}|[a-fA-F0-9]{1,4}:(?::[a-fA-F0-9]{1,4}){1,6}|:(?:(?::[a-fA-F0-9]{1,4}){1,7}|:)|fe80:(?::[a-fA-F0-9]{0,4}){0,4}%[0-9a-zA-Z]+|::(?:ffff(?::0{1,4})?:)?(?:(?:25[0-5]|(?:2[0-4]|1?[0-9])?[0-9])\.){3}(?:25[0-5]|(?:2[0-4]|1?[0-9])?[0-9])|(?:[a-fA-F0-9]{1,4}:){1,4}:(?:(?:25[0-5]|(?:2[0-4]|1?[0-9])?[0-9])\.){3}(?:25[0-5]|(?:2[0-4]|1?[0-9])?[0-9]))$/
+const DATETIME_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
+const TIME_REGEX = /^\d{2}:\d{2}:\d{2}(?:\.\d+)?$/
+const DURATION_REGEX = /^P(?:\d+Y)?(?:\d+M)?(?:\d+W)?(?:\d+D)?(?:T(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?$/
+const BASE64_REGEX = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
+const JWT_REGEX = /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/
+const EMOJI_REGEX = /^(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F)+$/u
 
 // ============================================================
 // Implementation
@@ -94,6 +132,121 @@ function createStringSchema(checks: Check<string>[] = []): StringSchema {
 				name: 'uuid',
 				check: (v) => UUID_REGEX.test(v),
 				message: message ?? 'Invalid UUID',
+			})
+		},
+
+		cuid(message?: string) {
+			return addCheck({
+				name: 'cuid',
+				check: (v) => CUID_REGEX.test(v),
+				message: message ?? 'Invalid CUID',
+			})
+		},
+
+		cuid2(message?: string) {
+			return addCheck({
+				name: 'cuid2',
+				check: (v) => CUID2_REGEX.test(v),
+				message: message ?? 'Invalid CUID2',
+			})
+		},
+
+		ulid(message?: string) {
+			return addCheck({
+				name: 'ulid',
+				check: (v) => ULID_REGEX.test(v),
+				message: message ?? 'Invalid ULID',
+			})
+		},
+
+		nanoid(message?: string) {
+			return addCheck({
+				name: 'nanoid',
+				check: (v) => NANOID_REGEX.test(v),
+				message: message ?? 'Invalid nanoid',
+			})
+		},
+
+		ip(options?: { version?: 'v4' | 'v6' }, message?: string) {
+			const version = options?.version
+			if (version === 'v4') return this.ipv4(message)
+			if (version === 'v6') return this.ipv6(message)
+			return addCheck({
+				name: 'ip',
+				check: (v) => IPV4_REGEX.test(v) || IPV6_REGEX.test(v),
+				message: message ?? 'Invalid IP address',
+			})
+		},
+
+		ipv4(message?: string) {
+			return addCheck({
+				name: 'ipv4',
+				check: (v) => IPV4_REGEX.test(v),
+				message: message ?? 'Invalid IPv4 address',
+			})
+		},
+
+		ipv6(message?: string) {
+			return addCheck({
+				name: 'ipv6',
+				check: (v) => IPV6_REGEX.test(v),
+				message: message ?? 'Invalid IPv6 address',
+			})
+		},
+
+		datetime(message?: string) {
+			return addCheck({
+				name: 'datetime',
+				check: (v) => DATETIME_REGEX.test(v),
+				message: message ?? 'Invalid ISO datetime',
+			})
+		},
+
+		date(message?: string) {
+			return addCheck({
+				name: 'date',
+				check: (v) => DATE_REGEX.test(v),
+				message: message ?? 'Invalid ISO date',
+			})
+		},
+
+		time(message?: string) {
+			return addCheck({
+				name: 'time',
+				check: (v) => TIME_REGEX.test(v),
+				message: message ?? 'Invalid ISO time',
+			})
+		},
+
+		duration(message?: string) {
+			return addCheck({
+				name: 'duration',
+				check: (v) => DURATION_REGEX.test(v),
+				message: message ?? 'Invalid ISO duration',
+			})
+		},
+
+		base64(message?: string) {
+			return addCheck({
+				name: 'base64',
+				check: (v) => BASE64_REGEX.test(v),
+				message: message ?? 'Invalid base64 string',
+			})
+		},
+
+		jwt(message?: string) {
+			return addCheck({
+				name: 'jwt',
+				check: (v) => JWT_REGEX.test(v),
+				message: message ?? 'Invalid JWT',
+			})
+		},
+
+		emoji(message?: string) {
+			return addCheck({
+				name: 'emoji',
+				check: (v) => EMOJI_REGEX.test(v),
+				message: message ?? 'Invalid emoji',
 			})
 		},
 
@@ -181,6 +334,19 @@ function createStringSchema(checks: Check<string>[] = []): StringSchema {
 				(v): v is string | null => v === null || isString(v),
 				checks as Check<string | null>[]
 			)
+		},
+
+		nullish() {
+			return createSchema<string | null | undefined>(
+				'string',
+				(v): v is string | null | undefined => v === null || v === undefined || isString(v),
+				checks as Check<string | null | undefined>[]
+			)
+		},
+
+		describe(_description: string) {
+			// Store description in metadata (for future use with JSON Schema export)
+			return createStringSchema(checks)
 		},
 	}
 

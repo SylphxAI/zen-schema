@@ -1,4 +1,5 @@
 import { SchemaError } from '../errors'
+import { toStandardIssue } from '../types'
 import type { BaseSchema, Check, Issue, Result } from '../types'
 
 // ============================================================
@@ -41,8 +42,8 @@ function createArraySchema<T extends AnySchema>(
 
 	const schema: ArraySchema<T> = {
 		// Type brands
-		_input: undefined as TInput,
-		_output: undefined as TOutput,
+		_input: undefined as unknown as TInput,
+		_output: undefined as unknown as TOutput,
 		_checks: checks,
 		element,
 
@@ -50,17 +51,12 @@ function createArraySchema<T extends AnySchema>(
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate(value: unknown) {
+			validate(value: unknown): { value: TOutput } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
 				const result = schema.safeParse(value)
 				if (result.success) {
 					return { value: result.data }
 				}
-				return {
-					issues: result.issues.map((i) => ({
-						message: i.message,
-						path: i.path ? [...i.path] : undefined,
-					})),
-				}
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: TInput; output: TOutput },
 		},
@@ -78,7 +74,7 @@ function createArraySchema<T extends AnySchema>(
 
 			// Run array-level checks
 			for (let i = 0; i < checks.length; i++) {
-				const check = checks[i]
+				const check = checks[i]!
 				if (!check.check(data)) {
 					const message = typeof check.message === 'function' ? check.message(data) : check.message
 					return { success: false, issues: [{ message }] }
@@ -159,21 +155,19 @@ function createArraySchema<T extends AnySchema>(
 			return this.min(1, message ?? 'Array must not be empty')
 		},
 
-		optional() {
+		optional(): BaseSchema<TInput | undefined, TOutput | undefined> {
 			return {
-				_input: undefined as TInput | undefined,
-				_output: undefined as TOutput | undefined,
+				_input: undefined as unknown as TInput | undefined,
+				_output: undefined as unknown as TOutput | undefined,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
 					vendor: 'zen',
-					validate: (v: unknown) => {
-						const result =
-							v === undefined
-								? ({ success: true, data: undefined } as Result<TOutput | undefined>)
-								: schema.safeParse(v)
+					validate: (v: unknown): { value: TOutput | undefined } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => {
+						if (v === undefined) return { value: undefined }
+						const result = schema.safeParse(v)
 						if (result.success) return { value: result.data }
-						return { issues: result.issues }
+						return { issues: result.issues.map(toStandardIssue) }
 					},
 					types: undefined as unknown as {
 						input: TInput | undefined
@@ -189,21 +183,19 @@ function createArraySchema<T extends AnySchema>(
 			}
 		},
 
-		nullable() {
+		nullable(): BaseSchema<TInput | null, TOutput | null> {
 			return {
-				_input: undefined as TInput | null,
-				_output: undefined as TOutput | null,
+				_input: undefined as unknown as TInput | null,
+				_output: undefined as unknown as TOutput | null,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
 					vendor: 'zen',
-					validate: (v: unknown) => {
-						const result =
-							v === null
-								? ({ success: true, data: null } as Result<TOutput | null>)
-								: schema.safeParse(v)
+					validate: (v: unknown): { value: TOutput | null } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => {
+						if (v === null) return { value: null }
+						const result = schema.safeParse(v)
 						if (result.success) return { value: result.data }
-						return { issues: result.issues }
+						return { issues: result.issues.map(toStandardIssue) }
 					},
 					types: undefined as unknown as { input: TInput | null; output: TOutput | null },
 				},

@@ -1,5 +1,6 @@
 import { SchemaError } from '../errors'
 import type { AnySchema, BaseSchema, Result } from '../types'
+import { toStandardIssue } from '../types'
 
 // ============================================================
 // Refine - Add custom validation
@@ -31,17 +32,17 @@ export function refine<TInput, TOutput>(
 	}
 
 	const refined: RefinedSchema<TInput, TOutput> = {
-		_input: undefined as TInput,
-		_output: undefined as TOutput,
+		_input: undefined as unknown as TInput,
+		_output: undefined as unknown as TOutput,
 		_checks: [],
 
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate(value: unknown) {
+			validate(value: unknown): { value: TOutput } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
 				const result = safeParse(value)
 				if (result.success) return { value: result.data }
-				return { issues: result.issues }
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: TInput; output: TOutput },
 		},
@@ -101,17 +102,17 @@ export function transform<TInput, TOutput, TNew>(
 	}
 
 	const transformed: RefinedSchema<TInput, TNew> = {
-		_input: undefined as TInput,
-		_output: undefined as TNew,
+		_input: undefined as unknown as TInput,
+		_output: undefined as unknown as TNew,
 		_checks: [],
 
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate(value: unknown) {
+			validate(value: unknown): { value: TNew } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
 				const result = safeParse(value)
 				if (result.success) return { value: result.data }
-				return { issues: result.issues }
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: TInput; output: TNew },
 		},
@@ -166,17 +167,17 @@ export function withDefault<TInput, TOutput>(
 	}
 
 	return {
-		_input: undefined as TInput | undefined,
-		_output: undefined as TOutput,
+		_input: undefined as unknown as TInput | undefined,
+		_output: undefined as unknown as TOutput,
 		_checks: [],
 
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate(value: unknown) {
+			validate(value: unknown): { value: TOutput } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
 				const result = safeParse(value)
 				if (result.success) return { value: result.data }
-				return { issues: result.issues }
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: TInput | undefined; output: TOutput },
 		},
@@ -214,16 +215,16 @@ export const coerce = {
 		}
 
 		return {
-			_input: undefined as unknown,
-			_output: undefined as string,
+			_input: undefined as unknown as unknown,
+			_output: undefined as unknown as string,
 			_checks: [],
 			'~standard': {
 				version: 1,
 				vendor: 'zen',
-				validate: (v) => {
+				validate: (v): { value: string } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => {
 					const result = safeParse(v)
 					if (result.success) return { value: result.data }
-					return { issues: result.issues }
+					return { issues: result.issues.map(toStandardIssue) }
 				},
 				types: undefined as unknown as { input: unknown; output: string },
 			},
@@ -233,7 +234,11 @@ export const coerce = {
 				throw new SchemaError(result.issues)
 			},
 			safeParse,
-			parseAsync: async (data) => safeParse(data).data!,
+			parseAsync: async (data) => {
+				const result = safeParse(data)
+				if (result.success) return result.data
+				throw new SchemaError(result.issues)
+			},
 			safeParseAsync: async (data) => safeParse(data),
 		}
 	},
@@ -248,16 +253,16 @@ export const coerce = {
 		}
 
 		return {
-			_input: undefined as unknown,
-			_output: undefined as number,
+			_input: undefined as unknown as unknown,
+			_output: undefined as unknown as number,
 			_checks: [],
 			'~standard': {
 				version: 1,
 				vendor: 'zen',
-				validate: (v) => {
+				validate: (v): { value: number } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => {
 					const result = safeParse(v)
 					if (result.success) return { value: result.data }
-					return { issues: result.issues }
+					return { issues: result.issues.map(toStandardIssue) }
 				},
 				types: undefined as unknown as { input: unknown; output: number },
 			},
@@ -267,7 +272,11 @@ export const coerce = {
 				throw new SchemaError(result.issues)
 			},
 			safeParse,
-			parseAsync: async (data) => safeParse(data).data!,
+			parseAsync: async (data) => {
+				const result = safeParse(data)
+				if (result.success) return result.data
+				throw new SchemaError(result.issues)
+			},
 			safeParseAsync: async (data) => safeParse(data),
 		}
 	},
@@ -281,16 +290,16 @@ export const coerce = {
 		}
 
 		return {
-			_input: undefined as unknown,
-			_output: undefined as boolean,
+			_input: undefined as unknown as unknown,
+			_output: undefined as unknown as boolean,
 			_checks: [],
 			'~standard': {
 				version: 1,
 				vendor: 'zen',
-				validate: (v) => {
+				validate: (v): { value: boolean } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => {
 					const result = safeParse(v)
 					if (result.success) return { value: result.data }
-					return { issues: result.issues }
+					return { issues: result.issues.map(toStandardIssue) }
 				},
 				types: undefined as unknown as { input: unknown; output: boolean },
 			},
@@ -300,7 +309,11 @@ export const coerce = {
 				throw new SchemaError(result.issues)
 			},
 			safeParse,
-			parseAsync: async (data) => safeParse(data).data!,
+			parseAsync: async (data) => {
+				const result = safeParse(data)
+				if (result.success) return result.data
+				throw new SchemaError(result.issues)
+			},
 			safeParseAsync: async (data) => safeParse(data),
 		}
 	},
@@ -321,16 +334,16 @@ export const coerce = {
 		}
 
 		return {
-			_input: undefined as unknown,
-			_output: undefined as Date,
+			_input: undefined as unknown as unknown,
+			_output: undefined as unknown as Date,
 			_checks: [],
 			'~standard': {
 				version: 1,
 				vendor: 'zen',
-				validate: (v) => {
+				validate: (v): { value: Date } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => {
 					const result = safeParse(v)
 					if (result.success) return { value: result.data }
-					return { issues: result.issues }
+					return { issues: result.issues.map(toStandardIssue) }
 				},
 				types: undefined as unknown as { input: unknown; output: Date },
 			},
@@ -340,7 +353,11 @@ export const coerce = {
 				throw new SchemaError(result.issues)
 			},
 			safeParse,
-			parseAsync: async (data) => safeParse(data).data!,
+			parseAsync: async (data) => {
+				const result = safeParse(data)
+				if (result.success) return result.data
+				throw new SchemaError(result.issues)
+			},
 			safeParseAsync: async (data) => safeParse(data),
 		}
 	},

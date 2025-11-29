@@ -30,3 +30,20 @@ export {
 
 // Modifiers
 export { refine, transform, withDefault, coerce, type RefinedSchema } from './modifiers'
+
+// Utilities
+export {
+	preprocess,
+	intersection,
+	promise,
+	function_ as function,
+	map,
+	set,
+	instanceof_ as instanceof,
+	pipe,
+	type IntersectionSchema,
+	type PromiseSchema,
+	type FunctionSchema,
+	type MapSchema,
+	type SetSchema,
+} from './utilities'

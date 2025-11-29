@@ -1,4 +1,5 @@
 import { SchemaError } from './errors'
+import { toStandardIssue } from './types'
 import type { BaseSchema, Check, Issue, Result } from './types'
 
 const VENDOR = 'zen'
@@ -22,17 +23,12 @@ export function createSchema<TInput, TOutput = TInput>(
 		'~standard': {
 			version: 1,
 			vendor: VENDOR,
-			validate(value: unknown) {
+			validate(value: unknown): { value: TOutput } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
 				const result = schema.safeParse(value)
 				if (result.success) {
 					return { value: result.data }
 				}
-				return {
-					issues: result.issues.map((i) => ({
-						message: i.message,
-						path: i.path ? [...i.path] : undefined,
-					})),
-				}
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: TInput; output: TOutput },
 		},
@@ -55,7 +51,7 @@ export function createSchema<TInput, TOutput = TInput>(
 			// Run all checks - lazy allocate issues array
 			let issues: Issue[] | null = null
 			for (let i = 0; i < checks.length; i++) {
-				const check = checks[i]
+				const check = checks[i]!
 				if (!check.check(data)) {
 					const message = typeof check.message === 'function' ? check.message(data) : check.message
 					if (!issues) issues = []

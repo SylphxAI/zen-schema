@@ -1,5 +1,6 @@
 import { SchemaError } from '../errors'
 import type { BaseSchema, Result } from '../types'
+import { toStandardIssue } from '../types'
 
 // ============================================================
 // Primitive Schemas
@@ -10,13 +11,13 @@ export function any(): BaseSchema<unknown, unknown> {
 	const safeParse = (data: unknown): Result<unknown> => ({ success: true, data })
 
 	return {
-		_input: undefined as unknown,
-		_output: undefined as unknown,
+		_input: undefined as unknown as unknown,
+		_output: undefined as unknown as unknown,
 		_checks: [],
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate: (v) => ({ value: v }),
+			validate: (v): { value: unknown } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => ({ value: v }),
 			types: undefined as unknown as { input: unknown; output: unknown },
 		},
 		parse: (data) => data,
@@ -45,10 +46,10 @@ export function null_(): BaseSchema<null, null> {
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate: (v) => {
+			validate: (v): { value: null } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => {
 				const result = safeParse(v)
 				if (result.success) return { value: result.data }
-				return { issues: result.issues }
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: null; output: null },
 		},
@@ -75,16 +76,16 @@ export function undefined_(): BaseSchema<undefined, undefined> {
 	}
 
 	return {
-		_input: undefined as undefined,
-		_output: undefined as undefined,
+		_input: undefined as unknown as undefined,
+		_output: undefined as unknown as undefined,
 		_checks: [],
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate: (v) => {
+			validate: (v): { value: undefined } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => {
 				const result = safeParse(v)
 				if (result.success) return { value: result.data }
-				return { issues: result.issues }
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: undefined; output: undefined },
 		},
@@ -111,16 +112,16 @@ export function void_(): BaseSchema<void, void> {
 	}
 
 	return {
-		_input: undefined as void,
-		_output: undefined as void,
+		_input: undefined as unknown as void,
+		_output: undefined as unknown as void,
 		_checks: [],
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate: (v) => {
+			validate: (v): { value: void } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => {
 				const result = safeParse(v)
 				if (result.success) return { value: result.data }
-				return { issues: result.issues }
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: void; output: void },
 		},
@@ -145,24 +146,24 @@ export function never(): BaseSchema<never, never> {
 		return { success: false, issues: [{ message: 'Expected never (no value is valid)' }] }
 	}
 
+	const errorIssue = [{ message: 'Expected never (no value is valid)' }]
+
 	return {
-		_input: undefined as never,
-		_output: undefined as never,
+		_input: undefined as unknown as never,
+		_output: undefined as unknown as never,
 		_checks: [],
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate: () => ({ issues: [{ message: 'Expected never' }] }),
+			validate: (): { value: never } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => ({ issues: [{ message: 'Expected never' }] }),
 			types: undefined as unknown as { input: never; output: never },
 		},
-		parse: (data) => {
-			const result = safeParse(data)
-			throw new SchemaError(result.issues)
+		parse: (_data) => {
+			throw new SchemaError(errorIssue)
 		},
 		safeParse,
-		parseAsync: async (data) => {
-			const result = safeParse(data)
-			throw new SchemaError(result.issues)
+		parseAsync: async (_data) => {
+			throw new SchemaError(errorIssue)
 		},
 		safeParseAsync: async (data) => safeParse(data),
 	}
@@ -184,10 +185,10 @@ export function nan(): BaseSchema<number, number> {
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate: (v) => {
+			validate: (v): { value: number } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => {
 				const result = safeParse(v)
 				if (result.success) return { value: result.data }
-				return { issues: result.issues }
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: number; output: number },
 		},
@@ -225,10 +226,10 @@ export function date(): BaseSchema<Date, Date> {
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate: (v) => {
+			validate: (v): { value: Date } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => {
 				const result = safeParse(v)
 				if (result.success) return { value: result.data }
-				return { issues: result.issues }
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: Date; output: Date },
 		},
@@ -261,10 +262,10 @@ export function bigint(): BaseSchema<bigint, bigint> {
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate: (v) => {
+			validate: (v): { value: bigint } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => {
 				const result = safeParse(v)
 				if (result.success) return { value: result.data }
-				return { issues: result.issues }
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: bigint; output: bigint },
 		},
@@ -297,10 +298,10 @@ export function symbol(): BaseSchema<symbol, symbol> {
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate: (v) => {
+			validate: (v): { value: symbol } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } => {
 				const result = safeParse(v)
 				if (result.success) return { value: result.data }
-				return { issues: result.issues }
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: symbol; output: symbol },
 		},

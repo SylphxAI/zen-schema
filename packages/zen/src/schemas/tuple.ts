@@ -1,5 +1,6 @@
 import { SchemaError } from '../errors'
 import type { AnySchema, BaseSchema, Issue, Result } from '../types'
+import { toStandardIssue } from '../types'
 
 // ============================================================
 // Tuple Schema
@@ -39,7 +40,7 @@ export function tuple<T extends TupleItems>(items: T): TupleSchema<T> {
 		let hasTransform = false
 
 		for (let i = 0; i < items.length; i++) {
-			const result = items[i].safeParse(data[i])
+			const result = items[i]!.safeParse(data[i])
 			if (result.success) {
 				if (result.data !== data[i] || hasTransform) {
 					if (!output) output = data.slice(0, i)
@@ -67,18 +68,18 @@ export function tuple<T extends TupleItems>(items: T): TupleSchema<T> {
 	}
 
 	const schema: TupleSchema<T> = {
-		_input: undefined as TInput,
-		_output: undefined as TOutput,
+		_input: undefined as unknown as TInput,
+		_output: undefined as unknown as TOutput,
 		_checks: [],
 		items,
 
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate(value: unknown) {
+			validate(value: unknown): { value: TOutput } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
 				const result = safeParse(value)
 				if (result.success) return { value: result.data }
-				return { issues: result.issues }
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: TInput; output: TOutput },
 		},
@@ -106,8 +107,8 @@ export function tuple<T extends TupleItems>(items: T): TupleSchema<T> {
 
 		optional() {
 			return {
-				_input: undefined as TInput | undefined,
-				_output: undefined as TOutput | undefined,
+				_input: undefined as unknown as TInput | undefined,
+				_output: undefined as unknown as TOutput | undefined,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
@@ -116,7 +117,7 @@ export function tuple<T extends TupleItems>(items: T): TupleSchema<T> {
 						if (v === undefined) return { value: undefined }
 						const result = safeParse(v)
 						if (result.success) return { value: result.data }
-						return { issues: result.issues }
+						return { issues: result.issues.map(toStandardIssue) }
 					},
 					types: undefined as unknown as { input: TInput | undefined; output: TOutput | undefined },
 				},
@@ -131,8 +132,8 @@ export function tuple<T extends TupleItems>(items: T): TupleSchema<T> {
 
 		nullable() {
 			return {
-				_input: undefined as TInput | null,
-				_output: undefined as TOutput | null,
+				_input: undefined as unknown as TInput | null,
+				_output: undefined as unknown as TOutput | null,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
@@ -141,7 +142,7 @@ export function tuple<T extends TupleItems>(items: T): TupleSchema<T> {
 						if (v === null) return { value: null }
 						const result = safeParse(v)
 						if (result.success) return { value: result.data }
-						return { issues: result.issues }
+						return { issues: result.issues.map(toStandardIssue) }
 					},
 					types: undefined as unknown as { input: TInput | null; output: TOutput | null },
 				},

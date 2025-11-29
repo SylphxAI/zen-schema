@@ -517,3 +517,123 @@ describe('primitive types', () => {
 		expect(() => schema.parse('not a symbol')).toThrow()
 	})
 })
+
+describe('string validators', () => {
+	it('should validate ipv4', () => {
+		const schema = z.string().ipv4()
+		expect(schema.parse('192.168.1.1')).toBe('192.168.1.1')
+		expect(() => schema.parse('not an ip')).toThrow()
+	})
+
+	it('should validate datetime', () => {
+		const schema = z.string().datetime()
+		expect(schema.parse('2024-01-01T00:00:00Z')).toBe('2024-01-01T00:00:00Z')
+		expect(() => schema.parse('not a date')).toThrow()
+	})
+
+	it('should validate base64', () => {
+		const schema = z.string().base64()
+		expect(schema.parse('SGVsbG8gV29ybGQ=')).toBe('SGVsbG8gV29ybGQ=')
+		expect(() => schema.parse('not base64!')).toThrow()
+	})
+
+	it('should validate jwt', () => {
+		const schema = z.string().jwt()
+		expect(schema.parse('eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature')).toBeTruthy()
+		expect(() => schema.parse('not.a.jwt!')).toThrow()
+	})
+
+	it('should support nullish', () => {
+		const schema = z.string().nullish()
+		expect(schema.parse('hello')).toBe('hello')
+		expect(schema.parse(null)).toBe(null)
+		expect(schema.parse(undefined)).toBe(undefined)
+	})
+})
+
+describe('object methods', () => {
+	it('should support required', () => {
+		const schema = z.object({ name: z.string().optional() }).required()
+		expect(() => schema.parse({ name: undefined })).toThrow()
+		expect(schema.parse({ name: 'test' })).toEqual({ name: 'test' })
+	})
+
+	it('should support keyof', () => {
+		const schema = z.object({ name: z.string(), age: z.number() })
+		const keySchema = schema.keyof()
+		expect(keySchema.parse('name')).toBe('name')
+		expect(keySchema.parse('age')).toBe('age')
+		expect(() => keySchema.parse('unknown')).toThrow()
+	})
+
+	it('should support nullish', () => {
+		const schema = z.object({ name: z.string() }).nullish()
+		expect(schema.parse({ name: 'test' })).toEqual({ name: 'test' })
+		expect(schema.parse(null)).toBe(null)
+		expect(schema.parse(undefined)).toBe(undefined)
+	})
+})
+
+describe('utilities', () => {
+	it('should support preprocess', () => {
+		const schema = z.preprocess((v) => String(v).trim(), z.string().min(1))
+		expect(schema.parse('  hello  ')).toBe('hello')
+		expect(() => schema.parse('   ')).toThrow()
+	})
+
+	it('should support intersection', () => {
+		const schema = z.intersection(
+			z.object({ name: z.string() }),
+			z.object({ age: z.number() })
+		)
+		expect(schema.parse({ name: 'test', age: 25 })).toEqual({ name: 'test', age: 25 })
+	})
+
+	it('should support map', () => {
+		const schema = z.map(z.string(), z.number())
+		const map = new Map([['a', 1], ['b', 2]])
+		expect(schema.parse(map)).toEqual(map)
+		expect(() => schema.parse('not a map')).toThrow()
+	})
+
+	it('should support set', () => {
+		const schema = z.set(z.number())
+		const set = new Set([1, 2, 3])
+		expect(schema.parse(set)).toEqual(set)
+		expect(() => schema.parse('not a set')).toThrow()
+	})
+
+	it('should support instanceof', () => {
+		class MyClass {}
+		const schema = z.instanceof(MyClass)
+		const instance = new MyClass()
+		expect(schema.parse(instance)).toBe(instance)
+		expect(() => schema.parse({})).toThrow()
+	})
+
+	it('should support pipe', () => {
+		const schema = z.pipe(
+			z.string(),
+			z.transform(z.string(), (s) => s.length)
+		)
+		// Note: pipe chains validation, so we need proper setup
+		const stringToNumber = z.pipe(
+			z.coerce.string(),
+			z.transform(z.string(), (s) => parseInt(s, 10))
+		)
+		expect(stringToNumber.parse(42)).toBe(42)
+	})
+
+	it('should support promise', () => {
+		const schema = z.promise(z.string())
+		const promise = Promise.resolve('hello')
+		const result = schema.parse(promise)
+		expect(result).toBeInstanceOf(Promise)
+	})
+
+	it('should support function', () => {
+		const schema = z.function()
+		expect(schema.parse(() => {})).toBeInstanceOf(Function)
+		expect(() => schema.parse('not a function')).toThrow()
+	})
+})

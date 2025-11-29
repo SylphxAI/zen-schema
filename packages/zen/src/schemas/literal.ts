@@ -1,5 +1,6 @@
 import { SchemaError } from '../errors'
 import type { BaseSchema, Result } from '../types'
+import { toStandardIssue } from '../types'
 
 // ============================================================
 // Literal Schema Types
@@ -24,8 +25,8 @@ export interface LiteralSchema<T extends Primitive> extends BaseSchema<T, T> {
 function createLiteralSchema<T extends Primitive>(value: T): LiteralSchema<T> {
 	const schema: LiteralSchema<T> = {
 		// Type brands
-		_input: undefined as T,
-		_output: undefined as T,
+		_input: undefined as unknown as T,
+		_output: undefined as unknown as T,
 		_checks: [],
 		value,
 
@@ -33,17 +34,12 @@ function createLiteralSchema<T extends Primitive>(value: T): LiteralSchema<T> {
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate(data: unknown) {
+			validate(data: unknown): { value: T } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
 				const result = schema.safeParse(data)
 				if (result.success) {
 					return { value: result.data }
 				}
-				return {
-					issues: result.issues.map((i) => ({
-						message: i.message,
-						path: i.path ? [...i.path] : undefined,
-					})),
-				}
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: T; output: T },
 		},
@@ -76,8 +72,8 @@ function createLiteralSchema<T extends Primitive>(value: T): LiteralSchema<T> {
 
 		optional() {
 			return {
-				_input: undefined as T | undefined,
-				_output: undefined as T | undefined,
+				_input: undefined as unknown as T | undefined,
+				_output: undefined as unknown as T | undefined,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
@@ -88,7 +84,7 @@ function createLiteralSchema<T extends Primitive>(value: T): LiteralSchema<T> {
 								? ({ success: true, data: undefined } as Result<T | undefined>)
 								: schema.safeParse(v)
 						if (result.success) return { value: result.data }
-						return { issues: result.issues }
+						return { issues: result.issues.map(toStandardIssue) }
 					},
 					types: undefined as unknown as { input: T | undefined; output: T | undefined },
 				},
@@ -103,8 +99,8 @@ function createLiteralSchema<T extends Primitive>(value: T): LiteralSchema<T> {
 
 		nullable() {
 			return {
-				_input: undefined as T | null,
-				_output: undefined as T | null,
+				_input: undefined as unknown as T | null,
+				_output: undefined as unknown as T | null,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
@@ -113,7 +109,7 @@ function createLiteralSchema<T extends Primitive>(value: T): LiteralSchema<T> {
 						const result =
 							v === null ? ({ success: true, data: null } as Result<T | null>) : schema.safeParse(v)
 						if (result.success) return { value: result.data }
-						return { issues: result.issues }
+						return { issues: result.issues.map(toStandardIssue) }
 					},
 					types: undefined as unknown as { input: T | null; output: T | null },
 				},

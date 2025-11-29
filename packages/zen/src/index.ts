@@ -49,18 +49,32 @@ export {
 	refine,
 	transform,
 	withDefault,
+	// Utilities
+	preprocess,
+	intersection,
+	promise,
+	function as function_,
+	map,
+	set,
+	instanceof as instanceof_,
+	pipe,
 	// Types
 	type ArraySchema,
 	type BooleanSchema,
 	type DiscriminatedUnionSchema,
 	type EnumSchema,
+	type FunctionSchema,
+	type IntersectionSchema,
 	type LazySchema,
 	type LiteralSchema,
+	type MapSchema,
 	type NumberSchema,
 	type ObjectSchema,
 	type ObjectShape,
+	type PromiseSchema,
 	type RecordSchema,
 	type RefinedSchema,
+	type SetSchema,
 	type StringSchema,
 	type TupleSchema,
 	type UnionSchema,
@@ -98,6 +112,15 @@ import {
 	refine,
 	transform,
 	withDefault,
+	// Utilities
+	preprocess,
+	intersection,
+	promise,
+	function as function_,
+	map,
+	set,
+	instanceof as instanceof_,
+	pipe,
 } from './schemas'
 
 export const z = {
@@ -121,18 +144,27 @@ export const z = {
 	array,
 	tuple,
 	record,
+	map,
+	set,
 	// Union & literal
 	union,
 	discriminatedUnion,
+	intersection,
 	literal,
 	enum: enum_,
 	// Recursion
 	lazy,
+	// Function & Promise
+	function: function_,
+	promise,
+	instanceof: instanceof_,
 	// Modifiers
 	refine,
 	transform,
 	default: withDefault,
 	coerce,
+	preprocess,
+	pipe,
 } as const
 
 // Alias for zen

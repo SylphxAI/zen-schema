@@ -1,5 +1,6 @@
 import { SchemaError } from '../errors'
 import type { AnySchema, BaseSchema, Result } from '../types'
+import { toStandardIssue } from '../types'
 
 // ============================================================
 // Lazy Schema (for recursive types)
@@ -29,8 +30,8 @@ export function lazy<T extends AnySchema>(getter: () => T): LazySchema<T> {
 	}
 
 	const schema: LazySchema<T> = {
-		_input: undefined as TInput,
-		_output: undefined as TOutput,
+		_input: undefined as unknown as TInput,
+		_output: undefined as unknown as TOutput,
 		_checks: [],
 
 		get schema() {
@@ -40,10 +41,10 @@ export function lazy<T extends AnySchema>(getter: () => T): LazySchema<T> {
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate(value: unknown) {
+			validate(value: unknown): { value: TOutput } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
 				const result = safeParse(value)
 				if (result.success) return { value: result.data }
-				return { issues: result.issues }
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: TInput; output: TOutput },
 		},
@@ -66,8 +67,8 @@ export function lazy<T extends AnySchema>(getter: () => T): LazySchema<T> {
 
 		optional() {
 			return {
-				_input: undefined as TInput | undefined,
-				_output: undefined as TOutput | undefined,
+				_input: undefined as unknown as TInput | undefined,
+				_output: undefined as unknown as TOutput | undefined,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
@@ -76,7 +77,7 @@ export function lazy<T extends AnySchema>(getter: () => T): LazySchema<T> {
 						if (v === undefined) return { value: undefined }
 						const result = safeParse(v)
 						if (result.success) return { value: result.data }
-						return { issues: result.issues }
+						return { issues: result.issues.map(toStandardIssue) }
 					},
 					types: undefined as unknown as {
 						input: TInput | undefined
@@ -94,8 +95,8 @@ export function lazy<T extends AnySchema>(getter: () => T): LazySchema<T> {
 
 		nullable() {
 			return {
-				_input: undefined as TInput | null,
-				_output: undefined as TOutput | null,
+				_input: undefined as unknown as TInput | null,
+				_output: undefined as unknown as TOutput | null,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
@@ -104,7 +105,7 @@ export function lazy<T extends AnySchema>(getter: () => T): LazySchema<T> {
 						if (v === null) return { value: null }
 						const result = safeParse(v)
 						if (result.success) return { value: result.data }
-						return { issues: result.issues }
+						return { issues: result.issues.map(toStandardIssue) }
 					},
 					types: undefined as unknown as { input: TInput | null; output: TOutput | null },
 				},

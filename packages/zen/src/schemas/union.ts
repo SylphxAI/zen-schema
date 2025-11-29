@@ -1,5 +1,6 @@
 import { SchemaError } from '../errors'
 import type { BaseSchema, Result } from '../types'
+import { toStandardIssue } from '../types'
 
 // ============================================================
 // Union Schema Types
@@ -31,8 +32,8 @@ function createUnionSchema<T extends readonly AnySchema[]>(options: T): UnionSch
 
 	const schema: UnionSchema<T> = {
 		// Type brands
-		_input: undefined as TInput,
-		_output: undefined as TOutput,
+		_input: undefined as unknown as TInput,
+		_output: undefined as unknown as TOutput,
 		_checks: [],
 		options,
 
@@ -40,17 +41,12 @@ function createUnionSchema<T extends readonly AnySchema[]>(options: T): UnionSch
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate(value: unknown) {
+			validate(value: unknown): { value: TOutput } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
 				const result = schema.safeParse(value)
 				if (result.success) {
 					return { value: result.data }
 				}
-				return {
-					issues: result.issues.map((i) => ({
-						message: i.message,
-						path: i.path ? [...i.path] : undefined,
-					})),
-				}
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: TInput; output: TOutput },
 		},
@@ -85,8 +81,8 @@ function createUnionSchema<T extends readonly AnySchema[]>(options: T): UnionSch
 
 		optional() {
 			return {
-				_input: undefined as TInput | undefined,
-				_output: undefined as TOutput | undefined,
+				_input: undefined as unknown as TInput | undefined,
+				_output: undefined as unknown as TOutput | undefined,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
@@ -97,7 +93,7 @@ function createUnionSchema<T extends readonly AnySchema[]>(options: T): UnionSch
 								? ({ success: true, data: undefined } as Result<TOutput | undefined>)
 								: schema.safeParse(v)
 						if (result.success) return { value: result.data }
-						return { issues: result.issues }
+						return { issues: result.issues.map(toStandardIssue) }
 					},
 					types: undefined as unknown as {
 						input: TInput | undefined
@@ -115,8 +111,8 @@ function createUnionSchema<T extends readonly AnySchema[]>(options: T): UnionSch
 
 		nullable() {
 			return {
-				_input: undefined as TInput | null,
-				_output: undefined as TOutput | null,
+				_input: undefined as unknown as TInput | null,
+				_output: undefined as unknown as TOutput | null,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
@@ -127,7 +123,7 @@ function createUnionSchema<T extends readonly AnySchema[]>(options: T): UnionSch
 								? ({ success: true, data: null } as Result<TOutput | null>)
 								: schema.safeParse(v)
 						if (result.success) return { value: result.data }
-						return { issues: result.issues }
+						return { issues: result.issues.map(toStandardIssue) }
 					},
 					types: undefined as unknown as { input: TInput | null; output: TOutput | null },
 				},

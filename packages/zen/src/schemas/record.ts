@@ -1,5 +1,6 @@
 import { SchemaError } from '../errors'
 import type { AnySchema, BaseSchema, Issue, Result } from '../types'
+import { toStandardIssue } from '../types'
 
 // ============================================================
 // Record Schema
@@ -72,7 +73,7 @@ export function record<TKey extends BaseSchema<string, string>, TValue extends A
 		const keys = Object.keys(data)
 
 		for (let i = 0; i < keys.length; i++) {
-			const key = keys[i]
+			const key = keys[i]!
 			const value = data[key]
 
 			// Validate key
@@ -94,7 +95,7 @@ export function record<TKey extends BaseSchema<string, string>, TValue extends A
 				if (valueResult.data !== value || keyResult.data !== key || output) {
 					if (!output) output = {}
 					for (let j = 0; j < i; j++) {
-						output[keys[j]] = data[keys[j]]
+						output[keys[j]!] = data[keys[j]!]
 					}
 					output[keyResult.data] = valueResult.data
 				}
@@ -117,8 +118,8 @@ export function record<TKey extends BaseSchema<string, string>, TValue extends A
 	}
 
 	const schema: RecordSchema<TKey, TValue> = {
-		_input: undefined as TInput,
-		_output: undefined as TOutput,
+		_input: undefined as unknown as TInput,
+		_output: undefined as unknown as TOutput,
 		_checks: [],
 		keySchema,
 		valueSchema,
@@ -126,10 +127,10 @@ export function record<TKey extends BaseSchema<string, string>, TValue extends A
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
-			validate(value: unknown) {
+			validate(value: unknown): { value: TOutput } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
 				const result = safeParse(value)
 				if (result.success) return { value: result.data }
-				return { issues: result.issues }
+				return { issues: result.issues.map(toStandardIssue) }
 			},
 			types: undefined as unknown as { input: TInput; output: TOutput },
 		},
@@ -152,8 +153,8 @@ export function record<TKey extends BaseSchema<string, string>, TValue extends A
 
 		optional() {
 			return {
-				_input: undefined as TInput | undefined,
-				_output: undefined as TOutput | undefined,
+				_input: undefined as unknown as TInput | undefined,
+				_output: undefined as unknown as TOutput | undefined,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
@@ -162,7 +163,7 @@ export function record<TKey extends BaseSchema<string, string>, TValue extends A
 						if (v === undefined) return { value: undefined }
 						const result = safeParse(v)
 						if (result.success) return { value: result.data }
-						return { issues: result.issues }
+						return { issues: result.issues.map(toStandardIssue) }
 					},
 					types: undefined as unknown as { input: TInput | undefined; output: TOutput | undefined },
 				},
@@ -177,8 +178,8 @@ export function record<TKey extends BaseSchema<string, string>, TValue extends A
 
 		nullable() {
 			return {
-				_input: undefined as TInput | null,
-				_output: undefined as TOutput | null,
+				_input: undefined as unknown as TInput | null,
+				_output: undefined as unknown as TOutput | null,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
@@ -187,7 +188,7 @@ export function record<TKey extends BaseSchema<string, string>, TValue extends A
 						if (v === null) return { value: null }
 						const result = safeParse(v)
 						if (result.success) return { value: result.data }
-						return { issues: result.issues }
+						return { issues: result.issues.map(toStandardIssue) }
 					},
 					types: undefined as unknown as { input: TInput | null; output: TOutput | null },
 				},
