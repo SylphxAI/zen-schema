@@ -1,8 +1,5 @@
 import { SchemaError } from '../errors'
-import { extendSchema, type ExtendedSchema } from '../schema-methods'
 import type { BaseSchema, Check, Issue, Result } from '../types'
-
-const VENDOR = 'zen'
 
 // ============================================================
 // Array Schema Types
@@ -15,43 +12,49 @@ type AnySchema = BaseSchema<unknown, unknown>
 // ============================================================
 
 export interface ArraySchema<T extends AnySchema>
-	extends ExtendedSchema<T['_input'][], T['_output'][]> {
+	extends BaseSchema<T['_input'][], T['_output'][]> {
 	readonly element: T
 	min(length: number, message?: string): ArraySchema<T>
 	max(length: number, message?: string): ArraySchema<T>
 	length(length: number, message?: string): ArraySchema<T>
 	nonempty(message?: string): ArraySchema<T>
+	optional(): BaseSchema<T['_input'][] | undefined, T['_output'][] | undefined>
+	nullable(): BaseSchema<T['_input'][] | null, T['_output'][] | null>
 }
 
 // ============================================================
 // Implementation
 // ============================================================
 
-interface ArrayCheck<T> {
-	name: string
-	check: (v: T[]) => boolean
-	message: string
-}
-
 function createArraySchema<T extends AnySchema>(
 	element: T,
-	checks: ArrayCheck<T['_input']>[] = []
+	checks: Check<T['_input'][]>[] = []
 ): ArraySchema<T> {
 	type TInput = T['_input'][]
 	type TOutput = T['_output'][]
 
 	const isArray = (v: unknown): v is TInput => Array.isArray(v)
 
-	const baseSchema: BaseSchema<TInput, TOutput> = {
+	const addCheck = (check: Check<TInput>): ArraySchema<T> => {
+		return createArraySchema(element, [...checks, check])
+	}
+
+	const schema: ArraySchema<T> = {
+		// Type brands
 		_input: undefined as TInput,
 		_output: undefined as TOutput,
-		_checks: checks as Check<TInput>[],
+		_checks: checks,
+		element,
+
+		// Standard Schema
 		'~standard': {
 			version: 1,
-			vendor: VENDOR,
+			vendor: 'zen',
 			validate(value: unknown) {
-				const result = baseSchema.safeParse(value)
-				if (result.success) return { value: result.data }
+				const result = schema.safeParse(value)
+				if (result.success) {
+					return { value: result.data }
+				}
 				return {
 					issues: result.issues.map((i) => ({
 						message: i.message,
@@ -61,20 +64,24 @@ function createArraySchema<T extends AnySchema>(
 			},
 			types: undefined as unknown as { input: TInput; output: TOutput },
 		},
+
 		parse(data: unknown): TOutput {
 			const result = this.safeParse(data)
 			if (result.success) return result.data
 			throw new SchemaError(result.issues)
 		},
+
 		safeParse(data: unknown): Result<TOutput> {
 			if (!isArray(data)) {
 				return { success: false, issues: [{ message: 'Expected array' }] }
 			}
 
 			// Run array-level checks
-			for (const check of checks) {
+			for (let i = 0; i < checks.length; i++) {
+				const check = checks[i]
 				if (!check.check(data)) {
-					return { success: false, issues: [{ message: check.message }] }
+					const message = typeof check.message === 'function' ? check.message(data) : check.message
+					return { success: false, issues: [{ message }] }
 				}
 			}
 
@@ -87,6 +94,7 @@ function createArraySchema<T extends AnySchema>(
 				const item = data[i]
 				const result = element.safeParse(item)
 				if (result.success) {
+					// Only create output if value changed (transform) or we already have transforms
 					if (result.data !== item || hasTransform) {
 						if (!output) {
 							output = data.slice(0, i) as T['_output'][]
@@ -111,20 +119,17 @@ function createArraySchema<T extends AnySchema>(
 				return { success: false, issues }
 			}
 
+			// Return original array if no transforms, else return new array
 			return { success: true, data: (output ?? data) as TOutput }
 		},
-		parseAsync: async (data: unknown) => baseSchema.parse(data),
-		safeParseAsync: async (data: unknown) => baseSchema.safeParse(data),
-	}
 
-	const extended = extendSchema(baseSchema)
+		async parseAsync(data: unknown): Promise<TOutput> {
+			return this.parse(data)
+		},
 
-	const addCheck = (check: ArrayCheck<T['_input']>): ArraySchema<T> => {
-		return createArraySchema(element, [...checks, check])
-	}
-
-	const schema: ArraySchema<T> = Object.assign(extended, {
-		element,
+		async safeParseAsync(data: unknown): Promise<Result<TOutput>> {
+			return this.safeParse(data)
+		},
 
 		min(length: number, message?: string) {
 			return addCheck({
@@ -153,7 +158,64 @@ function createArraySchema<T extends AnySchema>(
 		nonempty(message?: string) {
 			return this.min(1, message ?? 'Array must not be empty')
 		},
-	})
+
+		optional() {
+			return {
+				_input: undefined as TInput | undefined,
+				_output: undefined as TOutput | undefined,
+				_checks: [],
+				'~standard': {
+					version: 1 as const,
+					vendor: 'zen',
+					validate: (v: unknown) => {
+						const result =
+							v === undefined
+								? ({ success: true, data: undefined } as Result<TOutput | undefined>)
+								: schema.safeParse(v)
+						if (result.success) return { value: result.data }
+						return { issues: result.issues }
+					},
+					types: undefined as unknown as {
+						input: TInput | undefined
+						output: TOutput | undefined
+					},
+				},
+				parse: (v: unknown) => (v === undefined ? undefined : schema.parse(v)),
+				safeParse: (v: unknown): Result<TOutput | undefined> =>
+					v === undefined ? { success: true, data: undefined } : schema.safeParse(v),
+				parseAsync: async (v: unknown) => (v === undefined ? undefined : schema.parse(v)),
+				safeParseAsync: async (v: unknown): Promise<Result<TOutput | undefined>> =>
+					v === undefined ? { success: true, data: undefined } : schema.safeParse(v),
+			}
+		},
+
+		nullable() {
+			return {
+				_input: undefined as TInput | null,
+				_output: undefined as TOutput | null,
+				_checks: [],
+				'~standard': {
+					version: 1 as const,
+					vendor: 'zen',
+					validate: (v: unknown) => {
+						const result =
+							v === null
+								? ({ success: true, data: null } as Result<TOutput | null>)
+								: schema.safeParse(v)
+						if (result.success) return { value: result.data }
+						return { issues: result.issues }
+					},
+					types: undefined as unknown as { input: TInput | null; output: TOutput | null },
+				},
+				parse: (v: unknown) => (v === null ? null : schema.parse(v)),
+				safeParse: (v: unknown): Result<TOutput | null> =>
+					v === null ? { success: true, data: null } : schema.safeParse(v),
+				parseAsync: async (v: unknown) => (v === null ? null : schema.parse(v)),
+				safeParseAsync: async (v: unknown): Promise<Result<TOutput | null>> =>
+					v === null ? { success: true, data: null } : schema.safeParse(v),
+			}
+		},
+	}
 
 	return schema
 }

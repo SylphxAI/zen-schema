@@ -2,145 +2,133 @@ import { SchemaError } from '../errors'
 import type { BaseSchema, Result } from '../types'
 
 // ============================================================
-// Enum Schema Types
+// Enum Schema
 // ============================================================
 
 type EnumValues = readonly [string, ...string[]]
-type EnumValue<T extends EnumValues> = T[number]
 
-// ============================================================
-// Enum Schema Interface
-// ============================================================
-
-export interface EnumSchema<T extends EnumValues> extends BaseSchema<EnumValue<T>, EnumValue<T>> {
+export interface EnumSchema<T extends EnumValues> extends BaseSchema<T[number], T[number]> {
 	readonly options: T
 	readonly enum: { [K in T[number]]: K }
-	optional(): BaseSchema<EnumValue<T> | undefined, EnumValue<T> | undefined>
-	nullable(): BaseSchema<EnumValue<T> | null, EnumValue<T> | null>
+	exclude<U extends T[number]>(values: readonly U[]): EnumSchema<Exclude<T[number], U>[]>
+	extract<U extends T[number]>(values: readonly U[]): EnumSchema<U[]>
+	optional(): BaseSchema<T[number] | undefined, T[number] | undefined>
+	nullable(): BaseSchema<T[number] | null, T[number] | null>
 }
 
-// ============================================================
-// Implementation
-// ============================================================
+const isString = (v: unknown): v is string => typeof v === 'string'
 
-function createEnumSchema<T extends EnumValues>(values: T): EnumSchema<T> {
-	type TValue = EnumValue<T>
+export function enumSchema<T extends EnumValues>(values: T): EnumSchema<T> {
+	const valuesSet = new Set<string>(values)
+	const enumObj = Object.fromEntries(values.map((v) => [v, v])) as { [K in T[number]]: K }
 
-	const valueSet = new Set<string>(values)
-	const enumObj = {} as { [K in T[number]]: K }
-	for (const v of values) {
-		;(enumObj as Record<string, string>)[v] = v
+	const safeParse = (data: unknown): Result<T[number]> => {
+		if (!isString(data)) {
+			return { success: false, issues: [{ message: 'Expected string' }] }
+		}
+		if (!valuesSet.has(data)) {
+			return {
+				success: false,
+				issues: [{ message: `Expected one of: ${values.join(', ')}` }],
+			}
+		}
+		return { success: true, data: data as T[number] }
 	}
 
-	const isValidEnum = (v: unknown): v is TValue =>
-		typeof v === 'string' && valueSet.has(v)
-
 	const schema: EnumSchema<T> = {
-		// Type brands
-		_input: undefined as TValue,
-		_output: undefined as TValue,
+		_input: undefined as T[number],
+		_output: undefined as T[number],
 		_checks: [],
 		options: values,
 		enum: enumObj,
 
-		// Standard Schema
 		'~standard': {
 			version: 1,
 			vendor: 'zen',
 			validate(value: unknown) {
-				const result = schema.safeParse(value)
-				if (result.success) {
-					return { value: result.data }
-				}
-				return {
-					issues: result.issues.map((i) => ({
-						message: i.message,
-						path: i.path ? [...i.path] : undefined,
-					})),
-				}
+				const result = safeParse(value)
+				if (result.success) return { value: result.data }
+				return { issues: result.issues }
 			},
-			types: undefined as unknown as { input: TValue; output: TValue },
+			types: undefined as unknown as { input: T[number]; output: T[number] },
 		},
 
-		parse(data: unknown): TValue {
-			const result = this.safeParse(data)
+		parse(data: unknown): T[number] {
+			const result = safeParse(data)
 			if (result.success) return result.data
 			throw new SchemaError(result.issues)
 		},
 
-		safeParse(data: unknown): Result<TValue> {
-			if (!isValidEnum(data)) {
-				return {
-					success: false,
-					issues: [
-						{
-							message: `Expected one of: ${values.map((v) => `"${v}"`).join(', ')}`,
-						},
-					],
-				}
-			}
-			return { success: true, data }
-		},
+		safeParse,
 
-		async parseAsync(data: unknown): Promise<TValue> {
+		async parseAsync(data: unknown): Promise<T[number]> {
 			return this.parse(data)
 		},
 
-		async safeParseAsync(data: unknown): Promise<Result<TValue>> {
-			return this.safeParse(data)
+		async safeParseAsync(data: unknown): Promise<Result<T[number]>> {
+			return safeParse(data)
+		},
+
+		exclude<U extends T[number]>(excludeValues: readonly U[]) {
+			const excludeSet = new Set(excludeValues)
+			const newValues = values.filter((v) => !excludeSet.has(v as U)) as Exclude<T[number], U>[]
+			return enumSchema(newValues as unknown as EnumValues) as EnumSchema<Exclude<T[number], U>[]>
+		},
+
+		extract<U extends T[number]>(extractValues: readonly U[]) {
+			return enumSchema(extractValues as unknown as EnumValues) as EnumSchema<U[]>
 		},
 
 		optional() {
 			return {
-				_input: undefined as TValue | undefined,
-				_output: undefined as TValue | undefined,
+				_input: undefined as T[number] | undefined,
+				_output: undefined as T[number] | undefined,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
 					vendor: 'zen',
 					validate: (v: unknown) => {
-						const result =
-							v === undefined
-								? ({ success: true, data: undefined } as Result<TValue | undefined>)
-								: schema.safeParse(v)
+						if (v === undefined) return { value: undefined }
+						const result = safeParse(v)
 						if (result.success) return { value: result.data }
 						return { issues: result.issues }
 					},
-					types: undefined as unknown as { input: TValue | undefined; output: TValue | undefined },
+					types: undefined as unknown as {
+						input: T[number] | undefined
+						output: T[number] | undefined
+					},
 				},
 				parse: (v: unknown) => (v === undefined ? undefined : schema.parse(v)),
-				safeParse: (v: unknown): Result<TValue | undefined> =>
-					v === undefined ? { success: true, data: undefined } : schema.safeParse(v),
+				safeParse: (v: unknown): Result<T[number] | undefined> =>
+					v === undefined ? { success: true, data: undefined } : safeParse(v),
 				parseAsync: async (v: unknown) => (v === undefined ? undefined : schema.parse(v)),
-				safeParseAsync: async (v: unknown): Promise<Result<TValue | undefined>> =>
-					v === undefined ? { success: true, data: undefined } : schema.safeParse(v),
+				safeParseAsync: async (v: unknown): Promise<Result<T[number] | undefined>> =>
+					v === undefined ? { success: true, data: undefined } : safeParse(v),
 			}
 		},
 
 		nullable() {
 			return {
-				_input: undefined as TValue | null,
-				_output: undefined as TValue | null,
+				_input: undefined as T[number] | null,
+				_output: undefined as T[number] | null,
 				_checks: [],
 				'~standard': {
 					version: 1 as const,
 					vendor: 'zen',
 					validate: (v: unknown) => {
-						const result =
-							v === null
-								? ({ success: true, data: null } as Result<TValue | null>)
-								: schema.safeParse(v)
+						if (v === null) return { value: null }
+						const result = safeParse(v)
 						if (result.success) return { value: result.data }
 						return { issues: result.issues }
 					},
-					types: undefined as unknown as { input: TValue | null; output: TValue | null },
+					types: undefined as unknown as { input: T[number] | null; output: T[number] | null },
 				},
 				parse: (v: unknown) => (v === null ? null : schema.parse(v)),
-				safeParse: (v: unknown): Result<TValue | null> =>
-					v === null ? { success: true, data: null } : schema.safeParse(v),
+				safeParse: (v: unknown): Result<T[number] | null> =>
+					v === null ? { success: true, data: null } : safeParse(v),
 				parseAsync: async (v: unknown) => (v === null ? null : schema.parse(v)),
-				safeParseAsync: async (v: unknown): Promise<Result<TValue | null>> =>
-					v === null ? { success: true, data: null } : schema.safeParse(v),
+				safeParseAsync: async (v: unknown): Promise<Result<T[number] | null>> =>
+					v === null ? { success: true, data: null } : safeParse(v),
 			}
 		},
 	}
@@ -148,16 +136,4 @@ function createEnumSchema<T extends EnumValues>(values: T): EnumSchema<T> {
 	return schema
 }
 
-/**
- * Create an enum schema
- * @example
- * const status = z.enum(['pending', 'active', 'done'])
- * status.parse('active') // 'active'
- * status.enum.active // 'active' (autocomplete)
- */
-export function enumSchema<T extends EnumValues>(values: T): EnumSchema<T> {
-	return createEnumSchema(values)
-}
-
-// Alias for Zod compatibility
 export { enumSchema as enum_ }

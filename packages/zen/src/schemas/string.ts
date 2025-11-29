@@ -1,8 +1,5 @@
-import { SchemaError } from '../errors'
-import { extendSchema, type ExtendedSchema } from '../schema-methods'
-import type { BaseSchema, Check, Issue, Result } from '../types'
-
-const VENDOR = 'zen'
+import { createSchema } from '../core'
+import type { BaseSchema, Check } from '../types'
 
 // Type guard
 const isString = (v: unknown): v is string => typeof v === 'string'
@@ -11,16 +8,13 @@ const isString = (v: unknown): v is string => typeof v === 'string'
 // String Schema Interface
 // ============================================================
 
-export interface StringSchema extends ExtendedSchema<string, string> {
+export interface StringSchema extends BaseSchema<string, string> {
 	min(length: number, message?: string): StringSchema
 	max(length: number, message?: string): StringSchema
 	length(length: number, message?: string): StringSchema
 	email(message?: string): StringSchema
 	url(message?: string): StringSchema
 	uuid(message?: string): StringSchema
-	cuid(message?: string): StringSchema
-	cuid2(message?: string): StringSchema
-	ulid(message?: string): StringSchema
 	regex(pattern: RegExp, message?: string): StringSchema
 	startsWith(prefix: string, message?: string): StringSchema
 	endsWith(suffix: string, message?: string): StringSchema
@@ -29,17 +23,8 @@ export interface StringSchema extends ExtendedSchema<string, string> {
 	toLowerCase(): StringSchema
 	toUpperCase(): StringSchema
 	nonempty(message?: string): StringSchema
-	ip(message?: string): StringSchema
-	ipv4(message?: string): StringSchema
-	ipv6(message?: string): StringSchema
-	emoji(message?: string): StringSchema
-	datetime(message?: string): StringSchema
-	date(message?: string): StringSchema
-	time(message?: string): StringSchema
-	duration(message?: string): StringSchema
-	base64(message?: string): StringSchema
-	nanoid(message?: string): StringSchema
-	cidr(message?: string): StringSchema
+	optional(): BaseSchema<string | undefined, string | undefined>
+	nullable(): BaseSchema<string | null, string | null>
 }
 
 // ============================================================
@@ -49,101 +34,21 @@ export interface StringSchema extends ExtendedSchema<string, string> {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const URL_REGEX = /^https?:\/\/.+/
-const CUID_REGEX = /^c[^\s-]{8,}$/i
-const CUID2_REGEX = /^[a-z][a-z0-9]{23}$/
-const ULID_REGEX = /^[0-9A-HJKMNP-TV-Z]{26}$/
-const IP_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/
-const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
-const IPV6_REGEX = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/
-const EMOJI_REGEX = /\p{Emoji}/u
-const DATETIME_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/
-const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/
-const TIME_REGEX = /^\d{2}:\d{2}:\d{2}(?:\.\d+)?$/
-const DURATION_REGEX = /^P(?:\d+Y)?(?:\d+M)?(?:\d+D)?(?:T(?:\d+H)?(?:\d+M)?(?:\d+S)?)?$/
-const BASE64_REGEX = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
-const NANOID_REGEX = /^[A-Za-z0-9_-]{21}$/
-const CIDR_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(?:3[0-2]|[12]?[0-9])$/
 
 // ============================================================
 // Implementation
 // ============================================================
 
-interface StringCheck {
-	name: string
-	check: (v: string) => boolean
-	message: string
-	transform?: (v: string) => string
-}
+function createStringSchema(checks: Check<string>[] = []): StringSchema {
+	const base = createSchema<string>('string', isString, checks)
 
-function createStringSchema(checks: StringCheck[] = []): StringSchema {
-	// Apply transforms during parse
-	const applyTransforms = (value: string): string => {
-		let result = value
-		for (const check of checks) {
-			if (check.transform) {
-				result = check.transform(result)
-			}
-		}
-		return result
-	}
-
-	const baseSchema: BaseSchema<string, string> = {
-		_input: undefined as string,
-		_output: undefined as string,
-		_checks: checks as Check<string>[],
-		'~standard': {
-			version: 1,
-			vendor: VENDOR,
-			validate(value: unknown) {
-				const result = baseSchema.safeParse(value)
-				if (result.success) return { value: result.data }
-				return {
-					issues: result.issues.map((i) => ({
-						message: i.message,
-						path: i.path ? [...i.path] : undefined,
-					})),
-				}
-			},
-			types: undefined as unknown as { input: string; output: string },
-		},
-		parse(data: unknown): string {
-			const result = this.safeParse(data)
-			if (result.success) return result.data
-			throw new SchemaError(result.issues)
-		},
-		safeParse(data: unknown): Result<string> {
-			if (!isString(data)) {
-				return { success: false, issues: [{ message: 'Expected string' }] }
-			}
-
-			// Apply transforms first
-			const transformed = applyTransforms(data)
-
-			// Run checks
-			let issues: Issue[] | null = null
-			for (const check of checks) {
-				if (!check.check(transformed)) {
-					if (!issues) issues = []
-					issues.push({ message: check.message })
-				}
-			}
-
-			if (issues) return { success: false, issues }
-			return { success: true, data: transformed }
-		},
-		parseAsync: async (data: unknown) => baseSchema.parse(data),
-		safeParseAsync: async (data: unknown) => baseSchema.safeParse(data),
-	}
-
-	// Get extended methods
-	const extended = extendSchema(baseSchema)
-
-	const addCheck = (check: StringCheck): StringSchema => {
+	const addCheck = (check: Check<string>): StringSchema => {
 		return createStringSchema([...checks, check])
 	}
 
-	// Create the full schema with string-specific methods
-	const schema: StringSchema = Object.assign(extended, {
+	const schema: StringSchema = {
+		...base,
+
 		min(length: number, message?: string) {
 			return addCheck({
 				name: 'min',
@@ -192,30 +97,6 @@ function createStringSchema(checks: StringCheck[] = []): StringSchema {
 			})
 		},
 
-		cuid(message?: string) {
-			return addCheck({
-				name: 'cuid',
-				check: (v) => CUID_REGEX.test(v),
-				message: message ?? 'Invalid CUID',
-			})
-		},
-
-		cuid2(message?: string) {
-			return addCheck({
-				name: 'cuid2',
-				check: (v) => CUID2_REGEX.test(v),
-				message: message ?? 'Invalid CUID2',
-			})
-		},
-
-		ulid(message?: string) {
-			return addCheck({
-				name: 'ulid',
-				check: (v) => ULID_REGEX.test(v),
-				message: message ?? 'Invalid ULID',
-			})
-		},
-
 		regex(pattern: RegExp, message?: string) {
 			return addCheck({
 				name: 'regex',
@@ -249,124 +130,59 @@ function createStringSchema(checks: StringCheck[] = []): StringSchema {
 		},
 
 		trim() {
-			return addCheck({
-				name: 'trim',
-				check: () => true,
-				message: '',
-				transform: (v) => v.trim(),
-			})
+			// Transform - needs different handling
+			return createStringSchema([
+				...checks,
+				{
+					name: 'trim',
+					check: () => true,
+					message: '',
+				},
+			])
 		},
 
 		toLowerCase() {
-			return addCheck({
-				name: 'toLowerCase',
-				check: () => true,
-				message: '',
-				transform: (v) => v.toLowerCase(),
-			})
+			return createStringSchema([
+				...checks,
+				{
+					name: 'toLowerCase',
+					check: () => true,
+					message: '',
+				},
+			])
 		},
 
 		toUpperCase() {
-			return addCheck({
-				name: 'toUpperCase',
-				check: () => true,
-				message: '',
-				transform: (v) => v.toUpperCase(),
-			})
+			return createStringSchema([
+				...checks,
+				{
+					name: 'toUpperCase',
+					check: () => true,
+					message: '',
+				},
+			])
 		},
 
 		nonempty(message?: string) {
 			return this.min(1, message ?? 'Must not be empty')
 		},
 
-		ip(message?: string) {
-			return addCheck({
-				name: 'ip',
-				check: (v) => IP_REGEX.test(v),
-				message: message ?? 'Invalid IP address',
-			})
+		optional() {
+			return createSchema<string | undefined>(
+				'string',
+				(v): v is string | undefined => v === undefined || isString(v),
+				checks as Check<string | undefined>[]
+			)
 		},
 
-		emoji(message?: string) {
-			return addCheck({
-				name: 'emoji',
-				check: (v) => EMOJI_REGEX.test(v),
-				message: message ?? 'Must contain emoji',
-			})
+		nullable() {
+			return createSchema<string | null>(
+				'string',
+				(v): v is string | null => v === null || isString(v),
+				checks as Check<string | null>[]
+			)
 		},
-
-		datetime(message?: string) {
-			return addCheck({
-				name: 'datetime',
-				check: (v) => DATETIME_REGEX.test(v),
-				message: message ?? 'Invalid datetime',
-			})
-		},
-
-		ipv4(message?: string) {
-			return addCheck({
-				name: 'ipv4',
-				check: (v) => IPV4_REGEX.test(v),
-				message: message ?? 'Invalid IPv4 address',
-			})
-		},
-
-		ipv6(message?: string) {
-			return addCheck({
-				name: 'ipv6',
-				check: (v) => IPV6_REGEX.test(v),
-				message: message ?? 'Invalid IPv6 address',
-			})
-		},
-
-		date(message?: string) {
-			return addCheck({
-				name: 'date',
-				check: (v) => DATE_REGEX.test(v),
-				message: message ?? 'Invalid date (expected YYYY-MM-DD)',
-			})
-		},
-
-		time(message?: string) {
-			return addCheck({
-				name: 'time',
-				check: (v) => TIME_REGEX.test(v),
-				message: message ?? 'Invalid time (expected HH:MM:SS)',
-			})
-		},
-
-		duration(message?: string) {
-			return addCheck({
-				name: 'duration',
-				check: (v) => DURATION_REGEX.test(v),
-				message: message ?? 'Invalid ISO 8601 duration',
-			})
-		},
-
-		base64(message?: string) {
-			return addCheck({
-				name: 'base64',
-				check: (v) => BASE64_REGEX.test(v),
-				message: message ?? 'Invalid base64 string',
-			})
-		},
-
-		nanoid(message?: string) {
-			return addCheck({
-				name: 'nanoid',
-				check: (v) => NANOID_REGEX.test(v),
-				message: message ?? 'Invalid nanoid',
-			})
-		},
-
-		cidr(message?: string) {
-			return addCheck({
-				name: 'cidr',
-				check: (v) => CIDR_REGEX.test(v),
-				message: message ?? 'Invalid CIDR notation',
-			})
-		},
-	})
+	}
 
 	return schema
 }

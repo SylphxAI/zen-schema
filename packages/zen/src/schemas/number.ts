@@ -1,8 +1,5 @@
-import { SchemaError } from '../errors'
-import { extendSchema, type ExtendedSchema } from '../schema-methods'
-import type { BaseSchema, Check, Issue, Result } from '../types'
-
-const VENDOR = 'zen'
+import { createSchema } from '../core'
+import type { BaseSchema, Check } from '../types'
 
 // Type guard
 const isNumber = (v: unknown): v is number => typeof v === 'number' && !Number.isNaN(v)
@@ -11,7 +8,7 @@ const isNumber = (v: unknown): v is number => typeof v === 'number' && !Number.i
 // Number Schema Interface
 // ============================================================
 
-export interface NumberSchema extends ExtendedSchema<number, number> {
+export interface NumberSchema extends BaseSchema<number, number> {
 	min(value: number, message?: string): NumberSchema
 	max(value: number, message?: string): NumberSchema
 	int(message?: string): NumberSchema
@@ -26,71 +23,24 @@ export interface NumberSchema extends ExtendedSchema<number, number> {
 	gte(value: number, message?: string): NumberSchema
 	lt(value: number, message?: string): NumberSchema
 	lte(value: number, message?: string): NumberSchema
-	step(value: number, message?: string): NumberSchema
+	optional(): BaseSchema<number | undefined, number | undefined>
+	nullable(): BaseSchema<number | null, number | null>
 }
 
 // ============================================================
 // Implementation
 // ============================================================
 
-interface NumberCheck {
-	name: string
-	check: (v: number) => boolean
-	message: string
-}
+function createNumberSchema(checks: Check<number>[] = []): NumberSchema {
+	const base = createSchema<number>('number', isNumber, checks)
 
-function createNumberSchema(checks: NumberCheck[] = []): NumberSchema {
-	const baseSchema: BaseSchema<number, number> = {
-		_input: undefined as number,
-		_output: undefined as number,
-		_checks: checks as Check<number>[],
-		'~standard': {
-			version: 1,
-			vendor: VENDOR,
-			validate(value: unknown) {
-				const result = baseSchema.safeParse(value)
-				if (result.success) return { value: result.data }
-				return {
-					issues: result.issues.map((i) => ({
-						message: i.message,
-						path: i.path ? [...i.path] : undefined,
-					})),
-				}
-			},
-			types: undefined as unknown as { input: number; output: number },
-		},
-		parse(data: unknown): number {
-			const result = this.safeParse(data)
-			if (result.success) return result.data
-			throw new SchemaError(result.issues)
-		},
-		safeParse(data: unknown): Result<number> {
-			if (!isNumber(data)) {
-				return { success: false, issues: [{ message: 'Expected number' }] }
-			}
-
-			let issues: Issue[] | null = null
-			for (const check of checks) {
-				if (!check.check(data)) {
-					if (!issues) issues = []
-					issues.push({ message: check.message })
-				}
-			}
-
-			if (issues) return { success: false, issues }
-			return { success: true, data }
-		},
-		parseAsync: async (data: unknown) => baseSchema.parse(data),
-		safeParseAsync: async (data: unknown) => baseSchema.safeParse(data),
-	}
-
-	const extended = extendSchema(baseSchema)
-
-	const addCheck = (check: NumberCheck): NumberSchema => {
+	const addCheck = (check: Check<number>): NumberSchema => {
 		return createNumberSchema([...checks, check])
 	}
 
-	const schema: NumberSchema = Object.assign(extended, {
+	const schema: NumberSchema = {
+		...base,
+
 		min(value: number, message?: string) {
 			return addCheck({
 				name: 'min',
@@ -179,10 +129,6 @@ function createNumberSchema(checks: NumberCheck[] = []): NumberSchema {
 			})
 		},
 
-		step(value: number, message?: string) {
-			return this.multipleOf(value, message)
-		},
-
 		finite(message?: string) {
 			return addCheck({
 				name: 'finite',
@@ -198,7 +144,23 @@ function createNumberSchema(checks: NumberCheck[] = []): NumberSchema {
 				message: message ?? 'Must be a safe integer',
 			})
 		},
-	})
+
+		optional() {
+			return createSchema<number | undefined>(
+				'number',
+				(v): v is number | undefined => v === undefined || isNumber(v),
+				checks as Check<number | undefined>[]
+			)
+		},
+
+		nullable() {
+			return createSchema<number | null>(
+				'number',
+				(v): v is number | null => v === null || isNumber(v),
+				checks as Check<number | null>[]
+			)
+		},
+	}
 
 	return schema
 }

@@ -57,6 +57,10 @@ export interface BaseSchema<TInput = unknown, TOutput = TInput>
 	safeParseAsync(data: unknown): Promise<Result<TOutput>>
 }
 
+/** Any schema type */
+// biome-ignore lint/suspicious/noExplicitAny: intentionally any for schema compatibility
+export type AnySchema = BaseSchema<any, any>
+
 // ============================================================
 // Type Inference Utilities
 // ============================================================

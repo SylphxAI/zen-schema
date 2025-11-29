@@ -264,175 +264,135 @@ describe('Standard Schema compatibility', () => {
 	})
 })
 
-// ============================================================
-// Enum Schema
-// ============================================================
+// Note: Zod compatibility tests moved to @sylphx/zen-zod package
 
-describe('enum', () => {
-	const status = z.enum(['pending', 'active', 'done'])
-
+describe('enum schema', () => {
 	it('should validate enum values', () => {
-		expect(status.parse('pending')).toBe('pending')
-		expect(status.parse('active')).toBe('active')
-		expect(status.parse('done')).toBe('done')
+		const schema = z.enum(['apple', 'banana', 'cherry'])
+		expect(schema.parse('apple')).toBe('apple')
+		expect(schema.parse('banana')).toBe('banana')
 	})
 
-	it('should reject invalid values', () => {
-		expect(() => status.parse('invalid')).toThrow()
-		expect(() => status.parse(123)).toThrow()
+	it('should reject invalid enum values', () => {
+		const schema = z.enum(['apple', 'banana', 'cherry'])
+		expect(() => schema.parse('orange')).toThrow()
 	})
 
-	it('should provide enum object for autocomplete', () => {
-		expect(status.enum.pending).toBe('pending')
-		expect(status.enum.active).toBe('active')
-		expect(status.enum.done).toBe('done')
+	it('should have enum object', () => {
+		const schema = z.enum(['apple', 'banana', 'cherry'])
+		expect(schema.enum.apple).toBe('apple')
+		expect(schema.enum.banana).toBe('banana')
 	})
 })
 
-// ============================================================
-// Tuple Schema
-// ============================================================
-
-describe('tuple', () => {
-	const point = z.tuple([z.number(), z.number()])
-
+describe('tuple schema', () => {
 	it('should validate tuple', () => {
-		expect(point.parse([1, 2])).toEqual([1, 2])
+		const schema = z.tuple([z.string(), z.number()])
+		expect(schema.parse(['hello', 42])).toEqual(['hello', 42])
 	})
 
 	it('should reject wrong length', () => {
-		expect(() => point.parse([1])).toThrow()
-		expect(() => point.parse([1, 2, 3])).toThrow()
+		const schema = z.tuple([z.string(), z.number()])
+		expect(() => schema.parse(['hello'])).toThrow()
+		expect(() => schema.parse(['hello', 42, 'extra'])).toThrow()
 	})
 
 	it('should reject wrong types', () => {
-		expect(() => point.parse(['a', 'b'])).toThrow()
-	})
-
-	it('should work with mixed types', () => {
-		const mixed = z.tuple([z.string(), z.number(), z.boolean()])
-		expect(mixed.parse(['hello', 42, true])).toEqual(['hello', 42, true])
+		const schema = z.tuple([z.string(), z.number()])
+		expect(() => schema.parse([123, 'hello'])).toThrow()
 	})
 })
 
-// ============================================================
-// Record Schema
-// ============================================================
-
-describe('record', () => {
-	const scores = z.record(z.number())
-
+describe('record schema', () => {
 	it('should validate record', () => {
-		expect(scores.parse({ alice: 100, bob: 95 })).toEqual({ alice: 100, bob: 95 })
+		const schema = z.record(z.number())
+		expect(schema.parse({ a: 1, b: 2 })).toEqual({ a: 1, b: 2 })
 	})
 
 	it('should reject invalid values', () => {
-		expect(() => scores.parse({ alice: 'hundred' })).toThrow()
+		const schema = z.record(z.number())
+		expect(() => schema.parse({ a: 'not a number' })).toThrow()
 	})
 
-	it('should accept empty object', () => {
-		expect(scores.parse({})).toEqual({})
+	it('should reject non-objects', () => {
+		const schema = z.record(z.string())
+		expect(() => schema.parse('not an object')).toThrow()
+		expect(() => schema.parse([1, 2, 3])).toThrow()
 	})
 })
 
-// ============================================================
-// Transform Utilities
-// ============================================================
-
-describe('refine (chainable)', () => {
+describe('refine', () => {
 	it('should add custom validation', () => {
-		const password = z.string().refine((val) => val.length >= 8, 'Password must be at least 8 characters')
-		expect(password.parse('longpassword')).toBe('longpassword')
-		expect(() => password.parse('short')).toThrow()
+		const schema = z.refine(z.number(), (n) => n % 2 === 0, 'Must be even')
+		expect(schema.parse(4)).toBe(4)
+		expect(() => schema.parse(3)).toThrow()
 	})
 
-	it('should work with message object', () => {
-		const positive = z.number().refine((val) => val > 0, { message: 'Must be positive' })
-		expect(positive.parse(1)).toBe(1)
-		expect(() => positive.parse(-1)).toThrow()
-	})
-})
-
-describe('transform (chainable)', () => {
-	it('should transform output', () => {
-		const upper = z.string().transform((val) => val.toUpperCase())
-		expect(upper.parse('hello')).toBe('HELLO')
-	})
-
-	it('should chain with validation', () => {
-		const parsed = z.string().transform((val) => parseInt(val, 10))
-		expect(parsed.parse('42')).toBe(42)
+	it('should chain refine', () => {
+		const schema = z
+			.refine(z.number(), (n) => n > 0, 'Must be positive')
+			.refine((n) => n < 100, 'Must be less than 100')
+		expect(schema.parse(50)).toBe(50)
+		expect(() => schema.parse(-1)).toThrow()
+		expect(() => schema.parse(200)).toThrow()
 	})
 })
 
-describe('default (chainable)', () => {
-	it('should provide default for undefined', () => {
-		const name = z.string().default('Anonymous')
-		expect(name.parse(undefined)).toBe('Anonymous')
-		expect(name.parse('John')).toBe('John')
+describe('transform', () => {
+	it('should transform value', () => {
+		const schema = z.transform(z.string(), (s) => s.toUpperCase())
+		expect(schema.parse('hello')).toBe('HELLO')
 	})
 
-	it('should work with factory function', () => {
-		const arr = z.array(z.number()).default(() => [])
-		expect(arr.parse(undefined)).toEqual([])
-	})
-})
-
-describe('optional/nullable/nullish (chainable)', () => {
-	it('should make optional', () => {
-		const schema = z.string().optional()
-		expect(schema.parse(undefined)).toBe(undefined)
-		expect(schema.parse('hello')).toBe('hello')
-	})
-
-	it('should make nullable', () => {
-		const schema = z.string().nullable()
-		expect(schema.parse(null)).toBe(null)
-		expect(schema.parse('hello')).toBe('hello')
-	})
-
-	it('should make nullish', () => {
-		const schema = z.string().nullish()
-		expect(schema.parse(undefined)).toBe(undefined)
-		expect(schema.parse(null)).toBe(null)
-		expect(schema.parse('hello')).toBe('hello')
+	it('should chain transform', () => {
+		const schema = z
+			.transform(z.string(), (s) => s.trim())
+			.transform((s) => s.toUpperCase())
+		expect(schema.parse('  hello  ')).toBe('HELLO')
 	})
 })
 
-describe('or (chainable)', () => {
-	it('should create union with or()', () => {
-		const schema = z.string().or(z.number())
+describe('default', () => {
+	it('should provide default value', () => {
+		const schema = z.default(z.string(), 'default')
 		expect(schema.parse('hello')).toBe('hello')
+		expect(schema.parse(undefined)).toBe('default')
+	})
+
+	it('should work with function default', () => {
+		let counter = 0
+		const schema = z.default(z.number(), () => ++counter)
+		expect(schema.parse(undefined)).toBe(1)
+		expect(schema.parse(undefined)).toBe(2)
 		expect(schema.parse(42)).toBe(42)
-		expect(() => schema.parse(true)).toThrow()
-	})
-})
-
-describe('catch (chainable)', () => {
-	it('should return default on error', () => {
-		const schema = z.string().catch('fallback')
-		expect(schema.parse('hello')).toBe('hello')
-		expect(schema.parse(123)).toBe('fallback')
 	})
 })
 
 describe('coerce', () => {
-	it('should coerce to number', () => {
-		const num = z.coerce.number()
-		expect(num.parse('42')).toBe(42)
-		expect(num.parse(42)).toBe(42)
+	it('should coerce to string', () => {
+		const schema = z.coerce.string()
+		expect(schema.parse(123)).toBe('123')
+		expect(schema.parse(true)).toBe('true')
 	})
 
-	it('should coerce to string', () => {
-		const str = z.coerce.string()
-		expect(str.parse(42)).toBe('42')
-		expect(str.parse(true)).toBe('true')
+	it('should coerce to number', () => {
+		const schema = z.coerce.number()
+		expect(schema.parse('42')).toBe(42)
+		expect(schema.parse('3.14')).toBe(3.14)
 	})
 
 	it('should coerce to boolean', () => {
-		const bool = z.coerce.boolean()
-		expect(bool.parse(1)).toBe(true)
-		expect(bool.parse(0)).toBe(false)
-		expect(bool.parse('')).toBe(false)
+		const schema = z.coerce.boolean()
+		expect(schema.parse('true')).toBe(true)
+		expect(schema.parse('false')).toBe(false)
+		expect(schema.parse(1)).toBe(true)
+		expect(schema.parse(0)).toBe(false)
+	})
+
+	it('should coerce to date', () => {
+		const schema = z.coerce.date()
+		const date = schema.parse('2024-01-01')
+		expect(date instanceof Date).toBe(true)
+		expect(date.getFullYear()).toBe(2024)
 	})
 })
