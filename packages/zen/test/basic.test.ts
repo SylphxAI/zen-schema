@@ -396,3 +396,124 @@ describe('coerce', () => {
 		expect(date.getFullYear()).toBe(2024)
 	})
 })
+
+describe('discriminatedUnion', () => {
+	it('should validate based on discriminator', () => {
+		const schema = z.discriminatedUnion('type', [
+			z.object({ type: z.literal('a'), value: z.string() }),
+			z.object({ type: z.literal('b'), value: z.number() }),
+		])
+
+		expect(schema.parse({ type: 'a', value: 'hello' })).toEqual({ type: 'a', value: 'hello' })
+		expect(schema.parse({ type: 'b', value: 42 })).toEqual({ type: 'b', value: 42 })
+	})
+
+	it('should reject invalid discriminator', () => {
+		const schema = z.discriminatedUnion('type', [
+			z.object({ type: z.literal('a'), value: z.string() }),
+			z.object({ type: z.literal('b'), value: z.number() }),
+		])
+
+		expect(() => schema.parse({ type: 'c', value: 'test' })).toThrow()
+	})
+
+	it('should reject missing discriminator', () => {
+		const schema = z.discriminatedUnion('type', [
+			z.object({ type: z.literal('a'), value: z.string() }),
+		])
+
+		expect(() => schema.parse({ value: 'test' })).toThrow()
+	})
+})
+
+describe('lazy', () => {
+	it('should handle recursive types', () => {
+		type TreeNode = {
+			value: number
+			children: TreeNode[]
+		}
+
+		const treeSchema: z.Infer<typeof treeSchemaLazy> = {} as TreeNode
+		const treeSchemaLazy = z.lazy(() =>
+			z.object({
+				value: z.number(),
+				children: z.array(treeSchemaLazy),
+			})
+		)
+
+		const tree = {
+			value: 1,
+			children: [
+				{ value: 2, children: [] },
+				{ value: 3, children: [{ value: 4, children: [] }] },
+			],
+		}
+
+		expect(treeSchemaLazy.parse(tree)).toEqual(tree)
+	})
+})
+
+describe('primitive types', () => {
+	it('should validate any', () => {
+		const schema = z.any()
+		expect(schema.parse('hello')).toBe('hello')
+		expect(schema.parse(123)).toBe(123)
+		expect(schema.parse(null)).toBe(null)
+	})
+
+	it('should validate unknown', () => {
+		const schema = z.unknown()
+		expect(schema.parse('hello')).toBe('hello')
+		expect(schema.parse(123)).toBe(123)
+	})
+
+	it('should validate null', () => {
+		const schema = z.null()
+		expect(schema.parse(null)).toBe(null)
+		expect(() => schema.parse(undefined)).toThrow()
+	})
+
+	it('should validate undefined', () => {
+		const schema = z.undefined()
+		expect(schema.parse(undefined)).toBe(undefined)
+		expect(() => schema.parse(null)).toThrow()
+	})
+
+	it('should validate void', () => {
+		const schema = z.void()
+		expect(schema.parse(undefined)).toBe(undefined)
+		expect(() => schema.parse(null)).toThrow()
+	})
+
+	it('should reject never', () => {
+		const schema = z.never()
+		expect(() => schema.parse('anything')).toThrow()
+		expect(() => schema.parse(null)).toThrow()
+	})
+
+	it('should validate nan', () => {
+		const schema = z.nan()
+		expect(Number.isNaN(schema.parse(NaN))).toBe(true)
+		expect(() => schema.parse(123)).toThrow()
+	})
+
+	it('should validate date', () => {
+		const schema = z.date()
+		const now = new Date()
+		expect(schema.parse(now)).toBe(now)
+		expect(() => schema.parse('not a date')).toThrow()
+	})
+
+	it('should validate bigint', () => {
+		const schema = z.bigint()
+		expect(schema.parse(BigInt(123))).toBe(BigInt(123))
+		expect(() => schema.parse(123)).toThrow()
+	})
+
+	it('should validate symbol', () => {
+		const schema = z.symbol()
+		const sym = Symbol('test')
+		expect(schema.parse(sym)).toBe(sym)
+		expect(() => schema.parse('not a symbol')).toThrow()
+	})
+})

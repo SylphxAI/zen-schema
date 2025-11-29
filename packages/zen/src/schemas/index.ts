@@ -1,3 +1,4 @@
+// Core schemas
 export { string, type StringSchema } from './string'
 export { number, type NumberSchema } from './number'
 export { boolean, type BooleanSchema } from './boolean'
@@ -8,4 +9,24 @@ export { literal, type LiteralSchema } from './literal'
 export { enumSchema as enum_, type EnumSchema } from './enum'
 export { tuple, type TupleSchema } from './tuple'
 export { record, type RecordSchema } from './record'
+
+// Advanced schemas
+export { discriminatedUnion, type DiscriminatedUnionSchema } from './discriminatedUnion'
+export { lazy, type LazySchema } from './lazy'
+
+// Primitive types
+export {
+	any,
+	unknown,
+	null_ as null,
+	undefined_ as undefined,
+	void_ as void,
+	never,
+	nan,
+	date,
+	bigint,
+	symbol,
+} from './primitives'
+
+// Modifiers
 export { refine, transform, withDefault, coerce, type RefinedSchema } from './modifiers'

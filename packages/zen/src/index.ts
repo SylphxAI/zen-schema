@@ -19,23 +19,42 @@ export type {
 
 // Schemas
 export {
+	// Core schemas
 	array,
 	boolean,
-	coerce,
 	enum_,
 	literal,
 	number,
 	object,
 	record,
-	refine,
 	string,
-	transform,
 	tuple,
 	union,
+	// Advanced schemas
+	discriminatedUnion,
+	lazy,
+	// Primitive types
+	any,
+	unknown,
+	null as null_,
+	undefined as undefined_,
+	void as void_,
+	never,
+	nan,
+	date,
+	bigint,
+	symbol,
+	// Modifiers
+	coerce,
+	refine,
+	transform,
 	withDefault,
+	// Types
 	type ArraySchema,
 	type BooleanSchema,
+	type DiscriminatedUnionSchema,
 	type EnumSchema,
+	type LazySchema,
 	type LiteralSchema,
 	type NumberSchema,
 	type ObjectSchema,
@@ -49,19 +68,35 @@ export {
 
 // Convenience namespace (like zod's `z`)
 import {
+	// Core schemas
 	array,
 	boolean,
-	coerce,
 	enum_,
 	literal,
 	number,
 	object,
 	record,
-	refine,
 	string,
-	transform,
 	tuple,
 	union,
+	// Advanced schemas
+	discriminatedUnion,
+	lazy,
+	// Primitive types
+	any,
+	unknown,
+	null as null_,
+	undefined as undefined_,
+	void as void_,
+	never,
+	nan,
+	date,
+	bigint,
+	symbol,
+	// Modifiers
+	coerce,
+	refine,
+	transform,
 	withDefault,
 } from './schemas'
 
@@ -70,6 +105,17 @@ export const z = {
 	string,
 	number,
 	boolean,
+	bigint,
+	symbol,
+	date,
+	// Special types
+	any,
+	unknown,
+	null: null_,
+	undefined: undefined_,
+	void: void_,
+	never,
+	nan,
 	// Complex types
 	object,
 	array,
@@ -77,8 +123,11 @@ export const z = {
 	record,
 	// Union & literal
 	union,
+	discriminatedUnion,
 	literal,
 	enum: enum_,
+	// Recursion
+	lazy,
 	// Modifiers
 	refine,
 	transform,
