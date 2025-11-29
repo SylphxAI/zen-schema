@@ -26,6 +26,8 @@ export {
 	date,
 	bigint,
 	symbol,
+	type DateSchema,
+	type BigIntSchema,
 } from './primitives'
 
 // Modifiers

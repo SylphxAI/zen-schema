@@ -15,6 +15,8 @@ export interface TupleSchema<T extends TupleItems> extends BaseSchema<TupleInput
 	rest<R extends AnySchema>(rest: R): TupleSchema<T> & { readonly rest: R }
 	optional(): BaseSchema<TupleInput<T> | undefined, TupleOutput<T> | undefined>
 	nullable(): BaseSchema<TupleInput<T> | null, TupleOutput<T> | null>
+	/** Get the underlying item schemas */
+	unwrap(): T
 }
 
 const isArray = (v: unknown): v is unknown[] => Array.isArray(v)
@@ -153,6 +155,10 @@ export function tuple<T extends TupleItems>(items: T): TupleSchema<T> {
 				safeParseAsync: async (v: unknown): Promise<Result<TOutput | null>> =>
 					v === null ? { success: true, data: null } : safeParse(v),
 			}
+		},
+
+		unwrap(): T {
+			return items
 		},
 	}
 

@@ -18,6 +18,8 @@ export interface RecordSchema<TKey extends BaseSchema<string, string>, TValue ex
 		Record<TKey['_input'], TValue['_input']> | null,
 		Record<TKey['_output'], TValue['_output']> | null
 	>
+	/** Get the key and value schemas */
+	unwrap(): { key: TKey; value: TValue }
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> =>
@@ -199,6 +201,10 @@ export function record<TKey extends BaseSchema<string, string>, TValue extends A
 				safeParseAsync: async (v: unknown): Promise<Result<TOutput | null>> =>
 					v === null ? { success: true, data: null } : safeParse(v),
 			}
+		},
+
+		unwrap(): { key: TKey; value: TValue } {
+			return { key: keySchema, value: valueSchema }
 		},
 	}
 

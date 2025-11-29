@@ -89,10 +89,12 @@ export {
 	partialRecord,
 	// Types
 	type ArraySchema,
+	type BigIntSchema,
 	type Brand,
 	type BrandedSchema,
 	type BooleanSchema,
 	type Codec,
+	type DateSchema,
 	type DiscriminatedUnionSchema,
 	type EnumSchema,
 	type FileSchema,

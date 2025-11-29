@@ -208,18 +208,34 @@ export function nan(): BaseSchema<number, number> {
 }
 
 // --- date ---
-export function date(): BaseSchema<Date, Date> {
+export interface DateSchema extends BaseSchema<Date, Date> {
+	min(minDate: Date, message?: string): DateSchema
+	max(maxDate: Date, message?: string): DateSchema
+	optional(): BaseSchema<Date | undefined, Date | undefined>
+	nullable(): BaseSchema<Date | null, Date | null>
+}
+
+function createDateSchema(
+	checks: Array<{ check: (d: Date) => boolean; message: string }> = []
+): DateSchema {
 	const safeParse = (data: unknown): Result<Date> => {
-		if (data instanceof Date) {
-			if (Number.isNaN(data.getTime())) {
-				return { success: false, issues: [{ message: 'Invalid date' }] }
-			}
-			return { success: true, data }
+		if (!(data instanceof Date)) {
+			return { success: false, issues: [{ message: 'Expected Date' }] }
 		}
-		return { success: false, issues: [{ message: 'Expected Date' }] }
+		if (Number.isNaN(data.getTime())) {
+			return { success: false, issues: [{ message: 'Invalid date' }] }
+		}
+
+		for (const check of checks) {
+			if (!check.check(data)) {
+				return { success: false, issues: [{ message: check.message }] }
+			}
+		}
+
+		return { success: true, data }
 	}
 
-	return {
+	const schema: DateSchema = {
 		_input: undefined as unknown as Date,
 		_output: undefined as unknown as Date,
 		_checks: [],
@@ -245,17 +261,112 @@ export function date(): BaseSchema<Date, Date> {
 			throw new SchemaError(result.issues)
 		},
 		safeParseAsync: async (data) => safeParse(data),
+		min(minDate: Date, message?: string) {
+			return createDateSchema([
+				...checks,
+				{
+					check: (d) => d.getTime() >= minDate.getTime(),
+					message: message ?? `Date must be on or after ${minDate.toISOString()}`,
+				},
+			])
+		},
+		max(maxDate: Date, message?: string) {
+			return createDateSchema([
+				...checks,
+				{
+					check: (d) => d.getTime() <= maxDate.getTime(),
+					message: message ?? `Date must be on or before ${maxDate.toISOString()}`,
+				},
+			])
+		},
+		optional() {
+			return {
+				_input: undefined as unknown as Date | undefined,
+				_output: undefined as unknown as Date | undefined,
+				_checks: [],
+				'~standard': {
+					version: 1 as const,
+					vendor: 'zen',
+					validate: (v: unknown) => {
+						if (v === undefined) return { value: undefined }
+						const result = safeParse(v)
+						if (result.success) return { value: result.data }
+						return { issues: result.issues.map(toStandardIssue) }
+					},
+					types: undefined as unknown as { input: Date | undefined; output: Date | undefined },
+				},
+				parse: (v: unknown) => (v === undefined ? undefined : schema.parse(v)),
+				safeParse: (v: unknown) => (v === undefined ? { success: true, data: undefined } : safeParse(v)),
+				parseAsync: async (v: unknown) => (v === undefined ? undefined : schema.parse(v)),
+				safeParseAsync: async (v: unknown) => (v === undefined ? { success: true, data: undefined } : safeParse(v)),
+			}
+		},
+		nullable() {
+			return {
+				_input: undefined as unknown as Date | null,
+				_output: undefined as unknown as Date | null,
+				_checks: [],
+				'~standard': {
+					version: 1 as const,
+					vendor: 'zen',
+					validate: (v: unknown) => {
+						if (v === null) return { value: null }
+						const result = safeParse(v)
+						if (result.success) return { value: result.data }
+						return { issues: result.issues.map(toStandardIssue) }
+					},
+					types: undefined as unknown as { input: Date | null; output: Date | null },
+				},
+				parse: (v: unknown) => (v === null ? null : schema.parse(v)),
+				safeParse: (v: unknown) => (v === null ? { success: true, data: null } : safeParse(v)),
+				parseAsync: async (v: unknown) => (v === null ? null : schema.parse(v)),
+				safeParseAsync: async (v: unknown) => (v === null ? { success: true, data: null } : safeParse(v)),
+			}
+		},
 	}
+
+	return schema
+}
+
+export function date(): DateSchema {
+	return createDateSchema()
 }
 
 // --- bigint ---
-export function bigint(): BaseSchema<bigint, bigint> {
+export interface BigIntSchema extends BaseSchema<bigint, bigint> {
+	min(value: bigint, message?: string): BigIntSchema
+	max(value: bigint, message?: string): BigIntSchema
+	gt(value: bigint, message?: string): BigIntSchema
+	gte(value: bigint, message?: string): BigIntSchema
+	lt(value: bigint, message?: string): BigIntSchema
+	lte(value: bigint, message?: string): BigIntSchema
+	positive(message?: string): BigIntSchema
+	negative(message?: string): BigIntSchema
+	nonnegative(message?: string): BigIntSchema
+	nonpositive(message?: string): BigIntSchema
+	multipleOf(value: bigint, message?: string): BigIntSchema
+	optional(): BaseSchema<bigint | undefined, bigint | undefined>
+	nullable(): BaseSchema<bigint | null, bigint | null>
+}
+
+function createBigIntSchema(
+	checks: Array<{ check: (n: bigint) => boolean; message: string }> = []
+): BigIntSchema {
 	const safeParse = (data: unknown): Result<bigint> => {
-		if (typeof data === 'bigint') return { success: true, data }
-		return { success: false, issues: [{ message: 'Expected bigint' }] }
+		if (typeof data !== 'bigint') {
+			return { success: false, issues: [{ message: 'Expected bigint' }] }
+		}
+
+		for (const check of checks) {
+			if (!check.check(data)) {
+				return { success: false, issues: [{ message: check.message }] }
+			}
+		}
+
+		return { success: true, data }
 	}
 
-	return {
+	const schema: BigIntSchema = {
 		_input: undefined as unknown as bigint,
 		_output: undefined as unknown as bigint,
 		_checks: [],
@@ -281,7 +392,117 @@ export function bigint(): BaseSchema<bigint, bigint> {
 			throw new SchemaError(result.issues)
 		},
 		safeParseAsync: async (data) => safeParse(data),
+		min(value: bigint, message?: string) {
+			return createBigIntSchema([
+				...checks,
+				{ check: (n) => n >= value, message: message ?? `Must be at least ${value}` },
+			])
+		},
+		max(value: bigint, message?: string) {
+			return createBigIntSchema([
+				...checks,
+				{ check: (n) => n <= value, message: message ?? `Must be at most ${value}` },
+			])
+		},
+		gt(value: bigint, message?: string) {
+			return createBigIntSchema([
+				...checks,
+				{ check: (n) => n > value, message: message ?? `Must be greater than ${value}` },
+			])
+		},
+		gte(value: bigint, message?: string) {
+			return this.min(value, message)
+		},
+		lt(value: bigint, message?: string) {
+			return createBigIntSchema([
+				...checks,
+				{ check: (n) => n < value, message: message ?? `Must be less than ${value}` },
+			])
+		},
+		lte(value: bigint, message?: string) {
+			return this.max(value, message)
+		},
+		positive(message?: string) {
+			return createBigIntSchema([
+				...checks,
+				{ check: (n) => n > 0n, message: message ?? 'Must be positive' },
+			])
+		},
+		negative(message?: string) {
+			return createBigIntSchema([
+				...checks,
+				{ check: (n) => n < 0n, message: message ?? 'Must be negative' },
+			])
+		},
+		nonnegative(message?: string) {
+			return createBigIntSchema([
+				...checks,
+				{ check: (n) => n >= 0n, message: message ?? 'Must be non-negative' },
+			])
+		},
+		nonpositive(message?: string) {
+			return createBigIntSchema([
+				...checks,
+				{ check: (n) => n <= 0n, message: message ?? 'Must be non-positive' },
+			])
+		},
+		multipleOf(value: bigint, message?: string) {
+			return createBigIntSchema([
+				...checks,
+				{ check: (n) => n % value === 0n, message: message ?? `Must be a multiple of ${value}` },
+			])
+		},
+		optional() {
+			return {
+				_input: undefined as unknown as bigint | undefined,
+				_output: undefined as unknown as bigint | undefined,
+				_checks: [],
+				'~standard': {
+					version: 1 as const,
+					vendor: 'zen',
+					validate: (v: unknown) => {
+						if (v === undefined) return { value: undefined }
+						const result = safeParse(v)
+						if (result.success) return { value: result.data }
+						return { issues: result.issues.map(toStandardIssue) }
+					},
+					types: undefined as unknown as { input: bigint | undefined; output: bigint | undefined },
+				},
+				parse: (v: unknown) => (v === undefined ? undefined : schema.parse(v)),
+				safeParse: (v: unknown) => (v === undefined ? { success: true, data: undefined } : safeParse(v)),
+				parseAsync: async (v: unknown) => (v === undefined ? undefined : schema.parse(v)),
+				safeParseAsync: async (v: unknown) => (v === undefined ? { success: true, data: undefined } : safeParse(v)),
+			}
+		},
+		nullable() {
+			return {
+				_input: undefined as unknown as bigint | null,
+				_output: undefined as unknown as bigint | null,
+				_checks: [],
+				'~standard': {
+					version: 1 as const,
+					vendor: 'zen',
+					validate: (v: unknown) => {
+						if (v === null) return { value: null }
+						const result = safeParse(v)
+						if (result.success) return { value: result.data }
+						return { issues: result.issues.map(toStandardIssue) }
+					},
+					types: undefined as unknown as { input: bigint | null; output: bigint | null },
+				},
+				parse: (v: unknown) => (v === null ? null : schema.parse(v)),
+				safeParse: (v: unknown) => (v === null ? { success: true, data: null } : safeParse(v)),
+				parseAsync: async (v: unknown) => (v === null ? null : schema.parse(v)),
+				safeParseAsync: async (v: unknown) => (v === null ? { success: true, data: null } : safeParse(v)),
+			}
+		},
 	}
+
+	return schema
+}
+
+export function bigint(): BigIntSchema {
+	return createBigIntSchema()
 }
 
 // --- symbol ---

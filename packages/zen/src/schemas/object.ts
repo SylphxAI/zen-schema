@@ -38,6 +38,7 @@ export interface ObjectSchema<T extends ObjectShape>
 	omit<K extends keyof T>(keys: K[]): ObjectSchema<Omit<T, K>>
 	// Extend/Merge
 	extend<E extends ObjectShape>(extension: E): ObjectSchema<T & E>
+	safeExtend<E extends ObjectShape>(extension: E): ObjectSchema<T & Omit<E, keyof T>>
 	merge<E extends ObjectShape>(other: ObjectSchema<E>): ObjectSchema<T & E>
 	// Strictness
 	passthrough(): ObjectSchema<T>
@@ -240,6 +241,17 @@ function createObjectSchema<T extends ObjectShape>(
 
 		extend<E extends ObjectShape>(extension: E): ObjectSchema<T & E> {
 			return createObjectSchema({ ...shape, ...extension }, options)
+		},
+
+		safeExtend<E extends ObjectShape>(extension: E): ObjectSchema<T & Omit<E, keyof T>> {
+			// Only add keys that don't exist in the current shape
+			const safeExtension: ObjectShape = {}
+			for (const key of Object.keys(extension)) {
+				if (!(key in shape)) {
+					safeExtension[key] = extension[key]!
+				}
+			}
+			return createObjectSchema({ ...shape, ...safeExtension }, options) as unknown as ObjectSchema<T & Omit<E, keyof T>>
 		},
 
 		merge<E extends ObjectShape>(other: ObjectSchema<E>): ObjectSchema<T & E> {

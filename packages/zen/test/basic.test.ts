@@ -988,3 +988,87 @@ describe('advanced utilities', () => {
 		expect(() => schema.parse(wrongType)).toThrow()
 	})
 })
+
+describe('bigint validators', () => {
+	it('should validate bigint', () => {
+		const schema = z.bigint()
+		expect(schema.parse(123n)).toBe(123n)
+		expect(() => schema.parse(123)).toThrow()
+	})
+
+	it('should validate bigint min/max', () => {
+		const schema = z.bigint().min(10n).max(100n)
+		expect(schema.parse(50n)).toBe(50n)
+		expect(() => schema.parse(5n)).toThrow()
+		expect(() => schema.parse(200n)).toThrow()
+	})
+
+	it('should validate bigint positive/negative', () => {
+		const positive = z.bigint().positive()
+		expect(positive.parse(1n)).toBe(1n)
+		expect(() => positive.parse(0n)).toThrow()
+		expect(() => positive.parse(-1n)).toThrow()
+
+		const negative = z.bigint().negative()
+		expect(negative.parse(-1n)).toBe(-1n)
+		expect(() => negative.parse(0n)).toThrow()
+	})
+
+	it('should validate bigint multipleOf', () => {
+		const schema = z.bigint().multipleOf(5n)
+		expect(schema.parse(10n)).toBe(10n)
+		expect(schema.parse(0n)).toBe(0n)
+		expect(() => schema.parse(7n)).toThrow()
+	})
+})
+
+describe('date validators', () => {
+	it('should validate date', () => {
+		const schema = z.date()
+		const now = new Date()
+		expect(schema.parse(now)).toBe(now)
+		expect(() => schema.parse('2024-01-01')).toThrow()
+	})
+
+	it('should validate date min/max', () => {
+		const minDate = new Date('2024-01-01')
+		const maxDate = new Date('2024-12-31')
+		const schema = z.date().min(minDate).max(maxDate)
+
+		expect(schema.parse(new Date('2024-06-15'))).toBeTruthy()
+		expect(() => schema.parse(new Date('2023-06-15'))).toThrow()
+		expect(() => schema.parse(new Date('2025-06-15'))).toThrow()
+	})
+})
+
+describe('object safeExtend', () => {
+	it('should extend without overriding existing keys', () => {
+		const base = z.object({ name: z.string(), age: z.number() })
+		const extended = base.safeExtend({ age: z.string(), email: z.string() })
+
+		// age should still be number (not overridden), email should be added
+		expect(extended.parse({ name: 'test', age: 25, email: 'test@example.com' })).toEqual({
+			name: 'test',
+			age: 25,
+			email: 'test@example.com'
+		})
+		expect(() => extended.parse({ name: 'test', age: '25', email: 'test@example.com' })).toThrow()
+	})
+})
+
+describe('unwrap methods', () => {
+	it('should unwrap tuple', () => {
+		const schema = z.tuple([z.string(), z.number()])
+		const items = schema.unwrap()
+		expect(items.length).toBe(2)
+		expect(items[0]!.parse('hello')).toBe('hello')
+		expect(items[1]!.parse(42)).toBe(42)
+	})
+
+	it('should unwrap record', () => {
+		const schema = z.record(z.string(), z.number())
+		const { key, value } = schema.unwrap()
+		expect(key.parse('test')).toBe('test')
+		expect(value.parse(42)).toBe(42)
+	})
+})
