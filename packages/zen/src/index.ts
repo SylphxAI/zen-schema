@@ -26,6 +26,8 @@ export {
 	literal,
 	number,
 	object,
+	strictObject,
+	looseObject,
 	record,
 	string,
 	tuple,
@@ -72,13 +74,28 @@ export {
 	iso,
 	prefault,
 	check,
+	// Top-level format validators
+	email,
+	uuid,
+	url,
+	httpUrl,
+	ipv4,
+	ipv6,
+	hash,
+	// Advanced utilities
+	codec,
+	file,
+	templateLiteral,
+	partialRecord,
 	// Types
 	type ArraySchema,
 	type Brand,
 	type BrandedSchema,
 	type BooleanSchema,
+	type Codec,
 	type DiscriminatedUnionSchema,
 	type EnumSchema,
+	type FileSchema,
 	type FunctionSchema,
 	type IntersectionSchema,
 	type IntSchema,
@@ -107,6 +124,8 @@ import {
 	literal,
 	number,
 	object,
+	strictObject,
+	looseObject,
 	record,
 	string,
 	tuple,
@@ -153,6 +172,19 @@ import {
 	iso,
 	prefault,
 	check,
+	// Top-level format validators
+	email,
+	uuid,
+	url,
+	httpUrl,
+	ipv4,
+	ipv6,
+	hash,
+	// Advanced utilities
+	codec,
+	file,
+	templateLiteral,
+	partialRecord,
 } from './schemas'
 
 export const z = {
@@ -173,9 +205,12 @@ export const z = {
 	nan,
 	// Complex types
 	object,
+	strictObject,
+	looseObject,
 	array,
 	tuple,
 	record,
+	partialRecord,
 	map,
 	set,
 	// Union & literal
@@ -212,6 +247,18 @@ export const z = {
 	iso,
 	prefault,
 	check,
+	// Top-level format validators
+	email,
+	uuid,
+	url,
+	httpUrl,
+	ipv4,
+	ipv6,
+	hash,
+	// Advanced utilities
+	codec,
+	file,
+	templateLiteral,
 } as const
 
 // Alias for zen

@@ -476,3 +476,17 @@ function createObjectSchema<T extends ObjectShape>(
 export function object<T extends ObjectShape>(shape: T): ObjectSchema<T> {
 	return createObjectSchema(shape)
 }
+
+/**
+ * Create a strict object schema (rejects unknown keys)
+ */
+export function strictObject<T extends ObjectShape>(shape: T): ObjectSchema<T> {
+	return createObjectSchema(shape, { strict: true })
+}
+
+/**
+ * Create a loose object schema (passes through unknown keys)
+ */
+export function looseObject<T extends ObjectShape>(shape: T): ObjectSchema<T> {
+	return createObjectSchema(shape, { passthrough: true })
+}

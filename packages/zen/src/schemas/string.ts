@@ -54,6 +54,7 @@ export interface StringSchema extends BaseSchema<string, string> {
 	trim(): StringSchema
 	toLowerCase(): StringSchema
 	toUpperCase(): StringSchema
+	normalize(form?: 'NFC' | 'NFD' | 'NFKC' | 'NFKD'): StringSchema
 	// Nullable/Optional
 	optional(): BaseSchema<string | undefined, string | undefined>
 	nullable(): BaseSchema<string | null, string | null>
@@ -390,6 +391,17 @@ function createStringSchema(checks: Check<string>[] = []): StringSchema {
 				...checks,
 				{
 					name: 'toUpperCase',
+					check: () => true,
+					message: '',
+				},
+			])
+		},
+
+		normalize(form: 'NFC' | 'NFD' | 'NFKC' | 'NFKD' = 'NFC') {
+			return createStringSchema([
+				...checks,
+				{
+					name: `normalize:${form}`,
 					check: () => true,
 					message: '',
 				},

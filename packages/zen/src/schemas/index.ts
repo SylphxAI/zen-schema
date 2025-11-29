@@ -2,7 +2,7 @@
 export { string, type StringSchema } from './string'
 export { number, type NumberSchema } from './number'
 export { boolean, type BooleanSchema } from './boolean'
-export { object, type ObjectSchema, type ObjectShape } from './object'
+export { object, strictObject, looseObject, type ObjectSchema, type ObjectShape } from './object'
 export { array, type ArraySchema } from './array'
 export { union, type UnionSchema } from './union'
 export { literal, type LiteralSchema } from './literal'
@@ -64,6 +64,19 @@ export {
 	iso,
 	prefault,
 	check,
+	// Top-level format validators
+	email,
+	uuid,
+	url,
+	httpUrl,
+	ipv4,
+	ipv6,
+	hash,
+	// Advanced
+	codec,
+	file,
+	templateLiteral,
+	partialRecord,
 	type IntersectionSchema,
 	type PromiseSchema,
 	type FunctionSchema,
@@ -71,4 +84,6 @@ export {
 	type SetSchema,
 	type JsonSchema,
 	type IntSchema,
+	type Codec,
+	type FileSchema,
 } from './utilities'

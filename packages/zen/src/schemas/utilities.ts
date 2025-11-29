@@ -917,3 +917,365 @@ export function check<TInput, TOutput>(
 		safeParseAsync: async (data) => safeParse(data),
 	}
 }
+
+// ============================================================
+// Top-level Format Validators
+// ============================================================
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const URL_REGEX = /^https?:\/\/.+/
+const HTTP_URL_REGEX = /^https?:\/\/[^\s/$.?#].[^\s]*$/i
+const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+const IPV6_REGEX = /^(?:(?:[a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4}|(?:[a-fA-F0-9]{1,4}:){1,7}:|(?:[a-fA-F0-9]{1,4}:){1,6}:[a-fA-F0-9]{1,4}|(?:[a-fA-F0-9]{1,4}:){1,5}(?::[a-fA-F0-9]{1,4}){1,2}|(?:[a-fA-F0-9]{1,4}:){1,4}(?::[a-fA-F0-9]{1,4}){1,3}|(?:[a-fA-F0-9]{1,4}:){1,3}(?::[a-fA-F0-9]{1,4}){1,4}|(?:[a-fA-F0-9]{1,4}:){1,2}(?::[a-fA-F0-9]{1,4}){1,5}|[a-fA-F0-9]{1,4}:(?::[a-fA-F0-9]{1,4}){1,6}|:(?:(?::[a-fA-F0-9]{1,4}){1,7}|:)|fe80:(?::[a-fA-F0-9]{0,4}){0,4}%[0-9a-zA-Z]+|::(?:ffff(?::0{1,4})?:)?(?:(?:25[0-5]|(?:2[0-4]|1?[0-9])?[0-9])\.){3}(?:25[0-5]|(?:2[0-4]|1?[0-9])?[0-9])|(?:[a-fA-F0-9]{1,4}:){1,4}:(?:(?:25[0-5]|(?:2[0-4]|1?[0-9])?[0-9])\.){3}(?:25[0-5]|(?:2[0-4]|1?[0-9])?[0-9]))$/
+
+// Hash regexes
+const MD5_REGEX = /^[a-f0-9]{32}$/i
+const SHA1_REGEX = /^[a-f0-9]{40}$/i
+const SHA256_REGEX = /^[a-f0-9]{64}$/i
+const SHA384_REGEX = /^[a-f0-9]{96}$/i
+const SHA512_REGEX = /^[a-f0-9]{128}$/i
+
+function createFormatSchema(
+	name: string,
+	regex: RegExp,
+	errorMessage: string
+): BaseSchema<string, string> {
+	const safeParse = (data: unknown): Result<string> => {
+		if (typeof data !== 'string') {
+			return { success: false, issues: [{ message: 'Expected string' }] }
+		}
+		if (!regex.test(data)) {
+			return { success: false, issues: [{ message: errorMessage }] }
+		}
+		return { success: true, data }
+	}
+
+	return {
+		_input: undefined as unknown as string,
+		_output: undefined as unknown as string,
+		_checks: [],
+		'~standard': {
+			version: 1,
+			vendor: 'zen',
+			validate(value: unknown): { value: string } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
+				const result = safeParse(value)
+				if (result.success) return { value: result.data }
+				return { issues: result.issues.map(toStandardIssue) }
+			},
+			types: undefined as unknown as { input: string; output: string },
+		},
+		parse(data: unknown): string {
+			const result = safeParse(data)
+			if (result.success) return result.data
+			throw new SchemaError(result.issues)
+		},
+		safeParse,
+		parseAsync: async (data) => {
+			const result = safeParse(data)
+			if (result.success) return result.data
+			throw new SchemaError(result.issues)
+		},
+		safeParseAsync: async (data) => safeParse(data),
+	}
+}
+
+/** Standalone email schema */
+export function email(message?: string): BaseSchema<string, string> {
+	return createFormatSchema('email', EMAIL_REGEX, message ?? 'Invalid email address')
+}
+
+/** Standalone UUID schema */
+export function uuid(message?: string): BaseSchema<string, string> {
+	return createFormatSchema('uuid', UUID_REGEX, message ?? 'Invalid UUID')
+}
+
+/** Standalone URL schema */
+export function url(message?: string): BaseSchema<string, string> {
+	return createFormatSchema('url', URL_REGEX, message ?? 'Invalid URL')
+}
+
+/** HTTP/HTTPS URL schema */
+export function httpUrl(message?: string): BaseSchema<string, string> {
+	return createFormatSchema('httpUrl', HTTP_URL_REGEX, message ?? 'Invalid HTTP URL')
+}
+
+/** Standalone IPv4 schema */
+export function ipv4(message?: string): BaseSchema<string, string> {
+	return createFormatSchema('ipv4', IPV4_REGEX, message ?? 'Invalid IPv4 address')
+}
+
+/** Standalone IPv6 schema */
+export function ipv6(message?: string): BaseSchema<string, string> {
+	return createFormatSchema('ipv6', IPV6_REGEX, message ?? 'Invalid IPv6 address')
+}
+
+/** Hash validation schema */
+export function hash(
+	algorithm: 'md5' | 'sha1' | 'sha256' | 'sha384' | 'sha512',
+	message?: string
+): BaseSchema<string, string> {
+	const regexMap = {
+		md5: MD5_REGEX,
+		sha1: SHA1_REGEX,
+		sha256: SHA256_REGEX,
+		sha384: SHA384_REGEX,
+		sha512: SHA512_REGEX,
+	}
+	return createFormatSchema(
+		'hash',
+		regexMap[algorithm],
+		message ?? `Invalid ${algorithm.toUpperCase()} hash`
+	)
+}
+
+// ============================================================
+// Codec - Bidirectional transforms
+// ============================================================
+
+export interface Codec<TInput, TOutput> extends BaseSchema<TInput, TOutput> {
+	encode(data: TOutput): TInput
+}
+
+export function codec<TInput, TOutput>(
+	schema: BaseSchema<TInput, TOutput>,
+	encode: (data: TOutput) => TInput
+): Codec<TInput, TOutput> {
+	return {
+		...schema,
+		encode,
+	}
+}
+
+// ============================================================
+// File Schema - For File/Blob validation
+// ============================================================
+
+export interface FileSchema extends BaseSchema<File | Blob, File | Blob> {
+	minSize(bytes: number, message?: string): FileSchema
+	maxSize(bytes: number, message?: string): FileSchema
+	mimeType(types: string | string[], message?: string): FileSchema
+}
+
+function createFileSchema(
+	checks: Array<{ check: (f: File | Blob) => boolean; message: string }> = []
+): FileSchema {
+	const safeParse = (data: unknown): Result<File | Blob> => {
+		// Check for Blob (File extends Blob)
+		if (typeof Blob !== 'undefined' && data instanceof Blob) {
+			for (const check of checks) {
+				if (!check.check(data)) {
+					return { success: false, issues: [{ message: check.message }] }
+				}
+			}
+			return { success: true, data }
+		}
+		return { success: false, issues: [{ message: 'Expected File or Blob' }] }
+	}
+
+	const schema: FileSchema = {
+		_input: undefined as unknown as File | Blob,
+		_output: undefined as unknown as File | Blob,
+		_checks: [],
+		'~standard': {
+			version: 1,
+			vendor: 'zen',
+			validate(value: unknown): { value: File | Blob } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
+				const result = safeParse(value)
+				if (result.success) return { value: result.data }
+				return { issues: result.issues.map(toStandardIssue) }
+			},
+			types: undefined as unknown as { input: File | Blob; output: File | Blob },
+		},
+		parse(data: unknown): File | Blob {
+			const result = safeParse(data)
+			if (result.success) return result.data
+			throw new SchemaError(result.issues)
+		},
+		safeParse,
+		parseAsync: async (data) => {
+			const result = safeParse(data)
+			if (result.success) return result.data
+			throw new SchemaError(result.issues)
+		},
+		safeParseAsync: async (data) => safeParse(data),
+		minSize(bytes: number, message = `File must be at least ${bytes} bytes`) {
+			return createFileSchema([...checks, { check: (f) => f.size >= bytes, message }])
+		},
+		maxSize(bytes: number, message = `File must be at most ${bytes} bytes`) {
+			return createFileSchema([...checks, { check: (f) => f.size <= bytes, message }])
+		},
+		mimeType(types: string | string[], message?: string) {
+			const typeArray = Array.isArray(types) ? types : [types]
+			const defaultMsg = `File must be of type: ${typeArray.join(', ')}`
+			return createFileSchema([
+				...checks,
+				{ check: (f) => typeArray.includes(f.type), message: message ?? defaultMsg },
+			])
+		},
+	}
+
+	return schema
+}
+
+export function file(): FileSchema {
+	return createFileSchema()
+}
+
+// ============================================================
+// Template Literal Schema
+// ============================================================
+
+export function templateLiteral<T extends string>(
+	strings: TemplateStringsArray,
+	...schemas: BaseSchema<string, string>[]
+): BaseSchema<string, string> {
+	const safeParse = (data: unknown): Result<string> => {
+		if (typeof data !== 'string') {
+			return { success: false, issues: [{ message: 'Expected string' }] }
+		}
+
+		// Build a regex pattern from the template
+		let pattern = '^'
+		for (let i = 0; i < strings.length; i++) {
+			// Escape regex special chars in literal parts
+			pattern += strings[i]!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+			if (i < schemas.length) {
+				// For simplicity, match any string segment (can be enhanced)
+				pattern += '(.+?)'
+			}
+		}
+		pattern += '$'
+
+		const regex = new RegExp(pattern)
+		const match = data.match(regex)
+
+		if (!match) {
+			return { success: false, issues: [{ message: 'Does not match template pattern' }] }
+		}
+
+		// Validate each captured group with corresponding schema
+		for (let i = 0; i < schemas.length; i++) {
+			const captured = match[i + 1]
+			if (captured === undefined) {
+				return { success: false, issues: [{ message: `Missing segment ${i + 1}` }] }
+			}
+			const result = schemas[i]!.safeParse(captured)
+			if (!result.success) {
+				return result
+			}
+		}
+
+		return { success: true, data }
+	}
+
+	return {
+		_input: undefined as unknown as string,
+		_output: undefined as unknown as string,
+		_checks: [],
+		'~standard': {
+			version: 1,
+			vendor: 'zen',
+			validate(value: unknown): { value: string } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
+				const result = safeParse(value)
+				if (result.success) return { value: result.data }
+				return { issues: result.issues.map(toStandardIssue) }
+			},
+			types: undefined as unknown as { input: string; output: string },
+		},
+		parse(data: unknown): string {
+			const result = safeParse(data)
+			if (result.success) return result.data
+			throw new SchemaError(result.issues)
+		},
+		safeParse,
+		parseAsync: async (data) => {
+			const result = safeParse(data)
+			if (result.success) return result.data
+			throw new SchemaError(result.issues)
+		},
+		safeParseAsync: async (data) => safeParse(data),
+	}
+}
+
+// ============================================================
+// Partial Record Schema
+// ============================================================
+
+export function partialRecord<K extends BaseSchema<string, string>, V extends AnySchema>(
+	keySchema: K,
+	valueSchema: V
+): BaseSchema<Partial<Record<K['_output'], V['_input']>>, Partial<Record<K['_output'], V['_output']>>> {
+	type TInput = Partial<Record<K['_output'], V['_input']>>
+	type TOutput = Partial<Record<K['_output'], V['_output']>>
+
+	const safeParse = (data: unknown): Result<TOutput> => {
+		if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+			return { success: false, issues: [{ message: 'Expected object' }] }
+		}
+
+		const result: Record<string, V['_output']> = {}
+		const issues: Array<{ message: string; path?: PropertyKey[] }> = []
+
+		for (const [key, value] of Object.entries(data)) {
+			// Validate key
+			const keyResult = keySchema.safeParse(key)
+			if (!keyResult.success) {
+				for (const issue of keyResult.issues) {
+					issues.push({ message: issue.message, path: [key] })
+				}
+				continue
+			}
+
+			// Value can be undefined in partial record
+			if (value === undefined) {
+				continue
+			}
+
+			// Validate value
+			const valueResult = valueSchema.safeParse(value)
+			if (!valueResult.success) {
+				for (const issue of valueResult.issues) {
+					issues.push({ message: issue.message, path: [key, ...(issue.path ?? [])] })
+				}
+				continue
+			}
+
+			result[keyResult.data] = valueResult.data
+		}
+
+		if (issues.length > 0) {
+			return { success: false, issues }
+		}
+
+		return { success: true, data: result as TOutput }
+	}
+
+	return {
+		_input: undefined as unknown as TInput,
+		_output: undefined as unknown as TOutput,
+		_checks: [],
+		'~standard': {
+			version: 1,
+			vendor: 'zen',
+			validate(value: unknown): { value: TOutput } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
+				const result = safeParse(value)
+				if (result.success) return { value: result.data }
+				return { issues: result.issues.map(toStandardIssue) }
+			},
+			types: undefined as unknown as { input: TInput; output: TOutput },
+		},
+		parse(data: unknown): TOutput {
+			const result = safeParse(data)
+			if (result.success) return result.data
+			throw new SchemaError(result.issues)
+		},
+		safeParse,
+		parseAsync: async (data) => {
+			const result = safeParse(data)
+			if (result.success) return result.data
+			throw new SchemaError(result.issues)
+		},
+		safeParseAsync: async (data) => safeParse(data),
+	}
+}

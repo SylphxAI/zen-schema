@@ -877,3 +877,114 @@ describe('additional string validators', () => {
 		expect(() => schema.parse('Hello')).toThrow()
 	})
 })
+
+describe('top-level format validators', () => {
+	it('should validate email', () => {
+		const schema = z.email()
+		expect(schema.parse('test@example.com')).toBe('test@example.com')
+		expect(() => schema.parse('invalid')).toThrow()
+	})
+
+	it('should validate uuid', () => {
+		const schema = z.uuid()
+		expect(schema.parse('550e8400-e29b-41d4-a716-446655440000')).toBe('550e8400-e29b-41d4-a716-446655440000')
+		expect(() => schema.parse('not-a-uuid')).toThrow()
+	})
+
+	it('should validate url', () => {
+		const schema = z.url()
+		expect(schema.parse('https://example.com')).toBe('https://example.com')
+		expect(() => schema.parse('not-a-url')).toThrow()
+	})
+
+	it('should validate httpUrl', () => {
+		const schema = z.httpUrl()
+		expect(schema.parse('https://example.com/path')).toBe('https://example.com/path')
+		expect(schema.parse('http://localhost:3000')).toBe('http://localhost:3000')
+		expect(() => schema.parse('ftp://example.com')).toThrow()
+	})
+
+	it('should validate ipv4', () => {
+		const schema = z.ipv4()
+		expect(schema.parse('192.168.1.1')).toBe('192.168.1.1')
+		expect(schema.parse('10.0.0.0')).toBe('10.0.0.0')
+		expect(() => schema.parse('256.0.0.0')).toThrow()
+		expect(() => schema.parse('invalid')).toThrow()
+	})
+
+	it('should validate ipv6', () => {
+		const schema = z.ipv6()
+		expect(schema.parse('::1')).toBe('::1')
+		expect(schema.parse('2001:0db8:85a3:0000:0000:8a2e:0370:7334')).toBe('2001:0db8:85a3:0000:0000:8a2e:0370:7334')
+		expect(() => schema.parse('invalid')).toThrow()
+	})
+
+	it('should validate hash', () => {
+		const md5 = z.hash('md5')
+		expect(md5.parse('d41d8cd98f00b204e9800998ecf8427e')).toBe('d41d8cd98f00b204e9800998ecf8427e')
+		expect(() => md5.parse('invalid')).toThrow()
+
+		const sha256 = z.hash('sha256')
+		expect(sha256.parse('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
+		expect(() => sha256.parse('tooshort')).toThrow()
+	})
+})
+
+describe('object variants', () => {
+	it('should support strictObject', () => {
+		const schema = z.strictObject({ name: z.string() })
+		expect(schema.parse({ name: 'test' })).toEqual({ name: 'test' })
+		expect(() => schema.parse({ name: 'test', extra: 'field' })).toThrow()
+	})
+
+	it('should support looseObject', () => {
+		const schema = z.looseObject({ name: z.string() })
+		expect(schema.parse({ name: 'test', extra: 'field' })).toEqual({ name: 'test', extra: 'field' })
+	})
+})
+
+describe('advanced utilities', () => {
+	it('should support partialRecord', () => {
+		const schema = z.partialRecord(z.string(), z.number())
+		expect(schema.parse({ a: 1, b: 2 })).toEqual({ a: 1, b: 2 })
+		expect(schema.parse({})).toEqual({})
+		expect(() => schema.parse({ a: 'string' })).toThrow()
+	})
+
+	it('should support codec', () => {
+		const dateCodec = z.codec(
+			z.transform(z.string(), (s) => new Date(s)),
+			(d: Date) => d.toISOString()
+		)
+		const parsed = dateCodec.parse('2024-01-15T00:00:00.000Z')
+		expect(parsed instanceof Date).toBe(true)
+		expect(dateCodec.encode(parsed)).toBe('2024-01-15T00:00:00.000Z')
+	})
+
+	it('should support templateLiteral', () => {
+		const schema = z.templateLiteral`user_${z.string()}`
+		expect(schema.parse('user_123')).toBe('user_123')
+		expect(schema.parse('user_abc')).toBe('user_abc')
+		expect(() => schema.parse('admin_123')).toThrow()
+	})
+
+	it('should support file schema', () => {
+		// Create a mock Blob for testing
+		const blob = new Blob(['test content'], { type: 'text/plain' })
+		const schema = z.file()
+		expect(schema.parse(blob)).toBe(blob)
+		expect(() => schema.parse('not a file')).toThrow()
+	})
+
+	it('should support file with constraints', () => {
+		const schema = z.file().maxSize(1024).mimeType(['image/png', 'image/jpeg'])
+		const validBlob = new Blob(['x'.repeat(100)], { type: 'image/png' })
+		expect(schema.parse(validBlob)).toBe(validBlob)
+
+		const tooLarge = new Blob(['x'.repeat(2000)], { type: 'image/png' })
+		expect(() => schema.parse(tooLarge)).toThrow()
+
+		const wrongType = new Blob(['test'], { type: 'text/plain' })
+		expect(() => schema.parse(wrongType)).toThrow()
+	})
+})
