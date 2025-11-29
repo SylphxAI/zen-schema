@@ -4,6 +4,18 @@ import type { BaseSchema, Check, Issue, Result } from './types'
 
 const VENDOR = 'zen'
 
+// Pre-allocated error objects for common cases (avoid allocation in hot path)
+const TYPE_ERRORS: Record<string, { success: false; issues: Issue[] }> = {}
+
+function getTypeError(typeName: string): { success: false; issues: Issue[] } {
+	let error = TYPE_ERRORS[typeName]
+	if (!error) {
+		error = { success: false, issues: [{ message: `Expected ${typeName}` }] }
+		TYPE_ERRORS[typeName] = error
+	}
+	return error
+}
+
 /**
  * Create a schema with validation logic
  */
@@ -13,6 +25,13 @@ export function createSchema<TInput, TOutput = TInput>(
 	checks: Check<TInput>[] = [],
 	transform?: (value: TInput) => TOutput
 ): BaseSchema<TInput, TOutput> {
+	// Pre-cache type error for this schema
+	const typeError = getTypeError(typeName)
+	// Cache checks length (micro-optimization)
+	const checksLen = checks.length
+	const hasChecks = checksLen > 0
+	const hasTransform = transform !== undefined
+
 	const schema: BaseSchema<TInput, TOutput> = {
 		// Type brands
 		_input: undefined as TInput,
@@ -33,24 +52,43 @@ export function createSchema<TInput, TOutput = TInput>(
 			types: undefined as unknown as { input: TInput; output: TOutput },
 		},
 
+		// Optimized parse: no allocation on success path, direct validation
 		parse(data: unknown): TOutput {
-			const result = this.safeParse(data)
-			if (result.success) return result.data
-			throw new SchemaError(result.issues)
+			// Inline type check (avoid function call to safeParse)
+			if (!typeCheck(data)) {
+				throw new SchemaError(typeError.issues)
+			}
+
+			// Run checks directly
+			if (hasChecks) {
+				for (let i = 0; i < checksLen; i++) {
+					const check = checks[i]!
+					if (!check.check(data)) {
+						const message = typeof check.message === 'function' ? check.message(data) : check.message
+						throw new SchemaError([{ message }])
+					}
+				}
+			}
+
+			// Apply transform if any
+			return hasTransform ? transform(data) : (data as unknown as TOutput)
 		},
 
 		safeParse(data: unknown): Result<TOutput> {
-			// Type check
+			// Type check - return pre-allocated error
 			if (!typeCheck(data)) {
-				return {
-					success: false,
-					issues: [{ message: `Expected ${typeName}` }],
-				}
+				return typeError
+			}
+
+			// Fast path: no checks
+			if (!hasChecks) {
+				const output = hasTransform ? transform(data) : (data as unknown as TOutput)
+				return { success: true, data: output }
 			}
 
 			// Run all checks - lazy allocate issues array
 			let issues: Issue[] | null = null
-			for (let i = 0; i < checks.length; i++) {
+			for (let i = 0; i < checksLen; i++) {
 				const check = checks[i]!
 				if (!check.check(data)) {
 					const message = typeof check.message === 'function' ? check.message(data) : check.message
@@ -64,7 +102,7 @@ export function createSchema<TInput, TOutput = TInput>(
 			}
 
 			// Apply transform if any
-			const output = transform ? transform(data) : (data as unknown as TOutput)
+			const output = hasTransform ? transform(data) : (data as unknown as TOutput)
 			return { success: true, data: output }
 		},
 

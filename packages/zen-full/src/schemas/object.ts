@@ -8,6 +8,12 @@ import { toStandardIssue } from '../types'
 
 type AnySchema = BaseSchema<unknown, unknown>
 
+// Pre-allocated error for type check
+const OBJECT_TYPE_ERROR: { success: false; issues: Issue[] } = {
+	success: false,
+	issues: [{ message: 'Expected object' }],
+}
+
 export type ObjectShape = Record<string, AnySchema>
 
 export type InferObjectInput<T extends ObjectShape> = {
@@ -71,13 +77,88 @@ function createObjectSchema<T extends ObjectShape>(
 	const shapeEntries: [string, AnySchema][] = shapeKeys.map((k) => [k, shape[k]!])
 	const shapeKeySet = options.strict ? new Set(shapeKeys) : null
 
-	const isObject = (v: unknown): v is TInput =>
-		typeof v === 'object' && v !== null && !Array.isArray(v)
+	// Cache lengths for micro-optimization
+	const numFields = shapeEntries.length
+	const isStrict = options.strict === true
+	const isPassthrough = options.passthrough === true
 
-	// Optimized safeParse - avoid unnecessary allocations
+	// Optimized parse - throws on error, no allocation on success
+	const parse = (data: unknown): TOutput => {
+		// Inline type check
+		if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+			throw new SchemaError(OBJECT_TYPE_ERROR.issues)
+		}
+
+		const input = data as Record<string, unknown>
+		let output: Record<string, unknown> | null = null
+		let hasTransform = false
+
+		// Validate each field - use parse() directly to avoid Result allocation
+		for (let i = 0; i < numFields; i++) {
+			const [key, fieldSchema] = shapeEntries[i]!
+			const value = input[key]
+
+			try {
+				const result = fieldSchema.parse(value)
+
+				// Only create output if value changed (transform)
+				if (result !== value || hasTransform) {
+					if (!output) {
+						output = {}
+						for (let j = 0; j < i; j++) {
+							output[shapeEntries[j]![0]] = input[shapeEntries[j]![0]]
+						}
+					}
+					output[key] = result
+					hasTransform = true
+				} else if (output) {
+					output[key] = result
+				}
+			} catch (e) {
+				if (e instanceof SchemaError) {
+					// Re-throw with path prepended
+					throw new SchemaError(
+						e.issues.map((issue) => ({
+							message: issue.message,
+							path: [key, ...(issue.path ?? [])],
+						}))
+					)
+				}
+				throw e
+			}
+		}
+
+		// Strict mode: check for extra keys
+		if (isStrict && shapeKeySet) {
+			const inputKeys = Object.keys(input)
+			for (let i = 0; i < inputKeys.length; i++) {
+				const key = inputKeys[i]!
+				if (!shapeKeySet.has(key)) {
+					throw new SchemaError([{ message: `Unexpected property "${key}"`, path: [key] }])
+				}
+			}
+		}
+
+		// Passthrough: copy extra keys
+		if (isPassthrough) {
+			const inputKeys = Object.keys(input)
+			for (let i = 0; i < inputKeys.length; i++) {
+				const key = inputKeys[i]!
+				if (!(key in shape)) {
+					if (!output) output = { ...input }
+					else output[key] = input[key]
+				}
+			}
+		}
+
+		return (output ?? input) as TOutput
+	}
+
+	// safeParse wraps parse in try-catch
 	const safeParse = (data: unknown): Result<TOutput> => {
-		if (!isObject(data)) {
-			return { success: false, issues: [{ message: 'Expected object' }] }
+		// Fast path: inline type check to return pre-allocated error
+		if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+			return OBJECT_TYPE_ERROR
 		}
 
 		const input = data as Record<string, unknown>
@@ -86,7 +167,7 @@ function createObjectSchema<T extends ObjectShape>(
 		let hasTransform = false
 
 		// Validate each field in shape
-		for (let i = 0; i < shapeEntries.length; i++) {
+		for (let i = 0; i < numFields; i++) {
 			const [key, fieldSchema] = shapeEntries[i]!
 			const value = input[key]
 			const result = fieldSchema.safeParse(value)
@@ -118,7 +199,7 @@ function createObjectSchema<T extends ObjectShape>(
 		}
 
 		// Check for extra keys in strict mode
-		if (shapeKeySet) {
+		if (isStrict && shapeKeySet) {
 			const inputKeys = Object.keys(input)
 			for (let i = 0; i < inputKeys.length; i++) {
 				const key = inputKeys[i]!
@@ -133,7 +214,7 @@ function createObjectSchema<T extends ObjectShape>(
 		}
 
 		// Passthrough extra keys
-		if (options.passthrough) {
+		if (isPassthrough) {
 			const inputKeys = Object.keys(input)
 			for (let i = 0; i < inputKeys.length; i++) {
 				const key = inputKeys[i]!
@@ -176,11 +257,7 @@ function createObjectSchema<T extends ObjectShape>(
 			types: undefined as unknown as { input: TInput; output: TOutput },
 		},
 
-		parse(data: unknown): TOutput {
-			const result = safeParse(data)
-			if (result.success) return result.data
-			throw new SchemaError(result.issues)
-		},
+		parse,
 
 		safeParse,
 
