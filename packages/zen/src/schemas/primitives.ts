@@ -345,6 +345,8 @@ export interface BigIntSchema extends BaseSchema<bigint, bigint> {
 	nonnegative(message?: string): BigIntSchema
 	nonpositive(message?: string): BigIntSchema
 	multipleOf(value: bigint, message?: string): BigIntSchema
+	/** Alias for multipleOf */
+	step(value: bigint, message?: string): BigIntSchema
 	optional(): BaseSchema<bigint | undefined, bigint | undefined>
 	nullable(): BaseSchema<bigint | null, bigint | null>
 }
@@ -451,6 +453,10 @@ function createBigIntSchema(
 				...checks,
 				{ check: (n) => n % value === 0n, message: message ?? `Must be a multiple of ${value}` },
 			])
+		},
+
+		step(value: bigint, message?: string) {
+			return this.multipleOf(value, message)
 		},
 		optional() {
 			return {

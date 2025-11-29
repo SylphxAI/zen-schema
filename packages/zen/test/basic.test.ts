@@ -1195,3 +1195,59 @@ describe('int rejects unsafe integers (Zod v4)', () => {
 		expect(schema.parse(Number.MIN_SAFE_INTEGER)).toBe(Number.MIN_SAFE_INTEGER)
 	})
 })
+
+describe('nativeEnum', () => {
+	enum Color {
+		Red = 'RED',
+		Green = 'GREEN',
+		Blue = 'BLUE',
+	}
+
+	enum NumericEnum {
+		One = 1,
+		Two = 2,
+		Three = 3,
+	}
+
+	it('should validate string enums', () => {
+		const schema = z.nativeEnum(Color)
+		expect(schema.parse('RED')).toBe('RED')
+		expect(schema.parse('GREEN')).toBe('GREEN')
+		expect(() => schema.parse('YELLOW')).toThrow()
+	})
+
+	it('should validate numeric enums', () => {
+		const schema = z.nativeEnum(NumericEnum)
+		expect(schema.parse(1)).toBe(1)
+		expect(schema.parse(2)).toBe(2)
+		expect(() => schema.parse(4)).toThrow()
+	})
+
+	it('should expose enum object', () => {
+		const schema = z.nativeEnum(Color)
+		expect(schema.enum).toBe(Color)
+	})
+})
+
+describe('step alias', () => {
+	it('should work as alias for multipleOf on number', () => {
+		const schema = z.number().step(0.5)
+		expect(schema.parse(1.5)).toBe(1.5)
+		expect(schema.parse(2)).toBe(2)
+		expect(() => schema.parse(1.3)).toThrow()
+	})
+
+	it('should work as alias for multipleOf on bigint', () => {
+		const schema = z.bigint().step(5n)
+		expect(schema.parse(10n)).toBe(10n)
+		expect(() => schema.parse(7n)).toThrow()
+	})
+})
+
+describe('enum values property', () => {
+	it('should expose values array', () => {
+		const schema = z.enum(['a', 'b', 'c'])
+		expect(schema.values).toEqual(['a', 'b', 'c'])
+		expect(schema.options).toEqual(['a', 'b', 'c'])
+	})
+})

@@ -23,6 +23,7 @@ export {
 	array,
 	boolean,
 	enum_,
+	nativeEnum,
 	literal,
 	number,
 	object,
@@ -128,6 +129,7 @@ export {
 	type InterfaceSchema,
 	type InterfaceShape,
 	type OptionalProperty,
+	type NativeEnumSchema,
 } from './schemas'
 
 // Convenience namespace (like zod's `z`)
@@ -136,6 +138,7 @@ import {
 	array,
 	boolean,
 	enum_,
+	nativeEnum,
 	literal,
 	number,
 	object,
@@ -244,6 +247,7 @@ export const z = {
 	intersection,
 	literal,
 	enum: enum_,
+	nativeEnum,
 	// Recursion
 	lazy,
 	// Function & Promise

@@ -6,7 +6,7 @@ export { object, strictObject, looseObject, type ObjectSchema, type ObjectShape 
 export { array, type ArraySchema } from './array'
 export { union, type UnionSchema } from './union'
 export { literal, type LiteralSchema } from './literal'
-export { enumSchema as enum_, type EnumSchema } from './enum'
+export { enumSchema as enum_, nativeEnum, type EnumSchema, type NativeEnumSchema } from './enum'
 export { tuple, type TupleSchema } from './tuple'
 export { record, type RecordSchema } from './record'
 

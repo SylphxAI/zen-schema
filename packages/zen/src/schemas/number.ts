@@ -18,6 +18,8 @@ export interface NumberSchema extends BaseSchema<number, number> {
 	nonnegative(message?: string): NumberSchema
 	nonpositive(message?: string): NumberSchema
 	multipleOf(value: number, message?: string): NumberSchema
+	/** Alias for multipleOf */
+	step(value: number, message?: string): NumberSchema
 	finite(message?: string): NumberSchema
 	safe(message?: string): NumberSchema
 	gt(value: number, message?: string): NumberSchema
@@ -128,6 +130,10 @@ function createNumberSchema(checks: Check<number>[] = []): NumberSchema {
 				check: (v) => v % value === 0,
 				message: message ?? `Must be a multiple of ${value}`,
 			})
+		},
+
+		step(value: number, message?: string) {
+			return this.multipleOf(value, message)
 		},
 
 		finite(message?: string) {
