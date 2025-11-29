@@ -77,6 +77,13 @@ export {
 	// Top-level format validators
 	email,
 	uuid,
+	uuidv1,
+	uuidv2,
+	uuidv3,
+	uuidv4,
+	uuidv5,
+	uuidv6,
+	uuidv7,
 	url,
 	httpUrl,
 	ipv4,
@@ -87,6 +94,9 @@ export {
 	file,
 	templateLiteral,
 	partialRecord,
+	// Interface schema (Zod v4)
+	interface as interface_,
+	optionalProp,
 	// Types
 	type ArraySchema,
 	type BigIntSchema,
@@ -115,6 +125,9 @@ export {
 	type StringSchema,
 	type TupleSchema,
 	type UnionSchema,
+	type InterfaceSchema,
+	type InterfaceShape,
+	type OptionalProperty,
 } from './schemas'
 
 // Convenience namespace (like zod's `z`)
@@ -177,6 +190,13 @@ import {
 	// Top-level format validators
 	email,
 	uuid,
+	uuidv1,
+	uuidv2,
+	uuidv3,
+	uuidv4,
+	uuidv5,
+	uuidv6,
+	uuidv7,
 	url,
 	httpUrl,
 	ipv4,
@@ -187,6 +207,9 @@ import {
 	file,
 	templateLiteral,
 	partialRecord,
+	// Interface schema (Zod v4)
+	interface as interface_2,
+	optionalProp as optionalProp2,
 } from './schemas'
 
 export const z = {
@@ -252,6 +275,13 @@ export const z = {
 	// Top-level format validators
 	email,
 	uuid,
+	uuidv1,
+	uuidv2,
+	uuidv3,
+	uuidv4,
+	uuidv5,
+	uuidv6,
+	uuidv7,
 	url,
 	httpUrl,
 	ipv4,
@@ -261,6 +291,9 @@ export const z = {
 	codec,
 	file,
 	templateLiteral,
+	// Interface schema (Zod v4)
+	interface: interface_2,
+	optionalProp: optionalProp2,
 } as const
 
 // Alias for zen

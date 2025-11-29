@@ -1071,4 +1071,127 @@ describe('unwrap methods', () => {
 		expect(key.parse('test')).toBe('test')
 		expect(value.parse(42)).toBe(42)
 	})
+
+	it('should unwrap map', () => {
+		const schema = z.map(z.string(), z.number())
+		const { key, value } = schema.unwrap()
+		expect(key.parse('test')).toBe('test')
+		expect(value.parse(42)).toBe(42)
+	})
+
+	it('should unwrap set', () => {
+		const schema = z.set(z.number())
+		const valueSchema = schema.unwrap()
+		expect(valueSchema.parse(42)).toBe(42)
+	})
+})
+
+describe('z.interface (Zod v4)', () => {
+	it('should validate required properties', () => {
+		const schema = z.interface({
+			name: z.string(),
+			age: z.number(),
+		})
+
+		expect(schema.parse({ name: 'John', age: 30 })).toEqual({ name: 'John', age: 30 })
+		expect(() => schema.parse({ name: 'John' })).toThrow()
+	})
+
+	it('should validate optional properties with optionalProp', () => {
+		const schema = z.interface({
+			name: z.string(),
+			email: z.optionalProp(z.string()),
+		})
+
+		expect(schema.parse({ name: 'John' })).toEqual({ name: 'John' })
+		expect(schema.parse({ name: 'John', email: 'john@example.com' })).toEqual({
+			name: 'John',
+			email: 'john@example.com'
+		})
+	})
+
+	it('should support partial()', () => {
+		const schema = z.interface({
+			name: z.string(),
+			age: z.number(),
+		}).partial()
+
+		expect(schema.parse({})).toEqual({})
+		expect(schema.parse({ name: 'John' })).toEqual({ name: 'John' })
+	})
+
+	it('should support required()', () => {
+		const schema = z.interface({
+			name: z.string(),
+			email: z.optionalProp(z.string()),
+		}).required()
+
+		expect(() => schema.parse({ name: 'John' })).toThrow()
+		expect(schema.parse({ name: 'John', email: 'test@example.com' })).toBeTruthy()
+	})
+
+	it('should support pick()', () => {
+		const schema = z.interface({
+			name: z.string(),
+			age: z.number(),
+			email: z.string(),
+		}).pick(['name', 'email'])
+
+		expect(schema.parse({ name: 'John', email: 'john@example.com' })).toBeTruthy()
+	})
+
+	it('should support omit()', () => {
+		const schema = z.interface({
+			name: z.string(),
+			age: z.number(),
+			email: z.string(),
+		}).omit(['age'])
+
+		expect(schema.parse({ name: 'John', email: 'john@example.com' })).toBeTruthy()
+	})
+})
+
+describe('UUID versions', () => {
+	it('should validate uuidv4', () => {
+		const schema = z.uuidv4()
+		expect(schema.parse('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11')).toBe('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11')
+		// v1 UUID should fail v4 validation
+		expect(() => schema.parse('6ba7b810-9dad-11d1-80b4-00c04fd430c8')).toThrow()
+	})
+
+	it('should validate uuidv7', () => {
+		const schema = z.uuidv7()
+		expect(schema.parse('01908c70-7a1a-7f28-8db5-5a7b9c4b1234')).toBe('01908c70-7a1a-7f28-8db5-5a7b9c4b1234')
+	})
+})
+
+describe('number rejects Infinity (Zod v4)', () => {
+	it('should reject Infinity', () => {
+		const schema = z.number()
+		expect(() => schema.parse(Infinity)).toThrow()
+		expect(() => schema.parse(-Infinity)).toThrow()
+	})
+
+	it('should still accept regular numbers', () => {
+		const schema = z.number()
+		expect(schema.parse(42)).toBe(42)
+		expect(schema.parse(-100)).toBe(-100)
+		expect(schema.parse(0)).toBe(0)
+	})
+})
+
+describe('int rejects unsafe integers (Zod v4)', () => {
+	it('should reject unsafe integers', () => {
+		const schema = z.int()
+		// Numbers outside safe integer range
+		expect(() => schema.parse(Number.MAX_SAFE_INTEGER + 1)).toThrow()
+		expect(() => schema.parse(Number.MIN_SAFE_INTEGER - 1)).toThrow()
+	})
+
+	it('should accept safe integers', () => {
+		const schema = z.int()
+		expect(schema.parse(42)).toBe(42)
+		expect(schema.parse(Number.MAX_SAFE_INTEGER)).toBe(Number.MAX_SAFE_INTEGER)
+		expect(schema.parse(Number.MIN_SAFE_INTEGER)).toBe(Number.MIN_SAFE_INTEGER)
+	})
 })

@@ -234,6 +234,8 @@ export interface MapSchema<TKey extends AnySchema, TValue extends AnySchema>
 	extends BaseSchema<Map<TKey['_input'], TValue['_input']>, Map<TKey['_output'], TValue['_output']>> {
 	readonly keySchema: TKey
 	readonly valueSchema: TValue
+	/** Get the key and value schemas */
+	unwrap(): { key: TKey; value: TValue }
 }
 
 export function map<TKey extends AnySchema, TValue extends AnySchema>(
@@ -309,6 +311,9 @@ export function map<TKey extends AnySchema, TValue extends AnySchema>(
 			throw new SchemaError(result.issues)
 		},
 		safeParseAsync: async (data) => safeParse(data),
+		unwrap(): { key: TKey; value: TValue } {
+			return { key: keySchema, value: valueSchema }
+		},
 	}
 }
 
@@ -323,6 +328,8 @@ export interface SetSchema<T extends AnySchema>
 	max(size: number, message?: string): SetSchema<T>
 	size(size: number, message?: string): SetSchema<T>
 	nonempty(message?: string): SetSchema<T>
+	/** Get the underlying value schema */
+	unwrap(): T
 }
 
 export function set<T extends AnySchema>(valueSchema: T): SetSchema<T> {
@@ -403,6 +410,9 @@ export function set<T extends AnySchema>(valueSchema: T): SetSchema<T> {
 			},
 			nonempty(message = 'Set must not be empty') {
 				return createSetSchema([...checks, { check: (s) => s.size > 0, message }])
+			},
+			unwrap(): T {
+				return valueSchema
 			},
 		}
 	}
@@ -648,6 +658,10 @@ function createIntSchema(
 		}
 		if (!Number.isInteger(data)) {
 			return { success: false, issues: [{ message: 'Expected integer' }] }
+		}
+		// Zod v4: reject unsafe integers
+		if (!Number.isSafeInteger(data)) {
+			return { success: false, issues: [{ message: 'Integer out of safe range' }] }
 		}
 		if (is32Bit && (data < -2147483648 || data > 2147483647)) {
 			return { success: false, issues: [{ message: 'Expected 32-bit integer' }] }
@@ -924,6 +938,14 @@ export function check<TInput, TOutput>(
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+// UUID version-specific regexes
+const UUID_V1_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-1[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const UUID_V2_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-2[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const UUID_V3_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-3[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const UUID_V5_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const UUID_V6_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-6[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const UUID_V7_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const URL_REGEX = /^https?:\/\/.+/
 const HTTP_URL_REGEX = /^https?:\/\/[^\s/$.?#].[^\s]*$/i
 const IPV4_REGEX = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
@@ -988,6 +1010,41 @@ export function email(message?: string): BaseSchema<string, string> {
 /** Standalone UUID schema */
 export function uuid(message?: string): BaseSchema<string, string> {
 	return createFormatSchema('uuid', UUID_REGEX, message ?? 'Invalid UUID')
+}
+
+/** UUID v1 schema */
+export function uuidv1(message?: string): BaseSchema<string, string> {
+	return createFormatSchema('uuidv1', UUID_V1_REGEX, message ?? 'Invalid UUID v1')
+}
+
+/** UUID v2 schema */
+export function uuidv2(message?: string): BaseSchema<string, string> {
+	return createFormatSchema('uuidv2', UUID_V2_REGEX, message ?? 'Invalid UUID v2')
+}
+
+/** UUID v3 schema */
+export function uuidv3(message?: string): BaseSchema<string, string> {
+	return createFormatSchema('uuidv3', UUID_V3_REGEX, message ?? 'Invalid UUID v3')
+}
+
+/** UUID v4 schema */
+export function uuidv4(message?: string): BaseSchema<string, string> {
+	return createFormatSchema('uuidv4', UUID_V4_REGEX, message ?? 'Invalid UUID v4')
+}
+
+/** UUID v5 schema */
+export function uuidv5(message?: string): BaseSchema<string, string> {
+	return createFormatSchema('uuidv5', UUID_V5_REGEX, message ?? 'Invalid UUID v5')
+}
+
+/** UUID v6 schema */
+export function uuidv6(message?: string): BaseSchema<string, string> {
+	return createFormatSchema('uuidv6', UUID_V6_REGEX, message ?? 'Invalid UUID v6')
+}
+
+/** UUID v7 schema */
+export function uuidv7(message?: string): BaseSchema<string, string> {
+	return createFormatSchema('uuidv7', UUID_V7_REGEX, message ?? 'Invalid UUID v7')
 }
 
 /** Standalone URL schema */
@@ -1278,4 +1335,240 @@ export function partialRecord<K extends BaseSchema<string, string>, V extends An
 		},
 		safeParseAsync: async (data) => safeParse(data),
 	}
+}
+
+// ============================================================
+// Interface Schema - Zod v4 precise optional property control
+// ============================================================
+
+type AnyInterfaceSchema = BaseSchema<unknown, unknown>
+
+// Helper type to mark a property as optional (key can be omitted)
+// biome-ignore lint/suspicious/noExplicitAny: extends base schema with optional marker
+export interface OptionalProperty<T extends AnyInterfaceSchema> extends BaseSchema<any, any> {
+	readonly _optional: true
+	readonly schema: T
+}
+
+// Helper to create optional property marker
+export function optionalProp<T extends AnyInterfaceSchema>(schema: T): OptionalProperty<T> {
+	// Create a wrapper that extends the schema with the optional marker
+	return {
+		...schema,
+		_optional: true as const,
+		schema,
+	} as OptionalProperty<T>
+}
+
+export type InterfaceShape = Record<string, AnyInterfaceSchema>
+
+// Infer input type for interface schema
+type InferInterfaceInput<T extends InterfaceShape> = {
+	[K in keyof T as T[K] extends OptionalProperty<AnyInterfaceSchema> ? never : K]: T[K]['_input']
+} & {
+	[K in keyof T as T[K] extends OptionalProperty<AnyInterfaceSchema> ? K : never]?: T[K] extends OptionalProperty<
+		infer S
+	>
+		? S['_input']
+		: never
+}
+
+// Infer output type for interface schema
+type InferInterfaceOutput<T extends InterfaceShape> = {
+	[K in keyof T as T[K] extends OptionalProperty<AnyInterfaceSchema> ? never : K]: T[K]['_output']
+} & {
+	[K in keyof T as T[K] extends OptionalProperty<AnyInterfaceSchema> ? K : never]?: T[K] extends OptionalProperty<
+		infer S
+	>
+		? S['_output']
+		: never
+}
+
+export interface InterfaceSchema<T extends InterfaceShape>
+	extends BaseSchema<InferInterfaceInput<T>, InferInterfaceOutput<T>> {
+	readonly shape: T
+	// biome-ignore lint/suspicious/noExplicitAny: complex type transformation
+	partial(): InterfaceSchema<any>
+	// biome-ignore lint/suspicious/noExplicitAny: complex type transformation
+	required(): InterfaceSchema<any>
+	pick<K extends keyof T>(keys: K[]): InterfaceSchema<Pick<T, K>>
+	omit<K extends keyof T>(keys: K[]): InterfaceSchema<Omit<T, K>>
+	extend<E extends InterfaceShape>(extension: E): InterfaceSchema<T & E>
+}
+
+/**
+ * Create an interface schema with precise optional property control
+ * Use optionalProp() wrapper for properties that can be omitted
+ */
+export function interface_<T extends InterfaceShape>(shape: T): InterfaceSchema<T> {
+	type TInput = InferInterfaceInput<T>
+	type TOutput = InferInterfaceOutput<T>
+
+	const shapeKeys = Object.keys(shape)
+	const optionalKeys = new Set<string>()
+	const schemas: Record<string, AnyInterfaceSchema> = {}
+
+	for (const key of shapeKeys) {
+		const value = shape[key]!
+		if ((value as OptionalProperty<AnyInterfaceSchema>)._optional) {
+			optionalKeys.add(key)
+			schemas[key] = (value as OptionalProperty<AnyInterfaceSchema>).schema
+		} else {
+			schemas[key] = value as AnyInterfaceSchema
+		}
+	}
+
+	const isObject = (v: unknown): v is Record<string, unknown> =>
+		typeof v === 'object' && v !== null && !Array.isArray(v)
+
+	const safeParse = (data: unknown): Result<TOutput> => {
+		if (!isObject(data)) {
+			return { success: false, issues: [{ message: 'Expected object' }] }
+		}
+
+		let issues: Array<{ message: string; path?: PropertyKey[] }> | null = null
+		let output: Record<string, unknown> | null = null
+		let hasTransform = false
+
+		for (const key of shapeKeys) {
+			const fieldSchema = schemas[key]!
+			const isOptionalKey = optionalKeys.has(key)
+			const hasKey = key in data
+
+			// For optional keys, missing is OK
+			if (!hasKey && isOptionalKey) {
+				continue
+			}
+
+			// For required keys, missing is an error
+			if (!hasKey && !isOptionalKey) {
+				if (!issues) issues = []
+				issues.push({ message: 'Required', path: [key] })
+				continue
+			}
+
+			const value = data[key]
+			const result = fieldSchema.safeParse(value)
+
+			if (result.success) {
+				if (result.data !== value || hasTransform) {
+					if (!output) {
+						output = {}
+						// Copy already processed values
+						for (const k of shapeKeys) {
+							if (k === key) break
+							if (k in data) output[k] = data[k]
+						}
+					}
+					output[key] = result.data
+					hasTransform = true
+				} else if (output) {
+					output[key] = result.data
+				}
+			} else {
+				if (!issues) issues = []
+				for (const issue of result.issues) {
+					issues.push({
+						message: issue.message,
+						path: [key, ...(issue.path ?? [])],
+					})
+				}
+			}
+		}
+
+		if (issues) {
+			return { success: false, issues }
+		}
+
+		return { success: true, data: (output ?? data) as TOutput }
+	}
+
+	const interfaceSchema: InterfaceSchema<T> = {
+		_input: undefined as unknown as TInput,
+		_output: undefined as unknown as TOutput,
+		_checks: [],
+		shape,
+
+		'~standard': {
+			version: 1,
+			vendor: 'zen',
+			validate(value: unknown): { value: TOutput } | { issues: ReadonlyArray<{ message: string; path?: PropertyKey[] }> } {
+				const result = safeParse(value)
+				if (result.success) return { value: result.data }
+				return { issues: result.issues.map(toStandardIssue) }
+			},
+			types: undefined as unknown as { input: TInput; output: TOutput },
+		},
+
+		parse(data: unknown): TOutput {
+			const result = safeParse(data)
+			if (result.success) return result.data
+			throw new SchemaError(result.issues)
+		},
+
+		safeParse,
+
+		async parseAsync(data: unknown): Promise<TOutput> {
+			return this.parse(data)
+		},
+
+		async safeParseAsync(data: unknown): Promise<Result<TOutput>> {
+			return safeParse(data)
+		},
+
+		partial() {
+			const partialShape: InterfaceShape = {}
+			for (const key of shapeKeys) {
+				const value = shape[key]!
+				if ((value as OptionalProperty<AnyInterfaceSchema>)._optional) {
+					partialShape[key] = value
+				} else {
+					partialShape[key] = optionalProp(value as AnyInterfaceSchema)
+				}
+			}
+			// biome-ignore lint/suspicious/noExplicitAny: complex type transformation
+			return interface_(partialShape) as any
+		},
+
+		required() {
+			const requiredShape: InterfaceShape = {}
+			for (const key of shapeKeys) {
+				const value = shape[key]!
+				if ((value as OptionalProperty<AnyInterfaceSchema>)._optional) {
+					requiredShape[key] = (value as OptionalProperty<AnyInterfaceSchema>).schema
+				} else {
+					requiredShape[key] = value
+				}
+			}
+			// biome-ignore lint/suspicious/noExplicitAny: complex type transformation
+			return interface_(requiredShape) as any
+		},
+
+		pick<K extends keyof T>(keys: K[]): InterfaceSchema<Pick<T, K>> {
+			const pickedShape = {} as Pick<T, K>
+			for (const key of keys) {
+				if (key in shape) {
+					pickedShape[key] = shape[key]!
+				}
+			}
+			return interface_(pickedShape)
+		},
+
+		omit<K extends keyof T>(keys: K[]): InterfaceSchema<Omit<T, K>> {
+			const omitSet = new Set<PropertyKey>(keys)
+			const omittedShape = {} as Omit<T, K>
+			for (const key of shapeKeys) {
+				if (!omitSet.has(key)) {
+					;(omittedShape as Record<string, unknown>)[key] = shape[key]
+				}
+			}
+			return interface_(omittedShape)
+		},
+
+		extend<E extends InterfaceShape>(extension: E): InterfaceSchema<T & E> {
+			return interface_({ ...shape, ...extension })
+		},
+	}
+
+	return interfaceSchema
 }

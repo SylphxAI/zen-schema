@@ -1,8 +1,9 @@
 import { createSchema } from '../core'
 import type { BaseSchema, Check } from '../types'
 
-// Type guard
-const isNumber = (v: unknown): v is number => typeof v === 'number' && !Number.isNaN(v)
+// Type guard - Zod v4: reject Infinity by default
+const isNumber = (v: unknown): v is number =>
+	typeof v === 'number' && !Number.isNaN(v) && Number.isFinite(v)
 
 // ============================================================
 // Number Schema Interface

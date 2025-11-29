@@ -69,6 +69,13 @@ export {
 	// Top-level format validators
 	email,
 	uuid,
+	uuidv1,
+	uuidv2,
+	uuidv3,
+	uuidv4,
+	uuidv5,
+	uuidv6,
+	uuidv7,
 	url,
 	httpUrl,
 	ipv4,
@@ -79,6 +86,9 @@ export {
 	file,
 	templateLiteral,
 	partialRecord,
+	// Interface schema (Zod v4)
+	interface_ as interface,
+	optionalProp,
 	type IntersectionSchema,
 	type PromiseSchema,
 	type FunctionSchema,
@@ -88,4 +98,7 @@ export {
 	type IntSchema,
 	type Codec,
 	type FileSchema,
+	type InterfaceSchema,
+	type InterfaceShape,
+	type OptionalProperty,
 } from './utilities'
