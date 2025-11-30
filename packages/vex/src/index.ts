@@ -15,60 +15,79 @@
 //
 // ============================================================
 
-// All functional validators
+// Composition
 export {
+	catchError,
+	discriminatedUnion,
+	nullable,
+	optional,
+	pipe,
+	refine,
+	transform,
+	union,
+	withDefault,
+} from './composition'
+// Core types
+export type { Parser, Result, StandardSchemaV1, StandardValidator, Validator } from './core'
+export { ValidationError } from './core'
+// Schemas
+export { array, lazy, object, partial, passthrough, record, strict, strip, tuple } from './schemas'
+// Transforms
+export {
+	coerce,
+	coerceBigInt,
+	coerceBoolean,
+	coerceDate,
+	coerceNumber,
+	coerceString,
+	lower,
+	toDate,
+	toFloat,
+	toInt,
+	trim,
+	upper,
+} from './transforms'
+// Utils
+export { safeParse, tryParse } from './utils'
+// Type validators
+// String validators
+// Number validators
+// Literal & Enum
+export {
+	any,
 	arr,
-	array,
 	bigInt,
 	bool,
 	date,
 	email,
 	endsWith,
+	enum_,
+	enumType,
 	finite,
 	gt,
 	gte,
 	includes,
-	// Number validators
 	int,
 	len,
-	lower,
+	literal,
 	lt,
 	lte,
 	max,
-	// String validators
 	min,
 	multipleOf,
 	negative,
+	never,
 	nonempty,
-	nullable,
+	nullType,
 	num,
 	obj,
-	// Object/Array
-	object,
-	optional,
-	type Parser,
 	pattern,
-	// Composition
-	pipe,
 	positive,
-	type Result,
-	// Standard Schema
-	type StandardSchemaV1,
-	safeParse,
 	startsWith,
-	// Type validators
 	str,
-	toDate,
-	toFloat,
-	toInt,
-	// Transforms
-	trim,
-	tryParse,
-	upper,
+	undefinedType,
+	unknown,
 	url,
 	uuid,
-	// Types & Error
-	ValidationError,
-	type Validator,
-	withDefault,
-} from './fn'
+	voidType,
+} from './validators'
