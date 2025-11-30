@@ -7,6 +7,20 @@ export {
 	coerceDate,
 	coerceNumber,
 	coerceString,
+	toBigint,
+	toBoolean,
+	toNumber,
+	toString_,
 } from './coerce'
-export { toDate, toFloat, toInt } from './parse'
-export { lower, trim, upper } from './string'
+export { parseJson, parseJsonWith, stringifyJson, stringifyJsonWith } from './json'
+export { toDate, toFloat, toInt, toMaxValue, toMinValue } from './parse'
+export {
+	lower,
+	normalize,
+	toLowerCase,
+	toUpperCase,
+	trim,
+	trimEnd,
+	trimStart,
+	upper,
+} from './string'

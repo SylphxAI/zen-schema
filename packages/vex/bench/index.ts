@@ -1,3 +1,4 @@
+import * as v from 'valibot'
 import { z } from 'zod'
 import {
 	array,
@@ -15,7 +16,7 @@ import {
 } from '../src'
 
 // ============================================================
-// ⚡ Vex vs Zod Benchmark
+// ⚡ Vex vs Valibot vs Zod Benchmark
 // ============================================================
 
 const ITERATIONS = 100_000
@@ -64,6 +65,24 @@ const vexSimpleValidator = object({
 const vexEmailValidator = pipe(str, email)
 const vexNumberValidator = pipe(num, int, positive)
 
+// Valibot
+const valibotUserSchema = v.object({
+	id: v.pipe(v.string(), v.uuid()),
+	name: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
+	email: v.pipe(v.string(), v.email()),
+	age: v.pipe(v.number(), v.integer(), v.minValue(1)),
+})
+
+const valibotUsersSchema = v.array(valibotUserSchema)
+
+const valibotSimpleSchema = v.object({
+	name: v.string(),
+	value: v.number(),
+})
+
+const valibotEmailSchema = v.pipe(v.string(), v.email())
+const valibotNumberSchema = v.pipe(v.number(), v.integer(), v.minValue(1))
+
 // Zod
 const zodUserSchema = z.object({
 	id: z.string().uuid(),
@@ -89,33 +108,43 @@ const zodNumberSchema = z.number().int().positive()
 interface BenchResult {
 	name: string
 	vex: number
+	valibot: number
 	zod: number
-	ratio: number
 }
 
 const results: BenchResult[] = []
 
 function bench(name: string, fn: () => void, iterations: number): number {
-	// Warmup
-	for (let i = 0; i < 1000; i++) fn()
+	// Warmup - important for JIT
+	for (let i = 0; i < 5000; i++) fn()
 
 	const start = performance.now()
 	for (let i = 0; i < iterations; i++) fn()
 	const duration = performance.now() - start
 	const opsPerSec = (iterations / duration) * 1000
 
-	console.log(`${name.padEnd(35)} ${(opsPerSec / 1e6).toFixed(1).padStart(6)}M ops/sec`)
+	console.log(`${name.padEnd(40)} ${(opsPerSec / 1e6).toFixed(1).padStart(7)}M ops/sec`)
 	return opsPerSec
 }
 
-function runBench(category: string, vexFn: () => void, zodFn: () => void, iterations: number) {
-	const vexOps = bench(`Vex:  ${category}`, vexFn, iterations)
-	const zodOps = bench(`Zod:  ${category}`, zodFn, iterations)
-	const ratio = vexOps / zodOps
-	const indicator = ratio >= 1 ? '🟢' : '🔴'
-	console.log(`${indicator} Vex is ${ratio.toFixed(2)}x ${ratio >= 1 ? 'faster' : 'slower'}`)
+function runBench(
+	category: string,
+	vexFn: () => void,
+	valibotFn: () => void,
+	zodFn: () => void,
+	iterations: number
+) {
+	const vexOps = bench(`Vex:      ${category}`, vexFn, iterations)
+	const valibotOps = bench(`Valibot:  ${category}`, valibotFn, iterations)
+	const zodOps = bench(`Zod:      ${category}`, zodFn, iterations)
+
+	const vsValibot = vexOps / valibotOps
+	const vsZod = vexOps / zodOps
+
+	console.log(`  → Vex is ${vsValibot.toFixed(2)}x vs Valibot, ${vsZod.toFixed(2)}x vs Zod`)
 	console.log()
-	results.push({ name: category, vex: vexOps, zod: zodOps, ratio })
+
+	results.push({ name: category, vex: vexOps, valibot: valibotOps, zod: zodOps })
 }
 
 // ============================================================
@@ -123,7 +152,7 @@ function runBench(category: string, vexFn: () => void, zodFn: () => void, iterat
 // ============================================================
 
 console.log('='.repeat(70))
-console.log('⚡ Vex vs Zod Benchmark')
+console.log('⚡ Vex vs Valibot vs Zod Benchmark')
 console.log('='.repeat(70))
 console.log()
 
@@ -132,18 +161,21 @@ console.log('━━━ Direct Validation (throws) ━━━')
 runBench(
 	'simple object',
 	() => vexSimpleValidator(simpleData),
+	() => v.parse(valibotSimpleSchema, simpleData),
 	() => zodSimpleSchema.parse(simpleData),
 	ITERATIONS
 )
 runBench(
 	'complex object',
 	() => vexUserValidator(validUser),
+	() => v.parse(valibotUserSchema, validUser),
 	() => zodUserSchema.parse(validUser),
 	ITERATIONS
 )
 runBench(
 	'array (100 items)',
 	() => vexUsersValidator(validUsers),
+	() => v.parse(valibotUsersSchema, validUsers),
 	() => zodUsersSchema.parse(validUsers),
 	ITERATIONS / 10
 )
@@ -153,12 +185,14 @@ console.log('━━━ SafeParse ━━━')
 runBench(
 	'safeParse object (valid)',
 	() => safeParse(vexUserValidator)(validUser),
+	() => v.safeParse(valibotUserSchema, validUser),
 	() => zodUserSchema.safeParse(validUser),
 	ITERATIONS
 )
 runBench(
 	'safeParse object (invalid)',
 	() => safeParse(vexUserValidator)({ name: '', age: -1, email: 'bad', id: 'x' }),
+	() => v.safeParse(valibotUserSchema, { name: '', age: -1, email: 'bad', id: 'x' }),
 	() => zodUserSchema.safeParse({ name: '', age: -1, email: 'bad', id: 'x' }),
 	ITERATIONS
 )
@@ -168,12 +202,14 @@ console.log('━━━ Primitive Validation ━━━')
 runBench(
 	'string.email',
 	() => vexEmailValidator('test@example.com'),
+	() => v.parse(valibotEmailSchema, 'test@example.com'),
 	() => zodStringSchema.parse('test@example.com'),
 	ITERATIONS
 )
 runBench(
 	'number.int.positive',
 	() => vexNumberValidator(42),
+	() => v.parse(valibotNumberSchema, 42),
 	() => zodNumberSchema.parse(42),
 	ITERATIONS
 )
@@ -183,12 +219,14 @@ console.log('━━━ Schema Creation ━━━')
 runBench(
 	'create email validator',
 	() => pipe(str, email),
+	() => v.pipe(v.string(), v.email()),
 	() => z.string().email(),
 	ITERATIONS
 )
 runBench(
 	'create object validator',
 	() => object({ name: str, value: num }),
+	() => v.object({ name: v.string(), value: v.number() }),
 	() => z.object({ name: z.string(), value: z.number() }),
 	ITERATIONS
 )
@@ -202,22 +240,27 @@ console.log('📊 Summary')
 console.log('='.repeat(70))
 console.log()
 
-console.log('| Benchmark                    | Vex        | Zod        | Ratio  |')
-console.log('|------------------------------|------------|------------|--------|')
+console.log(
+	'| Benchmark                    | Vex        | Valibot    | Zod        | vs Valibot | vs Zod  |'
+)
+console.log(
+	'|------------------------------|------------|------------|------------|------------|---------|'
+)
 
 for (const r of results) {
-	const indicator = r.ratio >= 1 ? '🟢' : '🔴'
+	const vsV = r.vex / r.valibot
+	const vsZ = r.vex / r.zod
+	const indV = vsV >= 1 ? '🟢' : '🔴'
+	const indZ = vsZ >= 1 ? '🟢' : '🔴'
 	console.log(
-		`| ${r.name.padEnd(28)} | ${(r.vex / 1e6).toFixed(1).padStart(8)}M | ${(r.zod / 1e6).toFixed(1).padStart(8)}M | ${indicator} ${r.ratio.toFixed(2)}x |`
+		`| ${r.name.padEnd(28)} | ${(r.vex / 1e6).toFixed(1).padStart(8)}M | ${(r.valibot / 1e6).toFixed(1).padStart(8)}M | ${(r.zod / 1e6).toFixed(1).padStart(8)}M | ${indV} ${vsV.toFixed(2).padStart(5)}x | ${indZ} ${vsZ.toFixed(2).padStart(4)}x |`
 	)
 }
 
 console.log()
 
-const avgOverall = results.reduce((a, b) => a + b.ratio, 0) / results.length
+const avgVsValibot = results.reduce((a, b) => a + b.vex / b.valibot, 0) / results.length
+const avgVsZod = results.reduce((a, b) => a + b.vex / b.zod, 0) / results.length
 
-if (avgOverall >= 1) {
-	console.log(`✅ Vex is ${avgOverall.toFixed(2)}x faster than Zod on average`)
-} else {
-	console.log(`⚠️  Vex is ${(1 / avgOverall).toFixed(2)}x slower than Zod on average`)
-}
+console.log(`✅ Vex is ${avgVsValibot.toFixed(2)}x faster than Valibot on average`)
+console.log(`✅ Vex is ${avgVsZod.toFixed(2)}x faster than Zod on average`)

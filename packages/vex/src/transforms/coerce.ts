@@ -73,3 +73,9 @@ export const coerce = {
 	date: coerceDate,
 	bigint: coerceBigInt,
 }
+
+// Valibot-style aliases
+export { coerceString as toString_ }
+export { coerceNumber as toNumber }
+export { coerceBoolean as toBoolean }
+export { coerceBigInt as toBigint }

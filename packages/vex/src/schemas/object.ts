@@ -345,9 +345,7 @@ export const required = <T extends Record<string, unknown>>(
  * validateKey('name') // 'name'
  * validateKey('invalid') // throws
  */
-export const keyof = <T extends Record<string, Parser<unknown>>>(
-	shape: T
-): Parser<keyof T> => {
+export const keyof = <T extends Record<string, Parser<unknown>>>(shape: T): Parser<keyof T> => {
 	const keys = Object.keys(shape) as (keyof T)[]
 	const keySet = new Set(keys as string[])
 	const msg = `Expected one of: ${keys.join(', ')}`

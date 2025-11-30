@@ -20,7 +20,8 @@ export const str: Parser<string> = createValidator(
 		if (typeof v !== 'string') throw new ValidationError('Expected string')
 		return v
 	},
-	(v) => (typeof v === 'string' ? { ok: true, value: v } : ERR_STRING)
+	(v) => (typeof v === 'string' ? { ok: true, value: v } : ERR_STRING),
+	{ type: 'string' }
 )
 
 /** Validate number type */
@@ -29,7 +30,8 @@ export const num: Parser<number> = createValidator(
 		if (typeof v !== 'number' || Number.isNaN(v)) throw new ValidationError('Expected number')
 		return v
 	},
-	(v) => (typeof v === 'number' && !Number.isNaN(v) ? { ok: true, value: v } : ERR_NUMBER)
+	(v) => (typeof v === 'number' && !Number.isNaN(v) ? { ok: true, value: v } : ERR_NUMBER),
+	{ type: 'number' }
 )
 
 /** Validate boolean type */
@@ -38,7 +40,8 @@ export const bool: Parser<boolean> = createValidator(
 		if (typeof v !== 'boolean') throw new ValidationError('Expected boolean')
 		return v
 	},
-	(v) => (typeof v === 'boolean' ? { ok: true, value: v } : ERR_BOOLEAN)
+	(v) => (typeof v === 'boolean' ? { ok: true, value: v } : ERR_BOOLEAN),
+	{ type: 'boolean' }
 )
 
 /** Validate bigint type */
@@ -47,7 +50,8 @@ export const bigInt: Parser<bigint> = createValidator(
 		if (typeof v !== 'bigint') throw new ValidationError('Expected bigint')
 		return v
 	},
-	(v) => (typeof v === 'bigint' ? { ok: true, value: v } : ERR_BIGINT)
+	(v) => (typeof v === 'bigint' ? { ok: true, value: v } : ERR_BIGINT),
+	{ type: 'bigint' }
 )
 
 /** Validate Date type */
@@ -57,7 +61,8 @@ export const date: Parser<Date> = createValidator(
 			throw new ValidationError('Expected Date')
 		return v
 	},
-	(v) => (v instanceof Date && !Number.isNaN(v.getTime()) ? { ok: true, value: v } : ERR_DATE)
+	(v) => (v instanceof Date && !Number.isNaN(v.getTime()) ? { ok: true, value: v } : ERR_DATE),
+	{ type: 'date' }
 )
 
 /** Validate array type */
@@ -66,7 +71,8 @@ export const arr: Parser<unknown[]> = createValidator(
 		if (!Array.isArray(v)) throw new ValidationError('Expected array')
 		return v
 	},
-	(v) => (Array.isArray(v) ? { ok: true, value: v } : ERR_ARRAY)
+	(v) => (Array.isArray(v) ? { ok: true, value: v } : ERR_ARRAY),
+	{ type: 'array' }
 )
 
 /** Validate object type (not null, not array) */
@@ -79,5 +85,6 @@ export const obj: Parser<Record<string, unknown>> = createValidator(
 	(v) =>
 		typeof v === 'object' && v !== null && !Array.isArray(v)
 			? { ok: true, value: v as Record<string, unknown> }
-			: ERR_OBJECT
+			: ERR_OBJECT,
+	{ type: 'object' }
 )
