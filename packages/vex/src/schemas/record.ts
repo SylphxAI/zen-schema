@@ -18,22 +18,29 @@ export const record = <K extends string, V>(
 	keyValidator: Parser<K>,
 	valueValidator: Parser<V>
 ): Parser<Record<K, V>> => {
+	// Cache safe method lookups for JIT
+	const hasKeySafe = keyValidator.safe !== undefined
+	const hasValSafe = valueValidator.safe !== undefined
+
 	const fn = ((value: unknown) => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
 			throw new ValidationError('Expected object')
 		}
 
+		const input = value as Record<string, unknown>
+		const keys = Object.keys(input)
 		const result = {} as Record<K, V>
-		for (const [key, val] of Object.entries(value)) {
+
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i]
+			const val = input[key]
 			try {
 				const validKey = keyValidator(key)
 				try {
 					result[validKey] = valueValidator(val)
 				} catch (e) {
-					if (e instanceof ValidationError) {
-						throw new ValidationError(`[${key}]: ${e.message}`)
-					}
-					throw e
+					const msg = e instanceof Error ? e.message : 'Unknown error'
+					throw new ValidationError(`[${key}]: ${msg}`)
 				}
 			} catch (e) {
 				if (e instanceof ValidationError && !e.message.startsWith('[')) {
@@ -51,41 +58,60 @@ export const record = <K extends string, V>(
 			return ERR_OBJECT as Result<Record<K, V>>
 		}
 
+		const input = value as Record<string, unknown>
+		const keys = Object.keys(input)
 		const result = {} as Record<K, V>
-		for (const [key, val] of Object.entries(value)) {
-			if (keyValidator.safe) {
-				const keyResult = keyValidator.safe(key)
+
+		if (hasKeySafe && hasValSafe) {
+			const keySafe = keyValidator.safe!
+			const valSafe = valueValidator.safe!
+			for (let i = 0; i < keys.length; i++) {
+				const key = keys[i]
+				const keyResult = keySafe(key)
 				if (!keyResult.ok) {
 					return { ok: false, error: `Invalid key "${key}": ${keyResult.error}` }
 				}
-				if (valueValidator.safe) {
-					const valResult = valueValidator.safe(val)
+				const valResult = valSafe(input[key])
+				if (!valResult.ok) {
+					return { ok: false, error: `[${key}]: ${valResult.error}` }
+				}
+				result[keyResult.value] = valResult.value
+			}
+		} else if (hasKeySafe) {
+			const keySafe = keyValidator.safe!
+			for (let i = 0; i < keys.length; i++) {
+				const key = keys[i]
+				const keyResult = keySafe(key)
+				if (!keyResult.ok) {
+					return { ok: false, error: `Invalid key "${key}": ${keyResult.error}` }
+				}
+				try {
+					result[keyResult.value] = valueValidator(input[key])
+				} catch (e) {
+					return { ok: false, error: `[${key}]: ${e instanceof Error ? e.message : 'Unknown error'}` }
+				}
+			}
+		} else if (hasValSafe) {
+			const valSafe = valueValidator.safe!
+			for (let i = 0; i < keys.length; i++) {
+				const key = keys[i]
+				try {
+					const validKey = keyValidator(key)
+					const valResult = valSafe(input[key])
 					if (!valResult.ok) {
 						return { ok: false, error: `[${key}]: ${valResult.error}` }
 					}
-					result[keyResult.value] = valResult.value
-				} else {
-					try {
-						result[keyResult.value] = valueValidator(val)
-					} catch (e) {
-						return {
-							ok: false,
-							error: `[${key}]: ${e instanceof Error ? e.message : 'Unknown error'}`,
-						}
-					}
+					result[validKey] = valResult.value
+				} catch (e) {
+					return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
 				}
-			} else {
+			}
+		} else {
+			for (let i = 0; i < keys.length; i++) {
+				const key = keys[i]
 				try {
 					const validKey = keyValidator(key)
-					if (valueValidator.safe) {
-						const valResult = valueValidator.safe(val)
-						if (!valResult.ok) {
-							return { ok: false, error: `[${key}]: ${valResult.error}` }
-						}
-						result[validKey] = valResult.value
-					} else {
-						result[validKey] = valueValidator(val)
-					}
+					result[validKey] = valueValidator(input[key])
 				} catch (e) {
 					return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
 				}
@@ -96,6 +122,8 @@ export const record = <K extends string, V>(
 	}
 
 	// Add Standard Schema with path support
+	const keyStd = keyValidator['~standard']
+	const valStd = valueValidator['~standard']
 	;(fn as unknown as Record<string, unknown>)['~standard'] = {
 		version: 1 as const,
 		vendor: 'vex',
@@ -104,9 +132,12 @@ export const record = <K extends string, V>(
 				return { issues: [{ message: 'Expected object' }] }
 			}
 
+			const input = value as Record<string, unknown>
+			const keys = Object.keys(input)
 			const result = {} as Record<K, V>
-			for (const [key, val] of Object.entries(value)) {
-				const keyStd = keyValidator['~standard']
+
+			for (let i = 0; i < keys.length; i++) {
+				const key = keys[i]
 				if (keyStd) {
 					const keyResult = keyStd.validate(key) as StandardSchemaV1.Result<K>
 					if (keyResult.issues) {
@@ -114,9 +145,8 @@ export const record = <K extends string, V>(
 					}
 				}
 
-				const valStd = valueValidator['~standard']
 				if (valStd) {
-					const valResult = valStd.validate(val) as StandardSchemaV1.Result<V>
+					const valResult = valStd.validate(input[key]) as StandardSchemaV1.Result<V>
 					if (valResult.issues) {
 						return {
 							issues: valResult.issues.map((issue) => ({
@@ -128,7 +158,7 @@ export const record = <K extends string, V>(
 					result[key as K] = valResult.value
 				} else {
 					try {
-						result[key as K] = valueValidator(val)
+						result[key as K] = valueValidator(input[key])
 					} catch (e) {
 						return {
 							issues: [{ message: e instanceof Error ? e.message : 'Unknown error', path: [key] }],
