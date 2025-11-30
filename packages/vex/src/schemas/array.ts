@@ -2,10 +2,11 @@
 // Array Schema
 // ============================================================
 
-import type { Parser, Result, StandardSchemaV1 } from '../core'
-import { ValidationError } from '../core'
+import type { Parser, Result, StandardSchemaV1, Validator } from '../core'
+import { createValidator, ValidationError } from '../core'
 
 const ERR_ARRAY: Result<never> = { ok: false, error: 'Expected array' }
+const ERR_NONEMPTY: Result<never> = { ok: false, error: 'Array must not be empty' }
 
 /**
  * Create an array validator
@@ -92,4 +93,58 @@ export const array = <T>(itemValidator: Parser<T>): Parser<T[]> => {
 	}
 
 	return fn
+}
+
+// ============================================================
+// Array Length Validators
+// ============================================================
+
+/** Array minimum length validator */
+export const minLength = <T>(n: number): Validator<T[], T[]> => {
+	const msg = `Array must have at least ${n} items`
+	const err: Result<never> = { ok: false, error: msg }
+	return createValidator(
+		(v) => {
+			if (v.length < n) throw new ValidationError(msg)
+			return v
+		},
+		(v) => (v.length >= n ? { ok: true, value: v } : err)
+	)
+}
+
+/** Array maximum length validator */
+export const maxLength = <T>(n: number): Validator<T[], T[]> => {
+	const msg = `Array must have at most ${n} items`
+	const err: Result<never> = { ok: false, error: msg }
+	return createValidator(
+		(v) => {
+			if (v.length > n) throw new ValidationError(msg)
+			return v
+		},
+		(v) => (v.length <= n ? { ok: true, value: v } : err)
+	)
+}
+
+/** Array exact length validator */
+export const exactLength = <T>(n: number): Validator<T[], T[]> => {
+	const msg = `Array must have exactly ${n} items`
+	const err: Result<never> = { ok: false, error: msg }
+	return createValidator(
+		(v) => {
+			if (v.length !== n) throw new ValidationError(msg)
+			return v
+		},
+		(v) => (v.length === n ? { ok: true, value: v } : err)
+	)
+}
+
+/** Array non-empty validator */
+export const nonemptyArray = <T>(): Validator<T[], [T, ...T[]]> => {
+	return createValidator(
+		(v) => {
+			if (v.length === 0) throw new ValidationError('Array must not be empty')
+			return v as [T, ...T[]]
+		},
+		(v) => (v.length > 0 ? { ok: true, value: v as [T, ...T[]] } : ERR_NONEMPTY)
+	) as Validator<T[], [T, ...T[]]>
 }

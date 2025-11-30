@@ -52,6 +52,30 @@ export const nullable = <I, O>(validator: Validator<I, O>): Validator<I | null, 
 }
 
 /**
+ * Make a validator nullish (allows null or undefined)
+ */
+export const nullish = <I, O>(
+	validator: Validator<I, O>
+): Validator<I | null | undefined, O | null | undefined> => {
+	const fn = ((v: I | null | undefined) => {
+		if (v === null || v === undefined) return v
+		return validator(v)
+	}) as Validator<I | null | undefined, O | null | undefined>
+
+	fn.safe = (v: I | null | undefined): Result<O | null | undefined> => {
+		if (v === null || v === undefined) return { ok: true, value: v as O | null | undefined }
+		if (validator.safe) return validator.safe(v)
+		try {
+			return { ok: true, value: validator(v) }
+		} catch (e) {
+			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+		}
+	}
+
+	return addStandardSchema(fn)
+}
+
+/**
  * Provide a default value when undefined
  */
 export const withDefault = <I, O>(

@@ -197,3 +197,70 @@ export const strict = <T extends Record<string, unknown>>(schema: Parser<T>): Pa
 
 /** Alias for strict */
 export { strict as strip }
+
+// ============================================================
+// Object Utilities (shape-based)
+// ============================================================
+
+/**
+ * Pick specific properties from an object shape
+ *
+ * @example
+ * const userShape = { name: str, age: num, email: pipe(str, email) }
+ * const validateName = object(pick(userShape, ['name']))
+ */
+export const pick = <T extends Record<string, Parser<unknown>>, K extends keyof T>(
+	shape: T,
+	keys: readonly K[]
+): Pick<T, K> => {
+	const result = {} as Pick<T, K>
+	for (const key of keys) {
+		if (key in shape) {
+			result[key] = shape[key]
+		}
+	}
+	return result
+}
+
+/**
+ * Omit specific properties from an object shape
+ *
+ * @example
+ * const userShape = { name: str, age: num, email: pipe(str, email) }
+ * const validateWithoutEmail = object(omit(userShape, ['email']))
+ */
+export const omit = <T extends Record<string, Parser<unknown>>, K extends keyof T>(
+	shape: T,
+	keys: readonly K[]
+): Omit<T, K> => {
+	const keysSet = new Set<string>(keys as unknown as string[])
+	const result = {} as Record<string, Parser<unknown>>
+	for (const [key, value] of Object.entries(shape)) {
+		if (!keysSet.has(key)) {
+			result[key] = value
+		}
+	}
+	return result as Omit<T, K>
+}
+
+/**
+ * Extend an object shape with additional properties
+ *
+ * @example
+ * const userShape = { name: str, age: num }
+ * const adminShape = extend(userShape, { role: literal('admin') })
+ */
+export const extend = <
+	T extends Record<string, Parser<unknown>>,
+	U extends Record<string, Parser<unknown>>,
+>(
+	base: T,
+	extension: U
+): T & U => {
+	return { ...base, ...extension }
+}
+
+/**
+ * Merge two object shapes (alias for extend)
+ */
+export const merge = extend

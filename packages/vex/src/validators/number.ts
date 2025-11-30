@@ -8,7 +8,10 @@ import { createValidator, ValidationError } from '../core'
 const ERR_INT: Result<never> = { ok: false, error: 'Must be integer' }
 const ERR_POSITIVE: Result<never> = { ok: false, error: 'Must be positive' }
 const ERR_NEGATIVE: Result<never> = { ok: false, error: 'Must be negative' }
+const ERR_NONNEGATIVE: Result<never> = { ok: false, error: 'Must be non-negative' }
+const ERR_NONPOSITIVE: Result<never> = { ok: false, error: 'Must be non-positive' }
 const ERR_FINITE: Result<never> = { ok: false, error: 'Must be finite' }
+const ERR_SAFE: Result<never> = { ok: false, error: 'Must be safe integer' }
 
 /** Integer check */
 export const int: Validator<number> = createValidator(
@@ -35,6 +38,24 @@ export const negative: Validator<number> = createValidator(
 		return v
 	},
 	(v) => (v < 0 ? { ok: true, value: v } : ERR_NEGATIVE)
+)
+
+/** Non-negative number (>= 0) */
+export const nonnegative: Validator<number> = createValidator(
+	(v) => {
+		if (v < 0) throw new ValidationError('Must be non-negative')
+		return v
+	},
+	(v) => (v >= 0 ? { ok: true, value: v } : ERR_NONNEGATIVE)
+)
+
+/** Non-positive number (<= 0) */
+export const nonpositive: Validator<number> = createValidator(
+	(v) => {
+		if (v > 0) throw new ValidationError('Must be non-positive')
+		return v
+	},
+	(v) => (v <= 0 ? { ok: true, value: v } : ERR_NONPOSITIVE)
 )
 
 /** Finite number */
@@ -105,3 +126,15 @@ export const multipleOf = (n: number): Validator<number> => {
 		(v) => (v % n === 0 ? { ok: true, value: v } : err)
 	)
 }
+
+/** Safe integer (within JS safe integer range) */
+export const safe: Validator<number> = createValidator(
+	(v) => {
+		if (!Number.isSafeInteger(v)) throw new ValidationError('Must be safe integer')
+		return v
+	},
+	(v) => (Number.isSafeInteger(v) ? { ok: true, value: v } : ERR_SAFE)
+)
+
+/** Alias: step is same as multipleOf */
+export { multipleOf as step }

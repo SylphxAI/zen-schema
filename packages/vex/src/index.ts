@@ -20,6 +20,7 @@ export {
 	catchError,
 	discriminatedUnion,
 	nullable,
+	nullish,
 	optional,
 	pipe,
 	refine,
@@ -30,8 +31,28 @@ export {
 // Core types
 export type { Parser, Result, StandardSchemaV1, StandardValidator, Validator } from './core'
 export { ValidationError } from './core'
+
 // Schemas
-export { array, lazy, object, partial, passthrough, record, strict, strip, tuple } from './schemas'
+export {
+	array,
+	exactLength,
+	extend,
+	lazy,
+	maxLength,
+	merge,
+	minLength,
+	nonemptyArray,
+	object,
+	omit,
+	partial,
+	passthrough,
+	pick,
+	record,
+	strict,
+	strip,
+	tuple,
+} from './schemas'
+
 // Transforms
 export {
 	coerce,
@@ -47,6 +68,7 @@ export {
 	trim,
 	upper,
 } from './transforms'
+
 // Utils
 export { safeParse, tryParse } from './utils'
 // Type validators
@@ -56,9 +78,14 @@ export { safeParse, tryParse } from './utils'
 export {
 	any,
 	arr,
+	base64,
 	bigInt,
 	bool,
+	cuid,
+	cuid2,
 	date,
+	dateOnly,
+	datetime,
 	email,
 	endsWith,
 	enum_,
@@ -68,6 +95,9 @@ export {
 	gte,
 	includes,
 	int,
+	ip,
+	ipv4,
+	ipv6,
 	len,
 	literal,
 	lt,
@@ -78,13 +108,18 @@ export {
 	negative,
 	never,
 	nonempty,
+	nonnegative,
+	nonpositive,
 	nullType,
 	num,
 	obj,
 	pattern,
 	positive,
+	safe,
 	startsWith,
 	str,
+	time,
+	ulid,
 	undefinedType,
 	unknown,
 	url,

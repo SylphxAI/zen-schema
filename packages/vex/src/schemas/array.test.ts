@@ -3,7 +3,7 @@ import { pipe } from '../composition/pipe'
 import type { StandardSchemaV1 } from '../core'
 import { int } from '../validators/number'
 import { num } from '../validators/primitives'
-import { array } from './array'
+import { array, exactLength, maxLength, minLength, nonemptyArray } from './array'
 
 describe('Array Schema', () => {
 	test('array validates items', () => {
@@ -57,5 +57,43 @@ describe('Array Schema', () => {
 		expect(error).toHaveProperty('issues')
 		const issues = (error as StandardSchemaV1.FailureResult).issues
 		expect(issues[0]?.path).toEqual([1, 1])
+	})
+})
+
+describe('Array Length Validators', () => {
+	test('minLength validates minimum array length', () => {
+		const validate = pipe(array(num), minLength(2))
+		expect(validate([1, 2])).toEqual([1, 2])
+		expect(validate([1, 2, 3])).toEqual([1, 2, 3])
+		expect(() => validate([1])).toThrow('Array must have at least 2 items')
+		expect(() => validate([])).toThrow()
+	})
+
+	test('maxLength validates maximum array length', () => {
+		const validate = pipe(array(num), maxLength(3))
+		expect(validate([1, 2, 3])).toEqual([1, 2, 3])
+		expect(validate([1, 2])).toEqual([1, 2])
+		expect(validate([])).toEqual([])
+		expect(() => validate([1, 2, 3, 4])).toThrow('Array must have at most 3 items')
+	})
+
+	test('exactLength validates exact array length', () => {
+		const validate = pipe(array(num), exactLength(3))
+		expect(validate([1, 2, 3])).toEqual([1, 2, 3])
+		expect(() => validate([1, 2])).toThrow('Array must have exactly 3 items')
+		expect(() => validate([1, 2, 3, 4])).toThrow()
+	})
+
+	test('nonemptyArray validates non-empty arrays', () => {
+		const validate = pipe(array(num), nonemptyArray())
+		expect(validate([1])).toEqual([1])
+		expect(validate([1, 2, 3])).toEqual([1, 2, 3])
+		expect(() => validate([])).toThrow('Array must not be empty')
+	})
+
+	test('safe versions work', () => {
+		const validate = pipe(array(num), minLength(2))
+		expect(validate.safe!([1, 2])).toEqual({ ok: true, value: [1, 2] })
+		expect(validate.safe!([1])).toHaveProperty('ok', false)
 	})
 })
