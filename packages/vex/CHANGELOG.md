@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 (2025-11-30)
+
+### ✨ Features
+
+- add Standard Schema v1 support ([1c95364](https://github.com/SylphxAI/vex/commit/1c95364e3d0699be361419504555d537a31aa473))
+
 ## 0.1.0 (2025-11-30)
 
 ### ♻️ Refactoring
