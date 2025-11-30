@@ -46,8 +46,7 @@ export const tuple = <T extends readonly [Parser<unknown>, ...Parser<unknown>[]]
 		}
 
 		const result: unknown[] = []
-		for (let i = 0; i < schemas.length; i++) {
-			const schema = schemas[i]!
+		for (const [i, schema] of schemas.entries()) {
 			if (schema.safe) {
 				const r = schema.safe(value[i])
 				if (!r.ok) return { ok: false, error: `[${i}]: ${r.error}` }
@@ -77,8 +76,7 @@ export const tuple = <T extends readonly [Parser<unknown>, ...Parser<unknown>[]]
 			}
 
 			const result: unknown[] = []
-			for (let i = 0; i < schemas.length; i++) {
-				const schema = schemas[i]!
+			for (const [i, schema] of schemas.entries()) {
 				const std = schema['~standard']
 				if (std) {
 					const r = std.validate(value[i]) as StandardSchemaV1.Result<unknown>

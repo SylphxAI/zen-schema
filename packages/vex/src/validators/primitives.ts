@@ -81,6 +81,3 @@ export const obj: Parser<Record<string, unknown>> = createValidator(
 			? { ok: true, value: v as Record<string, unknown> }
 			: ERR_OBJECT
 )
-
-// Export shared error for use in other modules
-export { ERR_ARRAY, ERR_OBJECT }
