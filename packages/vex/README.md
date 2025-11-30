@@ -1,6 +1,6 @@
 # @sylphx/vex
 
-> ⚡ Ultra-fast schema validation - 90x faster than Zod, 6x faster than Valibot
+> ⚡ Ultra-fast schema validation - 24x faster than Zod, 4.5x faster than Valibot
 
 ## Features
 
@@ -222,25 +222,24 @@ All validators expose `~standard` property with:
 
 ## Performance
 
-Benchmarks (Bun, ops/sec, higher is better):
+Benchmarks (Bun, M ops/sec, higher is better):
 
-| Operation | Vex | Zod | Valibot | Vex/Zod | Vex/Val |
-|-----------|-----|-----|---------|---------|---------|
-| create string | 390M | 1.0M | 43M | 375x | 9x |
-| create string + email | 69M | 0.4M | 4.4M | 194x | 16x |
-| create object (4 fields) | 6.7M | 0.1M | 1.0M | 84x | 6x |
-| parse string | 246M | 1.2M | 31M | 206x | 8x |
-| parse email | 51M | 12M | 18M | 4x | 3x |
-| parse simple object | 23M | 21M | 25M | 1.1x | 0.9x |
-| parse complex object | 7.8M | 4.2M | 3.4M | 1.9x | 2.3x |
-| safeParse valid | 6.5M | 4.9M | 4.0M | 1.3x | 1.6x |
-| safeParse invalid | 15.6M | 0.2M | 1.9M | 70x | 8x |
+| Benchmark | Vex | Valibot | Zod | vs Valibot | vs Zod |
+|-----------|-----|---------|-----|------------|--------|
+| Simple object | 38.4M | 16.0M | 16.1M | 2.4x | 2.4x |
+| Complex object | 9.2M | 3.1M | 3.3M | 3.0x | 2.8x |
+| Array (100 items) | 0.1M | 0.03M | 0.04M | 3.6x | 2.9x |
+| SafeParse valid | 5.0M | 2.7M | 4.4M | 1.9x | 1.1x |
+| SafeParse invalid | 17.7M | 1.1M | 0.2M | 15.8x | 117.8x |
+| string.email | 54.6M | 11.9M | 8.3M | 4.6x | 6.6x |
+| number.int.positive | 94.1M | 16.4M | 12.3M | 5.7x | 7.7x |
+| Schema creation | 11.4M | 7.2M | 0.2M | 1.6x | 56.8x |
 
-**Average: 93x faster than Zod, 6x faster than Valibot**
+**Average: 4.5x faster than Valibot, 24x faster than Zod**
 
 Run benchmarks:
 ```bash
-bun run bench
+cd packages/vex && bun run bench/index.ts
 ```
 
 ## License
