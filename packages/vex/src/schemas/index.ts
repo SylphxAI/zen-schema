@@ -2,6 +2,24 @@
 
 export { array, exactLength, maxLength, minLength, nonemptyArray } from './array'
 export { lazy } from './lazy'
-export { extend, merge, object, omit, partial, passthrough, pick, strict, strip } from './object'
+export { map } from './map'
+export {
+	extend,
+	keyof,
+	looseObject,
+	merge,
+	object,
+	objectWithRest,
+	omit,
+	partial,
+	passthrough,
+	pick,
+	required,
+	strict,
+	strictObject,
+	strip,
+	variant,
+} from './object'
 export { record } from './record'
-export { tuple } from './tuple'
+export { set } from './set'
+export { looseTuple, strictTuple, tuple, tupleWithRest } from './tuple'

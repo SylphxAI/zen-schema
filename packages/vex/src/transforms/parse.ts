@@ -43,3 +43,23 @@ export const toDate: Validator<string, Date> = createValidator(
 		return Number.isNaN(d.getTime()) ? { ok: false, error: 'Invalid date' } : { ok: true, value: d }
 	}
 )
+
+/**
+ * Clamp value to maximum (toMaxValue)
+ * Values greater than max are replaced with max
+ */
+export const toMaxValue = <T extends number | bigint | Date>(max: T): Validator<T, T> =>
+	createValidator(
+		(v) => (v > max ? max : v) as T,
+		(v) => ({ ok: true, value: (v > max ? max : v) as T })
+	)
+
+/**
+ * Clamp value to minimum (toMinValue)
+ * Values less than min are replaced with min
+ */
+export const toMinValue = <T extends number | bigint | Date>(min: T): Validator<T, T> =>
+	createValidator(
+		(v) => (v < min ? min : v) as T,
+		(v) => ({ ok: true, value: (v < min ? min : v) as T })
+	)

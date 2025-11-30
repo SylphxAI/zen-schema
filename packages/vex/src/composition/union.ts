@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { Parser, Result, StandardSchemaV1 } from '../core'
-import { addStandardSchema, ValidationError } from '../core'
+import { addSchemaMetadata, addStandardSchema, ValidationError } from '../core'
 
 type UnionOutput<T extends readonly Parser<unknown>[]> = {
 	[K in keyof T]: T[K] extends Parser<infer O> ? O : never
@@ -20,9 +20,11 @@ export const union = <T extends readonly [Parser<unknown>, ...Parser<unknown>[]]
 ): Parser<UnionOutput<T>> => {
 	const msg = 'Value does not match any type in union'
 	const err: Result<never> = { ok: false, error: msg }
+	const len = schemas.length
 
 	const fn = ((value: unknown) => {
-		for (const schema of schemas) {
+		for (let i = 0; i < len; i++) {
+			const schema = schemas[i]
 			if (schema.safe) {
 				const result = schema.safe(value)
 				if (result.ok) return result.value
@@ -38,7 +40,8 @@ export const union = <T extends readonly [Parser<unknown>, ...Parser<unknown>[]]
 	}) as Parser<UnionOutput<T>>
 
 	fn.safe = (value: unknown): Result<UnionOutput<T>> => {
-		for (const schema of schemas) {
+		for (let i = 0; i < len; i++) {
+			const schema = schemas[i]
 			if (schema.safe) {
 				const result = schema.safe(value)
 				if (result.ok) return { ok: true, value: result.value as UnionOutput<T> }
@@ -58,7 +61,8 @@ export const union = <T extends readonly [Parser<unknown>, ...Parser<unknown>[]]
 		version: 1 as const,
 		vendor: 'vex',
 		validate: (value: unknown): StandardSchemaV1.Result<UnionOutput<T>> => {
-			for (const schema of schemas) {
+			for (let i = 0; i < len; i++) {
+				const schema = schemas[i]
 				const std = schema['~standard']
 				if (std) {
 					const result = std.validate(value) as StandardSchemaV1.Result<unknown>
@@ -78,6 +82,9 @@ export const union = <T extends readonly [Parser<unknown>, ...Parser<unknown>[]]
 		},
 	}
 
+	// Add schema metadata for JSON Schema conversion
+	addSchemaMetadata(fn, { type: 'union', inner: [...schemas] })
+
 	return fn
 }
 
@@ -96,6 +103,7 @@ export const discriminatedUnion = <K extends string, T extends readonly Parser<u
 ): Parser<UnionOutput<T>> => {
 	const msg = `Invalid discriminator value`
 	const ERR_OBJECT: Result<never> = { ok: false, error: 'Expected object' }
+	const len = options.length
 
 	const fn = ((value: unknown) => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -103,7 +111,8 @@ export const discriminatedUnion = <K extends string, T extends readonly Parser<u
 		}
 
 		// Try each option until one matches
-		for (const schema of options) {
+		for (let i = 0; i < len; i++) {
+			const schema = options[i]
 			if (schema.safe) {
 				const result = schema.safe(value)
 				if (result.ok) return result.value
@@ -124,7 +133,8 @@ export const discriminatedUnion = <K extends string, T extends readonly Parser<u
 			return ERR_OBJECT as Result<UnionOutput<T>>
 		}
 
-		for (const schema of options) {
+		for (let i = 0; i < len; i++) {
+			const schema = options[i]
 			if (schema.safe) {
 				const result = schema.safe(value)
 				if (result.ok) return { ok: true, value: result.value as UnionOutput<T> }
@@ -139,6 +149,13 @@ export const discriminatedUnion = <K extends string, T extends readonly Parser<u
 
 		return { ok: false, error: msg }
 	}
+
+	// Add schema metadata for JSON Schema conversion
+	addSchemaMetadata(fn, {
+		type: 'discriminatedUnion',
+		inner: [...options],
+		constraints: { discriminator: _discriminator },
+	})
 
 	return addStandardSchema(fn)
 }
