@@ -151,7 +151,7 @@ describe('composition/advanced', () => {
 			const check = partialCheck<{ password: string; confirm: string }>(
 				[['password'], ['confirm']],
 				(input) => input.password === input.confirm,
-				'Passwords must match'
+				'Passwords must match',
 			)
 			expect(check({ password: 'abc', confirm: 'abc' })).toEqual({
 				password: 'abc',
@@ -163,7 +163,7 @@ describe('composition/advanced', () => {
 			const check = partialCheck<{ password: string; confirm: string }>(
 				[['password'], ['confirm']],
 				(input) => input.password === input.confirm,
-				'Passwords must match'
+				'Passwords must match',
 			)
 			expect(() => check({ password: 'abc', confirm: 'xyz' })).toThrow('Passwords must match')
 		})
@@ -172,7 +172,7 @@ describe('composition/advanced', () => {
 			const check = partialCheck<{ password: string; confirm: string }>(
 				[['password'], ['confirm']],
 				(input) => input.password === input.confirm,
-				'Passwords must match'
+				'Passwords must match',
 			)
 			expect(check.safe!({ password: 'abc', confirm: 'xyz' })).toEqual({
 				ok: false,
@@ -354,7 +354,7 @@ describe('composition/advanced', () => {
 						{ message: 'Error 1', path: ['name'] },
 						{ message: 'Error 2', path: ['age'] },
 					],
-				})
+				}),
 			).toEqual({
 				nested: {
 					name: ['Error 1'],
@@ -376,7 +376,7 @@ describe('composition/advanced', () => {
 						{ message: 'Error 1', path: ['name'] },
 						{ message: 'Error 2', path: ['name'] },
 					],
-				})
+				}),
 			).toEqual({
 				nested: {
 					name: ['Error 1', 'Error 2'],
@@ -392,7 +392,7 @@ describe('composition/advanced', () => {
 			expect(
 				flatten({
 					issues: [{ message: 'Error', path: ['user', 'name'] }],
-				})
+				}),
 			).toEqual({
 				nested: {
 					'user.name': ['Error'],

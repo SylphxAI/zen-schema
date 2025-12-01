@@ -20,7 +20,7 @@ export const int: Validator<number> = createValidator(
 		return v
 	},
 	(v) => (Number.isInteger(v) ? { ok: true, value: v } : ERR_INT),
-	{ type: 'integer', constraints: { integer: true } }
+	{ type: 'integer', constraints: { integer: true } },
 )
 
 /** Positive number (> 0) */
@@ -30,7 +30,7 @@ export const positive: Validator<number> = createValidator(
 		return v
 	},
 	(v) => (v > 0 ? { ok: true, value: v } : ERR_POSITIVE),
-	{ type: 'positive', constraints: { exclusiveMinimum: 0 } }
+	{ type: 'positive', constraints: { exclusiveMinimum: 0 } },
 )
 
 /** Negative number (< 0) */
@@ -40,7 +40,7 @@ export const negative: Validator<number> = createValidator(
 		return v
 	},
 	(v) => (v < 0 ? { ok: true, value: v } : ERR_NEGATIVE),
-	{ type: 'negative', constraints: { exclusiveMaximum: 0 } }
+	{ type: 'negative', constraints: { exclusiveMaximum: 0 } },
 )
 
 /** Non-negative number (>= 0) */
@@ -50,7 +50,7 @@ export const nonnegative: Validator<number> = createValidator(
 		return v
 	},
 	(v) => (v >= 0 ? { ok: true, value: v } : ERR_NONNEGATIVE),
-	{ type: 'nonnegative', constraints: { minimum: 0 } }
+	{ type: 'nonnegative', constraints: { minimum: 0 } },
 )
 
 /** Non-positive number (<= 0) */
@@ -60,7 +60,7 @@ export const nonpositive: Validator<number> = createValidator(
 		return v
 	},
 	(v) => (v <= 0 ? { ok: true, value: v } : ERR_NONPOSITIVE),
-	{ type: 'nonpositive', constraints: { maximum: 0 } }
+	{ type: 'nonpositive', constraints: { maximum: 0 } },
 )
 
 /** Finite number */
@@ -70,7 +70,7 @@ export const finite: Validator<number> = createValidator(
 		return v
 	},
 	(v) => (Number.isFinite(v) ? { ok: true, value: v } : ERR_FINITE),
-	{ type: 'finite', constraints: { finite: true } }
+	{ type: 'finite', constraints: { finite: true } },
 )
 
 /** Greater than or equal */
@@ -82,7 +82,7 @@ export const gte = (n: number): Validator<number> => {
 			return v
 		},
 		(v) => (v >= n ? { ok: true, value: v } : err),
-		{ type: 'gte', constraints: { minimum: n } }
+		{ type: 'gte', constraints: { minimum: n } },
 	)
 }
 
@@ -95,7 +95,7 @@ export const lte = (n: number): Validator<number> => {
 			return v
 		},
 		(v) => (v <= n ? { ok: true, value: v } : err),
-		{ type: 'lte', constraints: { maximum: n } }
+		{ type: 'lte', constraints: { maximum: n } },
 	)
 }
 
@@ -108,7 +108,7 @@ export const gt = (n: number): Validator<number> => {
 			return v
 		},
 		(v) => (v > n ? { ok: true, value: v } : err),
-		{ type: 'gt', constraints: { exclusiveMinimum: n } }
+		{ type: 'gt', constraints: { exclusiveMinimum: n } },
 	)
 }
 
@@ -121,7 +121,7 @@ export const lt = (n: number): Validator<number> => {
 			return v
 		},
 		(v) => (v < n ? { ok: true, value: v } : err),
-		{ type: 'lt', constraints: { exclusiveMaximum: n } }
+		{ type: 'lt', constraints: { exclusiveMaximum: n } },
 	)
 }
 
@@ -134,7 +134,7 @@ export const multipleOf = (n: number): Validator<number> => {
 			return v
 		},
 		(v) => (v % n === 0 ? { ok: true, value: v } : err),
-		{ type: 'multipleOf', constraints: { multipleOf: n } }
+		{ type: 'multipleOf', constraints: { multipleOf: n } },
 	)
 }
 
@@ -152,7 +152,7 @@ export const safe: Validator<number> = createValidator(
 			minimum: Number.MIN_SAFE_INTEGER,
 			maximum: Number.MAX_SAFE_INTEGER,
 		},
-	}
+	},
 )
 
 /** Alias: step is same as multipleOf */

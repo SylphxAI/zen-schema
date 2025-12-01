@@ -16,7 +16,7 @@ const ERR_OBJECT: Result<never> = { ok: false, error: 'Expected object' }
  */
 export const record = <K extends string, V>(
 	keyValidator: Parser<K>,
-	valueValidator: Parser<V>
+	valueValidator: Parser<V>,
 ): Parser<Record<K, V>> => {
 	// Cache safe method lookups for JIT
 	const hasKeySafe = keyValidator.safe !== undefined

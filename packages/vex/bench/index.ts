@@ -119,7 +119,7 @@ function runBench(
 	vexFn: () => void,
 	valibotFn: () => void,
 	zodFn: () => void,
-	iterations: number
+	iterations: number,
 ) {
 	const vexOps = bench(`Vex:      ${category}`, vexFn, iterations)
 	const valibotOps = bench(`Valibot:  ${category}`, valibotFn, iterations)
@@ -150,21 +150,21 @@ runBench(
 	() => vexSimpleValidator(simpleData),
 	() => v.parse(valibotSimpleSchema, simpleData),
 	() => zodSimpleSchema.parse(simpleData),
-	ITERATIONS
+	ITERATIONS,
 )
 runBench(
 	'complex object',
 	() => vexUserValidator(validUser),
 	() => v.parse(valibotUserSchema, validUser),
 	() => zodUserSchema.parse(validUser),
-	ITERATIONS
+	ITERATIONS,
 )
 runBench(
 	'array (100 items)',
 	() => vexUsersValidator(validUsers),
 	() => v.parse(valibotUsersSchema, validUsers),
 	() => zodUsersSchema.parse(validUsers),
-	ITERATIONS / 10
+	ITERATIONS / 10,
 )
 
 // 2. SafeParse (returns Result)
@@ -174,14 +174,14 @@ runBench(
 	() => safeParse(vexUserValidator)(validUser),
 	() => v.safeParse(valibotUserSchema, validUser),
 	() => zodUserSchema.safeParse(validUser),
-	ITERATIONS
+	ITERATIONS,
 )
 runBench(
 	'safeParse object (invalid)',
 	() => safeParse(vexUserValidator)({ name: '', age: -1, email: 'bad', id: 'x' }),
 	() => v.safeParse(valibotUserSchema, { name: '', age: -1, email: 'bad', id: 'x' }),
 	() => zodUserSchema.safeParse({ name: '', age: -1, email: 'bad', id: 'x' }),
-	ITERATIONS
+	ITERATIONS,
 )
 
 // 3. Primitive validation
@@ -191,14 +191,14 @@ runBench(
 	() => vexEmailValidator('test@example.com'),
 	() => v.parse(valibotEmailSchema, 'test@example.com'),
 	() => zodStringSchema.parse('test@example.com'),
-	ITERATIONS
+	ITERATIONS,
 )
 runBench(
 	'number.int.positive',
 	() => vexNumberValidator(42),
 	() => v.parse(valibotNumberSchema, 42),
 	() => zodNumberSchema.parse(42),
-	ITERATIONS
+	ITERATIONS,
 )
 
 // 4. Schema creation
@@ -208,14 +208,14 @@ runBench(
 	() => str(email),
 	() => v.pipe(v.string(), v.email()),
 	() => z.string().email(),
-	ITERATIONS
+	ITERATIONS,
 )
 runBench(
 	'create object validator',
 	() => object({ name: str(), value: num() }),
 	() => v.object({ name: v.string(), value: v.number() }),
 	() => z.object({ name: z.string(), value: z.number() }),
-	ITERATIONS
+	ITERATIONS,
 )
 
 // ============================================================
@@ -228,10 +228,10 @@ console.log('='.repeat(70))
 console.log()
 
 console.log(
-	'| Benchmark                    | Vex        | Valibot    | Zod        | vs Valibot | vs Zod  |'
+	'| Benchmark                    | Vex        | Valibot    | Zod        | vs Valibot | vs Zod  |',
 )
 console.log(
-	'|------------------------------|------------|------------|------------|------------|---------|'
+	'|------------------------------|------------|------------|------------|------------|---------|',
 )
 
 for (const r of results) {
@@ -240,7 +240,7 @@ for (const r of results) {
 	const indV = vsV >= 1 ? '🟢' : '🔴'
 	const indZ = vsZ >= 1 ? '🟢' : '🔴'
 	console.log(
-		`| ${r.name.padEnd(28)} | ${(r.vex / 1e6).toFixed(1).padStart(8)}M | ${(r.valibot / 1e6).toFixed(1).padStart(8)}M | ${(r.zod / 1e6).toFixed(1).padStart(8)}M | ${indV} ${vsV.toFixed(2).padStart(5)}x | ${indZ} ${vsZ.toFixed(2).padStart(4)}x |`
+		`| ${r.name.padEnd(28)} | ${(r.vex / 1e6).toFixed(1).padStart(8)}M | ${(r.valibot / 1e6).toFixed(1).padStart(8)}M | ${(r.zod / 1e6).toFixed(1).padStart(8)}M | ${indV} ${vsV.toFixed(2).padStart(5)}x | ${indZ} ${vsZ.toFixed(2).padStart(4)}x |`,
 	)
 }
 

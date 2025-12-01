@@ -27,7 +27,7 @@ const strAsync = createAsyncValidator(
 	async (v: unknown) => {
 		if (typeof v !== 'string') return { ok: false, error: 'Expected string' }
 		return { ok: true, value: v }
-	}
+	},
 )
 
 const _numAsync = createAsyncValidator(
@@ -38,7 +38,7 @@ const _numAsync = createAsyncValidator(
 	async (v: unknown) => {
 		if (typeof v !== 'number') return { ok: false, error: 'Expected number' }
 		return { ok: true, value: v }
-	}
+	},
 )
 
 describe('async/methods', () => {
@@ -93,7 +93,7 @@ describe('async/methods', () => {
 		test('pipes multiple validators', async () => {
 			const upperAsync = createAsyncValidator(
 				async (v: string) => v.toUpperCase(),
-				async (v: string) => ({ ok: true, value: v.toUpperCase() })
+				async (v: string) => ({ ok: true, value: v.toUpperCase() }),
 			)
 
 			const piped = pipeAsync(strAsync, upperAsync)
@@ -103,7 +103,7 @@ describe('async/methods', () => {
 		test('safe version works', async () => {
 			const upperAsync = createAsyncValidator(
 				async (v: string) => v.toUpperCase(),
-				async (v: string) => ({ ok: true, value: v.toUpperCase() })
+				async (v: string) => ({ ok: true, value: v.toUpperCase() }),
 			)
 
 			const piped = pipeAsync(strAsync, upperAsync)
@@ -296,7 +296,7 @@ describe('async/methods', () => {
 			const check = partialCheckAsync<{ password: string; confirm: string }>(
 				[['password'], ['confirm']],
 				(input) => input.password === input.confirm,
-				'Passwords must match'
+				'Passwords must match',
 			)
 			expect(await check({ password: 'abc', confirm: 'abc' })).toEqual({
 				password: 'abc',
@@ -308,7 +308,7 @@ describe('async/methods', () => {
 			const check = partialCheckAsync<{ password: string; confirm: string }>(
 				[['password'], ['confirm']],
 				(input) => input.password === input.confirm,
-				'Passwords must match'
+				'Passwords must match',
 			)
 			await expect(check({ password: 'abc', confirm: 'xyz' })).rejects.toThrow('Passwords must match')
 		})
@@ -317,7 +317,7 @@ describe('async/methods', () => {
 			const check = partialCheckAsync<{ password: string; confirm: string }>(
 				[['password'], ['confirm']],
 				(input) => input.password === input.confirm,
-				'Passwords must match'
+				'Passwords must match',
 			)
 			expect(await check.safe!({ password: 'abc', confirm: 'xyz' })).toEqual({
 				ok: false,
@@ -336,7 +336,7 @@ describe('async/methods', () => {
 				() => {
 					throw new Error('Oops')
 				},
-				'Check failed'
+				'Check failed',
 			)
 			expect(await check.safe!({ a: 5 })).toEqual({ ok: false, error: 'Check failed' })
 		})
@@ -358,7 +358,7 @@ describe('async/methods', () => {
 		test('returns schema as-is', async () => {
 			const validator = createAsyncValidator(
 				async (v: unknown) => v as [string, number],
-				async (v: unknown) => ({ ok: true, value: v as [string, number] })
+				async (v: unknown) => ({ ok: true, value: v as [string, number] }),
 			)
 			const result = argsAsync(validator)
 			expect(result).toBe(validator)

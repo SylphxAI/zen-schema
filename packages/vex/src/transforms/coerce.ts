@@ -8,7 +8,7 @@ import { createValidator, ValidationError } from '../core'
 /** Coerce value to string */
 export const coerceString: Parser<string> = createValidator(
 	(v) => String(v),
-	(v) => ({ ok: true, value: String(v) })
+	(v) => ({ ok: true, value: String(v) }),
 )
 
 /** Coerce value to number */
@@ -23,13 +23,13 @@ export const coerceNumber: Parser<number> = createValidator(
 		return Number.isNaN(n)
 			? { ok: false, error: 'Cannot coerce to number' }
 			: { ok: true, value: n }
-	}
+	},
 )
 
 /** Coerce value to boolean */
 export const coerceBoolean: Parser<boolean> = createValidator(
 	(v) => Boolean(v),
-	(v) => ({ ok: true, value: Boolean(v) })
+	(v) => ({ ok: true, value: Boolean(v) }),
 )
 
 /** Coerce value to Date */
@@ -44,7 +44,7 @@ export const coerceDate: Parser<Date> = createValidator(
 		return Number.isNaN(d.getTime())
 			? { ok: false, error: 'Cannot coerce to Date' }
 			: { ok: true, value: d }
-	}
+	},
 )
 
 /** Coerce value to BigInt */
@@ -62,7 +62,7 @@ export const coerceBigInt: Parser<bigint> = createValidator(
 		} catch {
 			return { ok: false, error: 'Cannot coerce to BigInt' }
 		}
-	}
+	},
 )
 
 /** Coercion namespace */

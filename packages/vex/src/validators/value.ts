@@ -19,7 +19,7 @@ export const value = <T>(expected: T): Validator<T, T> => {
 			if (v !== expected) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (v === expected ? { ok: true, value: v } : err)
+		(v) => (v === expected ? { ok: true, value: v } : err),
 	)
 }
 
@@ -38,7 +38,7 @@ export const values = <T>(expected: readonly T[]): Validator<T, T> => {
 			if (!set.has(v)) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (set.has(v) ? { ok: true, value: v } : err)
+		(v) => (set.has(v) ? { ok: true, value: v } : err),
 	)
 }
 
@@ -56,7 +56,7 @@ export const notValue = <T>(excluded: T): Validator<T, T> => {
 			if (v === excluded) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (v !== excluded ? { ok: true, value: v } : err)
+		(v) => (v !== excluded ? { ok: true, value: v } : err),
 	)
 }
 
@@ -75,7 +75,7 @@ export const notValues = <T>(excluded: readonly T[]): Validator<T, T> => {
 			if (set.has(v)) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (!set.has(v) ? { ok: true, value: v } : err)
+		(v) => (!set.has(v) ? { ok: true, value: v } : err),
 	)
 }
 
@@ -93,7 +93,7 @@ export const gtValue = (min: number | bigint | Date): Validator<number | bigint 
 			if (v <= min) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (v > min ? { ok: true, value: v } : err)
+		(v) => (v > min ? { ok: true, value: v } : err),
 	)
 }
 
@@ -111,7 +111,7 @@ export const ltValue = (max: number | bigint | Date): Validator<number | bigint 
 			if (v >= max) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (v < max ? { ok: true, value: v } : err)
+		(v) => (v < max ? { ok: true, value: v } : err),
 	)
 }
 
@@ -129,7 +129,7 @@ export const minValue = (min: number | bigint | Date): Validator<number | bigint
 			if (v < min) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (v >= min ? { ok: true, value: v } : err)
+		(v) => (v >= min ? { ok: true, value: v } : err),
 	)
 }
 
@@ -147,6 +147,6 @@ export const maxValue = (max: number | bigint | Date): Validator<number | bigint
 			if (v > max) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (v <= max ? { ok: true, value: v } : err)
+		(v) => (v <= max ? { ok: true, value: v } : err),
 	)
 }

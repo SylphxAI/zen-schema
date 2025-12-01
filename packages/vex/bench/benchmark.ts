@@ -85,7 +85,7 @@ const nestedSchema = object({
 		object({
 			createdAt: str(),
 			updatedAt: optional(str()),
-		})
+		}),
 	),
 })
 
@@ -112,7 +112,7 @@ results.push(
 		try {
 			strValidator(123)
 		} catch {}
-	})
+	}),
 )
 results.push(bench('num (valid)', () => numValidator(validNumber)))
 results.push(
@@ -120,7 +120,7 @@ results.push(
 		try {
 			numValidator('abc')
 		} catch {}
-	})
+	}),
 )
 
 // Piped validators
@@ -131,7 +131,7 @@ results.push(
 		try {
 			emailValidator(invalidString)
 		} catch {}
-	})
+	}),
 )
 results.push(bench('pipe(num, int, gte, lte) valid', () => intRangeValidator(50)))
 results.push(
@@ -139,7 +139,7 @@ results.push(
 		try {
 			intRangeValidator(150)
 		} catch {}
-	})
+	}),
 )
 
 // Object validation
@@ -150,7 +150,7 @@ results.push(
 		try {
 			userSchema({ name: 123 })
 		} catch {}
-	})
+	}),
 )
 
 // Array validation
@@ -161,7 +161,7 @@ results.push(
 		try {
 			arraySchema(['a', 'b'])
 		} catch {}
-	})
+	}),
 )
 
 // Union validation
@@ -173,7 +173,7 @@ results.push(
 		try {
 			unionSchema({})
 		} catch {}
-	})
+	}),
 )
 
 // Safe parse

@@ -20,7 +20,7 @@ export type AsyncValidator<I, O = I> = {
 /** Create an async validator with both throwing and safe versions */
 export const createAsyncValidator = <I, O>(
 	parse: (value: I) => Promise<O>,
-	safeParse: (value: I) => Promise<Result<O>>
+	safeParse: (value: I) => Promise<Result<O>>,
 ): AsyncValidator<I, O> => {
 	const fn = parse as AsyncValidator<I, O>
 	fn.safe = safeParse

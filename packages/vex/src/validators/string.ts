@@ -29,7 +29,7 @@ export const min = (n: number): Validator<string> => {
 			return v
 		},
 		(v) => (v.length >= n ? { ok: true, value: v } : err),
-		{ type: 'minLength', constraints: { value: n, minLength: n } }
+		{ type: 'minLength', constraints: { value: n, minLength: n } },
 	)
 }
 
@@ -42,7 +42,7 @@ export const max = (n: number): Validator<string> => {
 			return v
 		},
 		(v) => (v.length <= n ? { ok: true, value: v } : err),
-		{ type: 'maxLength', constraints: { value: n, maxLength: n } }
+		{ type: 'maxLength', constraints: { value: n, maxLength: n } },
 	)
 }
 
@@ -55,7 +55,7 @@ export const len = (n: number): Validator<string> => {
 			return v
 		},
 		(v) => (v.length === n ? { ok: true, value: v } : err),
-		{ type: 'length', constraints: { value: n, length: n } }
+		{ type: 'length', constraints: { value: n, length: n } },
 	)
 }
 
@@ -66,7 +66,7 @@ export const nonempty: Validator<string> = createValidator(
 		return v
 	},
 	(v) => (v.length > 0 ? { ok: true, value: v } : ERR_REQUIRED),
-	{ type: 'minLength', constraints: { value: 1, minLength: 1 } }
+	{ type: 'minLength', constraints: { value: 1, minLength: 1 } },
 )
 
 /** Alias: nonEmpty (Valibot compatibility) */
@@ -80,7 +80,7 @@ export const email: Validator<string> = createValidator(
 		return v
 	},
 	(v) => (EMAIL_RE.test(v) ? { ok: true, value: v } : ERR_EMAIL),
-	{ type: 'email', constraints: { format: 'email' } }
+	{ type: 'email', constraints: { format: 'email' } },
 )
 
 /** URL format */
@@ -91,7 +91,7 @@ export const url: Validator<string> = createValidator(
 		return v
 	},
 	(v) => (URL_RE.test(v) ? { ok: true, value: v } : ERR_URL),
-	{ type: 'url', constraints: { format: 'uri' } }
+	{ type: 'url', constraints: { format: 'uri' } },
 )
 
 /** UUID format */
@@ -102,7 +102,7 @@ export const uuid: Validator<string> = createValidator(
 		return v
 	},
 	(v) => (UUID_RE.test(v) ? { ok: true, value: v } : ERR_UUID),
-	{ type: 'uuid', constraints: { format: 'uuid' } }
+	{ type: 'uuid', constraints: { format: 'uuid' } },
 )
 
 /** Regex pattern */
@@ -113,7 +113,7 @@ export const pattern = (re: RegExp, msg = 'Invalid format'): Validator<string> =
 			if (!re.test(v)) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (re.test(v) ? { ok: true, value: v } : err)
+		(v) => (re.test(v) ? { ok: true, value: v } : err),
 	)
 }
 
@@ -126,7 +126,7 @@ export const startsWith = (prefix: string): Validator<string> => {
 			if (!v.startsWith(prefix)) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (v.startsWith(prefix) ? { ok: true, value: v } : err)
+		(v) => (v.startsWith(prefix) ? { ok: true, value: v } : err),
 	)
 }
 
@@ -139,7 +139,7 @@ export const endsWith = (suffix: string): Validator<string> => {
 			if (!v.endsWith(suffix)) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (v.endsWith(suffix) ? { ok: true, value: v } : err)
+		(v) => (v.endsWith(suffix) ? { ok: true, value: v } : err),
 	)
 }
 
@@ -152,7 +152,7 @@ export const includes = (search: string): Validator<string> => {
 			if (!v.includes(search)) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (v.includes(search) ? { ok: true, value: v } : err)
+		(v) => (v.includes(search) ? { ok: true, value: v } : err),
 	)
 }
 
@@ -170,7 +170,7 @@ export const datetime: Validator<string> = createValidator(
 	},
 	(v) =>
 		DATETIME_RE.test(v) && !Number.isNaN(Date.parse(v)) ? { ok: true, value: v } : ERR_DATETIME,
-	{ type: 'datetime', constraints: { format: 'date-time' } }
+	{ type: 'datetime', constraints: { format: 'date-time' } },
 )
 
 /** ISO 8601 date only (e.g., 2024-01-15) */
@@ -183,7 +183,7 @@ export const dateOnly: Validator<string> = createValidator(
 	},
 	(v) =>
 		DATE_ONLY_RE.test(v) && !Number.isNaN(Date.parse(v)) ? { ok: true, value: v } : ERR_DATE_ONLY,
-	{ type: 'isoDate', constraints: { format: 'date' } }
+	{ type: 'isoDate', constraints: { format: 'date' } },
 )
 
 /** ISO 8601 time only (e.g., 10:30:00) */
@@ -202,7 +202,7 @@ export const time: Validator<string> = createValidator(
 		return v
 	},
 	(v) => (isValidTime(v) ? { ok: true, value: v } : ERR_TIME),
-	{ type: 'isoTime', constraints: { format: 'time' } }
+	{ type: 'isoTime', constraints: { format: 'time' } },
 )
 
 // ============================================================
@@ -227,7 +227,7 @@ export const ipv4: Validator<string> = createValidator(
 		return v
 	},
 	(v) => (isValidIPv4(v) ? { ok: true, value: v } : ERR_IPV4),
-	{ type: 'ipv4', constraints: { format: 'ipv4' } }
+	{ type: 'ipv4', constraints: { format: 'ipv4' } },
 )
 
 /** IPv6 address (e.g., 2001:0db8:85a3:0000:0000:8a2e:0370:7334) */
@@ -239,7 +239,7 @@ export const ipv6: Validator<string> = createValidator(
 		return v
 	},
 	(v) => (IPV6_RE.test(v) ? { ok: true, value: v } : ERR_IPV6),
-	{ type: 'ipv6', constraints: { format: 'ipv6' } }
+	{ type: 'ipv6', constraints: { format: 'ipv6' } },
 )
 
 /** IP address (IPv4 or IPv6) */
@@ -248,7 +248,7 @@ export const ip: Validator<string> = createValidator(
 		if (!isValidIPv4(v) && !IPV6_RE.test(v)) throw new ValidationError('Invalid IP address')
 		return v
 	},
-	(v) => (isValidIPv4(v) || IPV6_RE.test(v) ? { ok: true, value: v } : ERR_IP)
+	(v) => (isValidIPv4(v) || IPV6_RE.test(v) ? { ok: true, value: v } : ERR_IP),
 )
 
 // ============================================================
@@ -262,7 +262,7 @@ export const cuid: Validator<string> = createValidator(
 		if (!CUID_RE.test(v)) throw new ValidationError('Invalid CUID')
 		return v
 	},
-	(v) => (CUID_RE.test(v) ? { ok: true, value: v } : ERR_CUID)
+	(v) => (CUID_RE.test(v) ? { ok: true, value: v } : ERR_CUID),
 )
 
 /** CUID2 format (variable length, lowercase) */
@@ -272,7 +272,7 @@ export const cuid2: Validator<string> = createValidator(
 		if (!CUID2_RE.test(v)) throw new ValidationError('Invalid CUID2')
 		return v
 	},
-	(v) => (CUID2_RE.test(v) ? { ok: true, value: v } : ERR_CUID2)
+	(v) => (CUID2_RE.test(v) ? { ok: true, value: v } : ERR_CUID2),
 )
 
 /** ULID format (26 chars, Crockford base32) */
@@ -282,7 +282,7 @@ export const ulid: Validator<string> = createValidator(
 		if (!ULID_RE.test(v)) throw new ValidationError('Invalid ULID')
 		return v
 	},
-	(v) => (ULID_RE.test(v) ? { ok: true, value: v } : ERR_ULID)
+	(v) => (ULID_RE.test(v) ? { ok: true, value: v } : ERR_ULID),
 )
 
 /** Base64 string */
@@ -292,7 +292,7 @@ export const base64: Validator<string> = createValidator(
 		if (!BASE64_RE.test(v)) throw new ValidationError('Invalid base64')
 		return v
 	},
-	(v) => (BASE64_RE.test(v) ? { ok: true, value: v } : ERR_BASE64)
+	(v) => (BASE64_RE.test(v) ? { ok: true, value: v } : ERR_BASE64),
 )
 
 // ============================================================
@@ -322,7 +322,7 @@ export const hexColor: Validator<string> = createValidator(
 		if (!HEX_COLOR_RE.test(v)) throw new ValidationError('Invalid hex color')
 		return v
 	},
-	(v) => (HEX_COLOR_RE.test(v) ? { ok: true, value: v } : ERR_HEX_COLOR)
+	(v) => (HEX_COLOR_RE.test(v) ? { ok: true, value: v } : ERR_HEX_COLOR),
 )
 
 /** Hexadecimal string */
@@ -332,7 +332,7 @@ export const hexadecimal: Validator<string> = createValidator(
 		if (!HEX_RE.test(v)) throw new ValidationError('Invalid hexadecimal')
 		return v
 	},
-	(v) => (HEX_RE.test(v) ? { ok: true, value: v } : ERR_HEX)
+	(v) => (HEX_RE.test(v) ? { ok: true, value: v } : ERR_HEX),
 )
 /** Alias for hexadecimal */
 export { hexadecimal as hex }
@@ -344,7 +344,7 @@ export const nanoid: Validator<string> = createValidator(
 		if (!NANOID_RE.test(v)) throw new ValidationError('Invalid nanoid')
 		return v
 	},
-	(v) => (NANOID_RE.test(v) ? { ok: true, value: v } : ERR_NANOID)
+	(v) => (NANOID_RE.test(v) ? { ok: true, value: v } : ERR_NANOID),
 )
 
 /** URL slug (lowercase letters, numbers, hyphens) */
@@ -354,7 +354,7 @@ export const slug: Validator<string> = createValidator(
 		if (!SLUG_RE.test(v)) throw new ValidationError('Invalid slug')
 		return v
 	},
-	(v) => (SLUG_RE.test(v) ? { ok: true, value: v } : ERR_SLUG)
+	(v) => (SLUG_RE.test(v) ? { ok: true, value: v } : ERR_SLUG),
 )
 
 /** MAC-48 address (e.g., 00:1A:2B:3C:4D:5E or 00-1A-2B-3C-4D-5E) */
@@ -364,7 +364,7 @@ export const mac48: Validator<string> = createValidator(
 		if (!MAC48_RE.test(v)) throw new ValidationError('Invalid MAC-48 address')
 		return v
 	},
-	(v) => (MAC48_RE.test(v) ? { ok: true, value: v } : ERR_MAC48)
+	(v) => (MAC48_RE.test(v) ? { ok: true, value: v } : ERR_MAC48),
 )
 
 /** MAC-64 address (EUI-64) */
@@ -374,7 +374,7 @@ export const mac64: Validator<string> = createValidator(
 		if (!MAC64_RE.test(v)) throw new ValidationError('Invalid MAC-64 address')
 		return v
 	},
-	(v) => (MAC64_RE.test(v) ? { ok: true, value: v } : ERR_MAC64)
+	(v) => (MAC64_RE.test(v) ? { ok: true, value: v } : ERR_MAC64),
 )
 
 /** MAC address (MAC-48 or MAC-64) */
@@ -383,7 +383,7 @@ export const mac: Validator<string> = createValidator(
 		if (!MAC48_RE.test(v) && !MAC64_RE.test(v)) throw new ValidationError('Invalid MAC address')
 		return v
 	},
-	(v) => (MAC48_RE.test(v) || MAC64_RE.test(v) ? { ok: true, value: v } : ERR_MAC)
+	(v) => (MAC48_RE.test(v) || MAC64_RE.test(v) ? { ok: true, value: v } : ERR_MAC),
 )
 
 /** Credit card number (Luhn algorithm) */
@@ -410,7 +410,7 @@ export const creditCard: Validator<string> = createValidator(
 		if (!isValidCreditCard(v)) throw new ValidationError('Invalid credit card number')
 		return v
 	},
-	(v) => (isValidCreditCard(v) ? { ok: true, value: v } : ERR_CREDIT_CARD)
+	(v) => (isValidCreditCard(v) ? { ok: true, value: v } : ERR_CREDIT_CARD),
 )
 
 /** BIC/SWIFT code (e.g., DEUTDEFF, DEUTDEFF500) */
@@ -420,7 +420,7 @@ export const bic: Validator<string> = createValidator(
 		if (!BIC_RE.test(v)) throw new ValidationError('Invalid BIC/SWIFT code')
 		return v
 	},
-	(v) => (BIC_RE.test(v) ? { ok: true, value: v } : ERR_BIC)
+	(v) => (BIC_RE.test(v) ? { ok: true, value: v } : ERR_BIC),
 )
 
 /** IMEI (15 digits with Luhn check) */
@@ -444,7 +444,7 @@ export const imei: Validator<string> = createValidator(
 		if (!isValidIMEI(v)) throw new ValidationError('Invalid IMEI')
 		return v
 	},
-	(v) => (isValidIMEI(v) ? { ok: true, value: v } : ERR_IMEI)
+	(v) => (isValidIMEI(v) ? { ok: true, value: v } : ERR_IMEI),
 )
 
 /** Emoji (single emoji or emoji sequence) */
@@ -455,7 +455,7 @@ export const emoji: Validator<string> = createValidator(
 		if (!EMOJI_RE.test(v)) throw new ValidationError('Invalid emoji')
 		return v
 	},
-	(v) => (EMOJI_RE.test(v) ? { ok: true, value: v } : ERR_EMOJI)
+	(v) => (EMOJI_RE.test(v) ? { ok: true, value: v } : ERR_EMOJI),
 )
 
 /** Decimal number string (e.g., "123.45", "-123.45") */
@@ -465,7 +465,7 @@ export const decimal: Validator<string> = createValidator(
 		if (!DECIMAL_RE.test(v)) throw new ValidationError('Invalid decimal')
 		return v
 	},
-	(v) => (DECIMAL_RE.test(v) ? { ok: true, value: v } : ERR_DECIMAL)
+	(v) => (DECIMAL_RE.test(v) ? { ok: true, value: v } : ERR_DECIMAL),
 )
 
 /** Digits only string */
@@ -475,7 +475,7 @@ export const digits: Validator<string> = createValidator(
 		if (!DIGITS_RE.test(v)) throw new ValidationError('Must contain only digits')
 		return v
 	},
-	(v) => (DIGITS_RE.test(v) ? { ok: true, value: v } : ERR_DIGITS)
+	(v) => (DIGITS_RE.test(v) ? { ok: true, value: v } : ERR_DIGITS),
 )
 
 /** Octal string (e.g., "0o755", "755") */
@@ -485,7 +485,7 @@ export const octal: Validator<string> = createValidator(
 		if (!OCTAL_RE.test(v)) throw new ValidationError('Invalid octal')
 		return v
 	},
-	(v) => (OCTAL_RE.test(v) ? { ok: true, value: v } : ERR_OCTAL)
+	(v) => (OCTAL_RE.test(v) ? { ok: true, value: v } : ERR_OCTAL),
 )
 
 /** Hash validator factory for various hash types */
@@ -515,7 +515,7 @@ export const hash = (algorithm: keyof typeof HASH_LENGTHS): Validator<string> =>
 			if (!re.test(v)) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (re.test(v) ? { ok: true, value: v } : err)
+		(v) => (re.test(v) ? { ok: true, value: v } : err),
 	)
 }
 
@@ -540,7 +540,7 @@ export const rfcEmail: Validator<string> = createValidator(
 		if (!RFC_EMAIL_RE.test(v)) throw new ValidationError('Invalid RFC 5322 email')
 		return v
 	},
-	(v) => (RFC_EMAIL_RE.test(v) ? { ok: true, value: v } : ERR_RFC_EMAIL)
+	(v) => (RFC_EMAIL_RE.test(v) ? { ok: true, value: v } : ERR_RFC_EMAIL),
 )
 
 /**
@@ -552,7 +552,7 @@ export const isoWeek: Validator<string> = createValidator(
 		if (!ISO_WEEK_RE.test(v)) throw new ValidationError('Invalid ISO week')
 		return v
 	},
-	(v) => (ISO_WEEK_RE.test(v) ? { ok: true, value: v } : ERR_ISO_WEEK)
+	(v) => (ISO_WEEK_RE.test(v) ? { ok: true, value: v } : ERR_ISO_WEEK),
 )
 
 /**
@@ -580,7 +580,7 @@ export const iban: Validator<string> = createValidator(
 		if (!isValidIBAN(v)) throw new ValidationError('Invalid IBAN')
 		return v
 	},
-	(v) => (isValidIBAN(v) ? { ok: true, value: v } : ERR_IBAN)
+	(v) => (isValidIBAN(v) ? { ok: true, value: v } : ERR_IBAN),
 )
 
 /**
@@ -617,7 +617,7 @@ export const isbn: Validator<string> = createValidator(
 		if (!isValidISBN(v)) throw new ValidationError('Invalid ISBN')
 		return v
 	},
-	(v) => (isValidISBN(v) ? { ok: true, value: v } : ERR_ISBN)
+	(v) => (isValidISBN(v) ? { ok: true, value: v } : ERR_ISBN),
 )
 
 /** Empty string validator */
@@ -626,7 +626,7 @@ export const empty: Validator<string> = createValidator(
 		if (v.length !== 0) throw new ValidationError('Must be empty')
 		return v
 	},
-	(v) => (v.length === 0 ? { ok: true, value: v } : ERR_EMPTY)
+	(v) => (v.length === 0 ? { ok: true, value: v } : ERR_EMPTY),
 )
 
 /** Alias for pattern - regex validation */
@@ -644,7 +644,7 @@ export const notLength = (n: number): Validator<string> => {
 			if (v.length === n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (v.length !== n ? { ok: true, value: v } : err)
+		(v) => (v.length !== n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -673,7 +673,7 @@ export const isoTimestamp: Validator<string> = createValidator(
 	(v) =>
 		ISO_TIMESTAMP_RE.test(v) && !Number.isNaN(Date.parse(v))
 			? { ok: true, value: v }
-			: ERR_ISO_TIMESTAMP
+			: ERR_ISO_TIMESTAMP,
 )
 
 /** ISO time with seconds */
@@ -692,5 +692,5 @@ export const isoTimeSecond: Validator<string> = createValidator(
 		if (!isValidTimeSecond(v)) throw new ValidationError('Invalid ISO time')
 		return v
 	},
-	(v) => (isValidTimeSecond(v) ? { ok: true, value: v } : ERR_ISO_TIME_SECOND)
+	(v) => (isValidTimeSecond(v) ? { ok: true, value: v } : ERR_ISO_TIME_SECOND),
 )

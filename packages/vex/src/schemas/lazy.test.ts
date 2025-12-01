@@ -9,7 +9,7 @@ describe('lazy', () => {
 			object({
 				value: num(),
 				children: array(nodeValidator),
-			})
+			}),
 		)
 
 		const input = {
@@ -32,7 +32,7 @@ describe('lazy', () => {
 					if (v === null) return null
 					return linkedListValidator(v)
 				},
-			})
+			}),
 		)
 
 		const input = { value: 1, next: { value: 2, next: { value: 3, next: null } } }
@@ -45,7 +45,7 @@ describe('lazy', () => {
 			object({
 				value: num(),
 				children: array(nodeValidator),
-			})
+			}),
 		)
 
 		expect(() => nodeValidator({ value: 'not a number', children: [] })).toThrow()

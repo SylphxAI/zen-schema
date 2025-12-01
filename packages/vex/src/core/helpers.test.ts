@@ -205,7 +205,7 @@ describe('helpers', () => {
 		test('creates validator with safe method', () => {
 			const validator = createValidator(
 				(v: string) => v.toUpperCase(),
-				(v) => ({ ok: true, value: v.toUpperCase() })
+				(v) => ({ ok: true, value: v.toUpperCase() }),
 			)
 
 			expect(validator('hello')).toBe('HELLO')
@@ -215,7 +215,7 @@ describe('helpers', () => {
 		test('adds Standard Schema support', () => {
 			const validator = createValidator(
 				(v: string) => v.toUpperCase(),
-				(v) => ({ ok: true, value: v.toUpperCase() })
+				(v) => ({ ok: true, value: v.toUpperCase() }),
 			)
 
 			expect(validator['~standard']).toBeDefined()
@@ -231,7 +231,7 @@ describe('helpers', () => {
 				(v) => {
 					if (typeof v !== 'string') return { ok: false, error: 'Expected string' }
 					return { ok: true, value: v }
-				}
+				},
 			)
 
 			expect(validator.safe!(123)).toEqual({ ok: false, error: 'Expected string' })
@@ -244,7 +244,7 @@ describe('helpers', () => {
 					const num = parseInt(v, 10)
 					if (Number.isNaN(num)) return { ok: false, error: 'Not a number' }
 					return { ok: true, value: num }
-				}
+				},
 			)
 
 			expect(validator('42')).toBe(42)
@@ -261,7 +261,7 @@ describe('helpers', () => {
 				(v) => {
 					if (v < 0) return { ok: false, error: 'Must be positive' }
 					return { ok: true, value: v }
-				}
+				},
 			)
 
 			expect(validator(5)).toBe(5)
@@ -273,7 +273,7 @@ describe('helpers', () => {
 		test('Standard Schema validate uses safe method', () => {
 			const validator = createValidator(
 				(v: string) => v.toUpperCase(),
-				(v) => ({ ok: true, value: v.toUpperCase() })
+				(v) => ({ ok: true, value: v.toUpperCase() }),
 			)
 
 			const result = validator['~standard']!.validate('hello')
@@ -289,7 +289,7 @@ describe('helpers', () => {
 				(v) => {
 					if (typeof v !== 'number') return { ok: false, error: 'Expected number' }
 					return { ok: true, value: v }
-				}
+				},
 			)
 
 			const result = validator['~standard']!.validate('not a number')
@@ -299,7 +299,7 @@ describe('helpers', () => {
 		test('validator is callable', () => {
 			const validator = createValidator(
 				(v: string) => v,
-				(v) => ({ ok: true, value: v })
+				(v) => ({ ok: true, value: v }),
 			)
 
 			expect(typeof validator).toBe('function')
@@ -308,7 +308,7 @@ describe('helpers', () => {
 		test('validator has safe property', () => {
 			const validator = createValidator(
 				(v: string) => v,
-				(v) => ({ ok: true, value: v })
+				(v) => ({ ok: true, value: v }),
 			)
 
 			expect(typeof validator.safe).toBe('function')
@@ -317,7 +317,7 @@ describe('helpers', () => {
 		test('validator has ~standard property', () => {
 			const validator = createValidator(
 				(v: string) => v,
-				(v) => ({ ok: true, value: v })
+				(v) => ({ ok: true, value: v }),
 			)
 
 			expect(validator['~standard']).toBeDefined()
@@ -328,7 +328,7 @@ describe('helpers', () => {
 		test('handles null return value', () => {
 			const validator = createValidator(
 				(_v: unknown) => null,
-				(_v) => ({ ok: true, value: null })
+				(_v) => ({ ok: true, value: null }),
 			)
 
 			expect(validator('anything')).toBe(null)
@@ -338,7 +338,7 @@ describe('helpers', () => {
 		test('handles undefined return value', () => {
 			const validator = createValidator(
 				(_v: unknown) => undefined,
-				(_v) => ({ ok: true, value: undefined })
+				(_v) => ({ ok: true, value: undefined }),
 			)
 
 			expect(validator('anything')).toBe(undefined)
@@ -348,7 +348,7 @@ describe('helpers', () => {
 		test('handles array return value', () => {
 			const validator = createValidator(
 				(v: string) => v.split(','),
-				(v) => ({ ok: true, value: v.split(',') })
+				(v) => ({ ok: true, value: v.split(',') }),
 			)
 
 			expect(validator('a,b,c')).toEqual(['a', 'b', 'c'])
@@ -358,7 +358,7 @@ describe('helpers', () => {
 		test('handles object return value', () => {
 			const validator = createValidator(
 				(v: string) => ({ name: v }),
-				(v) => ({ ok: true, value: { name: v } })
+				(v) => ({ ok: true, value: { name: v } }),
 			)
 
 			expect(validator('John')).toEqual({ name: 'John' })
@@ -368,7 +368,7 @@ describe('helpers', () => {
 		test('preserves input value when no transformation', () => {
 			const validator = createValidator(
 				(v: number) => v,
-				(v) => ({ ok: true, value: v })
+				(v) => ({ ok: true, value: v }),
 			)
 
 			expect(validator(42)).toBe(42)
@@ -397,7 +397,7 @@ describe('helpers', () => {
 					if (typeof obj.age !== 'number') return { ok: false, error: 'Age must be number' }
 					if (obj.age < 0) return { ok: false, error: 'Age must be positive' }
 					return { ok: true, value: { name: obj.name, age: obj.age } }
-				}
+				},
 			)
 
 			expect(validator({ name: 'John', age: 30 })).toEqual({ name: 'John', age: 30 })

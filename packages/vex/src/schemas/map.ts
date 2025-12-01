@@ -16,7 +16,7 @@ const ERR_MAP: Result<never> = { ok: false, error: 'Expected Map' }
  */
 export const map = <K, V>(
 	keyValidator: Parser<K>,
-	valueValidator: Parser<V>
+	valueValidator: Parser<V>,
 ): Parser<Map<K, V>> => {
 	const fn = ((value: unknown) => {
 		if (!(value instanceof Map)) throw new ValidationError('Expected Map')

@@ -66,7 +66,7 @@ describe('record', () => {
 					if (!/^\d+$/.test(v)) throw new Error('Must be numeric')
 					return v
 				}),
-				str()
+				str(),
 			)
 			const result = numKey.safe!({ abc: 'value' })
 			expect(result.ok).toBe(false)
@@ -166,7 +166,7 @@ describe('record', () => {
 					if (!/^\d+$/.test(v)) throw new Error('Must be numeric')
 					return v
 				}),
-				str()
+				str(),
 			)
 			const result = numKey['~standard']!.validate({ abc: 'value' })
 			expect(result.issues).toBeDefined()

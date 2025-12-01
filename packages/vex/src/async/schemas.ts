@@ -11,7 +11,7 @@ import type { AsyncParser, AsyncValidator } from './core'
 // ============================================================
 
 export const arrayAsync = <T>(
-	itemValidator: AsyncValidator<unknown, T> | ((v: unknown) => Promise<T>)
+	itemValidator: AsyncValidator<unknown, T> | ((v: unknown) => Promise<T>),
 ): AsyncParser<T[]> => {
 	const validator = itemValidator as AsyncValidator<unknown, T>
 
@@ -21,8 +21,8 @@ export const arrayAsync = <T>(
 			value.map((item, i) =>
 				Promise.resolve(validator(item)).catch((e) => {
 					throw new ValidationError(`[${i}]: ${e instanceof Error ? e.message : 'Unknown error'}`)
-				})
-			)
+				}),
+			),
 		)
 	}) as AsyncParser<T[]>
 
@@ -68,7 +68,7 @@ export const objectAsync = <T extends Record<string, unknown>>(shape: Shape<T>):
 				result[key] = (await validator(input[key as string])) as T[keyof T]
 			} catch (e) {
 				throw new ValidationError(
-					`${String(key)}: ${e instanceof Error ? e.message : 'Unknown error'}`
+					`${String(key)}: ${e instanceof Error ? e.message : 'Unknown error'}`,
 				)
 			}
 		}
@@ -104,7 +104,7 @@ export const objectAsync = <T extends Record<string, unknown>>(shape: Shape<T>):
 }
 
 export const looseObjectAsync = <T extends Record<string, unknown>>(
-	shape: Shape<T>
+	shape: Shape<T>,
 ): AsyncParser<T & Record<string, unknown>> => {
 	const entries = Object.entries(shape) as [keyof T, AsyncValidator<unknown, unknown>][]
 
@@ -119,7 +119,7 @@ export const looseObjectAsync = <T extends Record<string, unknown>>(
 				result[key] = (await validator(input[key as string])) as T[keyof T]
 			} catch (e) {
 				throw new ValidationError(
-					`${String(key)}: ${e instanceof Error ? e.message : 'Unknown error'}`
+					`${String(key)}: ${e instanceof Error ? e.message : 'Unknown error'}`,
 				)
 			}
 		}
@@ -158,7 +158,7 @@ export const strictObjectAsync = objectAsync
 
 export const objectWithRestAsync = <T extends Record<string, unknown>, R>(
 	shape: Shape<T>,
-	rest: AsyncValidator<unknown, R> | ((v: unknown) => Promise<R>)
+	rest: AsyncValidator<unknown, R> | ((v: unknown) => Promise<R>),
 ): AsyncParser<T & Record<string, R>> => {
 	const entries = Object.entries(shape) as [keyof T, AsyncValidator<unknown, unknown>][]
 	const knownKeys = new Set(Object.keys(shape))
@@ -176,7 +176,7 @@ export const objectWithRestAsync = <T extends Record<string, unknown>, R>(
 				result[key as string] = await validator(input[key as string])
 			} catch (e) {
 				throw new ValidationError(
-					`${String(key)}: ${e instanceof Error ? e.message : 'Unknown error'}`
+					`${String(key)}: ${e instanceof Error ? e.message : 'Unknown error'}`,
 				)
 			}
 		}
@@ -262,8 +262,8 @@ export const tupleAsync = <T extends TupleValidators>(schemas: T): AsyncParser<T
 			schemas.map((schema, i) =>
 				Promise.resolve(schema(value[i])).catch((e) => {
 					throw new ValidationError(`[${i}]: ${e instanceof Error ? e.message : 'Unknown error'}`)
-				})
-			)
+				}),
+			),
 		) as Promise<TupleOutput<T>>
 	}) as AsyncParser<TupleOutput<T>>
 
@@ -296,7 +296,7 @@ export const tupleAsync = <T extends TupleValidators>(schemas: T): AsyncParser<T
 export const strictTupleAsync = tupleAsync
 
 export const looseTupleAsync = <T extends TupleValidators>(
-	schemas: T
+	schemas: T,
 ): AsyncParser<TupleOutput<T>> => {
 	const fn = (async (value: unknown) => {
 		if (!Array.isArray(value)) throw new ValidationError('Expected array')
@@ -307,8 +307,8 @@ export const looseTupleAsync = <T extends TupleValidators>(
 			schemas.map((schema, i) =>
 				Promise.resolve(schema(value[i])).catch((e) => {
 					throw new ValidationError(`[${i}]: ${e instanceof Error ? e.message : 'Unknown error'}`)
-				})
-			)
+				}),
+			),
 		) as Promise<TupleOutput<T>>
 	}) as AsyncParser<TupleOutput<T>>
 
@@ -340,7 +340,7 @@ export const looseTupleAsync = <T extends TupleValidators>(
 
 export const tupleWithRestAsync = <T extends TupleValidators, R>(
 	schemas: T,
-	rest: AsyncValidator<unknown, R> | ((v: unknown) => Promise<R>)
+	rest: AsyncValidator<unknown, R> | ((v: unknown) => Promise<R>),
 ): AsyncParser<[...TupleOutput<T>, ...R[]]> => {
 	type Output = [...TupleOutput<T>, ...R[]]
 	const restValidator = rest as AsyncValidator<unknown, R>
@@ -415,7 +415,7 @@ export const tupleWithRestAsync = <T extends TupleValidators, R>(
 
 export const mapAsync = <K, V>(
 	keyValidator: AsyncValidator<unknown, K>,
-	valueValidator: AsyncValidator<unknown, V>
+	valueValidator: AsyncValidator<unknown, V>,
 ): AsyncParser<Map<K, V>> => {
 	const fn = (async (value: unknown) => {
 		if (!(value instanceof Map)) throw new ValidationError('Expected Map')
@@ -485,7 +485,7 @@ export const setAsync = <T>(itemValidator: AsyncValidator<unknown, T>): AsyncPar
 }
 
 export const recordAsync = <V>(
-	valueValidator: AsyncValidator<unknown, V>
+	valueValidator: AsyncValidator<unknown, V>,
 ): AsyncParser<Record<string, V>> => {
 	const fn = (async (value: unknown) => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -525,7 +525,7 @@ export const recordAsync = <V>(
 export const intersectAsync = <
 	T extends readonly [AsyncParser<unknown>, ...AsyncParser<unknown>[]],
 >(
-	schemas: T
+	schemas: T,
 ): AsyncParser<T[number] extends AsyncParser<infer O> ? O : never> => {
 	type Output = T[number] extends AsyncParser<infer O> ? O : never
 
@@ -559,7 +559,7 @@ export const intersectAsync = <
 }
 
 export const unionAsync = <T extends readonly [AsyncParser<unknown>, ...AsyncParser<unknown>[]]>(
-	schemas: T
+	schemas: T,
 ): AsyncParser<T[number] extends AsyncParser<infer O> ? O : never> => {
 	type Output = T[number] extends AsyncParser<infer O> ? O : never
 
@@ -600,7 +600,7 @@ export const unionAsync = <T extends readonly [AsyncParser<unknown>, ...AsyncPar
 
 export const variantAsync = <K extends string, T extends AsyncParser<Record<K, unknown>>[]>(
 	key: K,
-	options: T
+	options: T,
 ): AsyncParser<T[number] extends AsyncParser<infer O> ? O : never> => {
 	type Output = T[number] extends AsyncParser<infer O> ? O : never
 

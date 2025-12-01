@@ -13,7 +13,7 @@ import { addStandardSchema, ValidationError } from '../core'
  */
 export const custom = <T>(
 	checkFn: (value: T) => boolean,
-	message = 'Validation failed'
+	message = 'Validation failed',
 ): Parser<T> => {
 	const err: Result<never> = { ok: false, error: message }
 
@@ -46,7 +46,7 @@ export const custom = <T>(
  */
 export const customAsync = <T>(
 	checkFn: (value: T) => Promise<boolean>,
-	message = 'Validation failed'
+	message = 'Validation failed',
 ): ((value: unknown) => Promise<T>) => {
 	return async (value: unknown) => {
 		if (!(await checkFn(value as T))) throw new ValidationError(message)

@@ -16,7 +16,7 @@ export const parseAsync = async <T>(schema: AsyncParser<T>, value: unknown): Pro
 
 export const safeParseAsync = async <T>(
 	schema: AsyncParser<T>,
-	value: unknown
+	value: unknown,
 ): Promise<{ success: true; data: T } | { success: false; error: string }> => {
 	if (schema.safe) {
 		const result = await schema.safe(value)
@@ -36,9 +36,9 @@ export const parserAsync = <T>(schema: AsyncParser<T>): ((value: unknown) => Pro
 }
 
 export const safeParserAsync = <T>(
-	schema: AsyncParser<T>
+	schema: AsyncParser<T>,
 ): ((
-	value: unknown
+	value: unknown,
 ) => Promise<{ success: true; data: T } | { success: false; error: string }>) => {
 	return (value: unknown) => safeParseAsync(schema, value)
 }
@@ -113,7 +113,7 @@ export const transformAsync = <I, O>(fn: (value: I) => O | Promise<O>): AsyncVal
 
 export const checkAsync = <T>(
 	checkFn: (value: T) => boolean | Promise<boolean>,
-	message = 'Validation failed'
+	message = 'Validation failed',
 ): AsyncValidator<T, T> => {
 	const fn = (async (value: T) => {
 		if (!(await checkFn(value))) throw new ValidationError(message)
@@ -134,7 +134,7 @@ export const checkAsync = <T>(
 
 export const checkItemsAsync = <T>(
 	checkFn: (item: T, index: number) => boolean | Promise<boolean>,
-	message = 'Item validation failed'
+	message = 'Item validation failed',
 ): AsyncValidator<T[], T[]> => {
 	const fn = (async (value: T[]) => {
 		for (let i = 0; i < value.length; i++) {
@@ -169,7 +169,7 @@ export const rawCheckAsync = <T>(
 	check: (ctx: {
 		input: T
 		addIssue: (issue: { message: string; path?: PropertyKey[] }) => void
-	}) => void | Promise<void>
+	}) => void | Promise<void>,
 ): AsyncValidator<T, T> => {
 	const fn = (async (value: T) => {
 		const issues: { message: string; path?: PropertyKey[] }[] = []
@@ -199,7 +199,7 @@ export const rawCheckAsync = <T>(
 }
 
 export const rawTransformAsync = <I, O>(
-	transform: (ctx: { input: I; addIssue: (issue: { message: string }) => void }) => O | Promise<O>
+	transform: (ctx: { input: I; addIssue: (issue: { message: string }) => void }) => O | Promise<O>,
 ): AsyncValidator<I, O> => {
 	const fn = (async (value: I) => {
 		const issues: { message: string }[] = []
@@ -235,7 +235,7 @@ export const rawTransformAsync = <I, O>(
 export const partialCheckAsync = <T extends Record<string, unknown>>(
 	_paths: PropertyKey[][],
 	check: (input: T) => boolean | Promise<boolean>,
-	errorMessage = 'Partial check failed'
+	errorMessage = 'Partial check failed',
 ): AsyncValidator<T, T> => {
 	const fn = (async (value: T) => {
 		if (!(await check(value))) throw new ValidationError(errorMessage)
@@ -256,7 +256,7 @@ export const partialCheckAsync = <T extends Record<string, unknown>>(
 
 export const forwardAsync = <I, O>(
 	validator: AsyncValidator<I, O>,
-	_path: PropertyKey[]
+	_path: PropertyKey[],
 ): AsyncValidator<I, O> => {
 	const fn = (async (value: I) => validator(value)) as AsyncValidator<I, O>
 

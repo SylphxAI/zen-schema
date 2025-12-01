@@ -32,7 +32,7 @@ const baseStr: Parser<string> = createValidator(
 		return v
 	},
 	(v) => (typeof v === 'string' ? { ok: true, value: v } : ERR_STRING),
-	{ type: 'string' }
+	{ type: 'string' },
 )
 
 const baseNum: Parser<number> = createValidator(
@@ -41,7 +41,7 @@ const baseNum: Parser<number> = createValidator(
 		return v
 	},
 	(v) => (typeof v === 'number' && !Number.isNaN(v) ? { ok: true, value: v } : ERR_NUMBER),
-	{ type: 'number' }
+	{ type: 'number' },
 )
 
 const baseBool: Parser<boolean> = createValidator(
@@ -50,7 +50,7 @@ const baseBool: Parser<boolean> = createValidator(
 		return v
 	},
 	(v) => (typeof v === 'boolean' ? { ok: true, value: v } : ERR_BOOLEAN),
-	{ type: 'boolean' }
+	{ type: 'boolean' },
 )
 
 const baseBigInt: Parser<bigint> = createValidator(
@@ -59,7 +59,7 @@ const baseBigInt: Parser<bigint> = createValidator(
 		return v
 	},
 	(v) => (typeof v === 'bigint' ? { ok: true, value: v } : ERR_BIGINT),
-	{ type: 'bigint' }
+	{ type: 'bigint' },
 )
 
 const baseDate: Parser<Date> = createValidator(
@@ -69,7 +69,7 @@ const baseDate: Parser<Date> = createValidator(
 		return v
 	},
 	(v) => (v instanceof Date && !Number.isNaN(v.getTime()) ? { ok: true, value: v } : ERR_DATE),
-	{ type: 'date' }
+	{ type: 'date' },
 )
 
 const baseArr: Parser<unknown[]> = createValidator(
@@ -78,7 +78,7 @@ const baseArr: Parser<unknown[]> = createValidator(
 		return v
 	},
 	(v) => (Array.isArray(v) ? { ok: true, value: v } : ERR_ARRAY),
-	{ type: 'array' }
+	{ type: 'array' },
 )
 
 const baseObj: Parser<Record<string, unknown>> = createValidator(
@@ -91,7 +91,7 @@ const baseObj: Parser<Record<string, unknown>> = createValidator(
 		typeof v === 'object' && v !== null && !Array.isArray(v)
 			? { ok: true, value: v as Record<string, unknown> }
 			: ERR_OBJECT,
-	{ type: 'object' }
+	{ type: 'object' },
 )
 
 const baseSymbol: Parser<symbol> = createValidator(
@@ -100,7 +100,7 @@ const baseSymbol: Parser<symbol> = createValidator(
 		return v
 	},
 	(v) => (typeof v === 'symbol' ? { ok: true, value: v } : ERR_SYMBOL),
-	{ type: 'symbol' }
+	{ type: 'symbol' },
 )
 
 const baseFunc: Parser<(...args: unknown[]) => unknown> = createValidator(
@@ -112,7 +112,7 @@ const baseFunc: Parser<(...args: unknown[]) => unknown> = createValidator(
 		typeof v === 'function'
 			? { ok: true, value: v as (...args: unknown[]) => unknown }
 			: ERR_FUNCTION,
-	{ type: 'function' }
+	{ type: 'function' },
 )
 
 // ============================================================
@@ -122,7 +122,7 @@ const baseFunc: Parser<(...args: unknown[]) => unknown> = createValidator(
 function composeWithBase<T>(
 	base: Parser<T>,
 	constraints: Validator<T, T>[],
-	baseType: string
+	baseType: string,
 ): Parser<T> {
 	if (constraints.length === 0) return base
 

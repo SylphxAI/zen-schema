@@ -137,7 +137,7 @@ export const object = <T extends Record<string, unknown>>(shape: Shape<T>): Pars
  * Make all properties optional
  */
 export const partial = <T extends Record<string, unknown>>(
-	schema: Parser<T>
+	schema: Parser<T>,
 ): Parser<Partial<T>> => {
 	const fn = ((value: unknown) => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -166,7 +166,7 @@ export const partial = <T extends Record<string, unknown>>(
  * Allow extra properties (passthrough mode)
  */
 export const passthrough = <T extends Record<string, unknown>>(
-	schema: Parser<T>
+	schema: Parser<T>,
 ): Parser<T & Record<string, unknown>> => {
 	const fn = ((value: unknown) => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -222,7 +222,7 @@ export { strict as strip }
  */
 export const pick = <T extends Record<string, Parser<unknown>>, K extends keyof T>(
 	shape: T,
-	keys: readonly K[]
+	keys: readonly K[],
 ): Pick<T, K> => {
 	const result = {} as Pick<T, K>
 	for (const key of keys) {
@@ -242,7 +242,7 @@ export const pick = <T extends Record<string, Parser<unknown>>, K extends keyof 
  */
 export const omit = <T extends Record<string, Parser<unknown>>, K extends keyof T>(
 	shape: T,
-	keys: readonly K[]
+	keys: readonly K[],
 ): Omit<T, K> => {
 	const keysSet = new Set<string>(keys as unknown as string[])
 	const result = {} as Record<string, Parser<unknown>>
@@ -266,7 +266,7 @@ export const extend = <
 	U extends Record<string, Parser<unknown>>,
 >(
 	base: T,
-	extension: U
+	extension: U,
 ): T & U => {
 	return { ...base, ...extension }
 }
@@ -284,7 +284,7 @@ export const merge = extend
  * const fullUser = required(partialUser)
  */
 export const required = <T extends Record<string, unknown>>(
-	schema: Parser<Partial<T>>
+	schema: Parser<Partial<T>>,
 ): Parser<Required<T>> => {
 	const fn = ((value: unknown) => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -381,7 +381,7 @@ export const strictObject = object
  * validateUser({ name: 'John', extra: 123 }) // { name: 'John', extra: 123 }
  */
 export const looseObject = <T extends Record<string, unknown>>(
-	shape: Shape<T>
+	shape: Shape<T>,
 ): Parser<T & Record<string, unknown>> => {
 	// Pre-extract keys and validators for JIT-optimized indexed loops
 	const keys = Object.keys(shape) as (keyof T)[]
@@ -455,7 +455,7 @@ export const looseObject = <T extends Record<string, unknown>>(
  */
 export const objectWithRest = <T extends Record<string, unknown>, R>(
 	shape: Shape<T>,
-	rest: Parser<R>
+	rest: Parser<R>,
 ): Parser<T & Record<string, R>> => {
 	// Pre-extract keys and validators for JIT-optimized indexed loops
 	const keys = Object.keys(shape) as (keyof T)[]
@@ -579,7 +579,7 @@ export const objectWithRest = <T extends Record<string, unknown>, R>(
  */
 export const variant = <K extends string, T extends Parser<Record<K, unknown>>[]>(
 	key: K,
-	options: T
+	options: T,
 ): Parser<T[number] extends Parser<infer O> ? O : never> => {
 	type Output = T[number] extends Parser<infer O> ? O : never
 

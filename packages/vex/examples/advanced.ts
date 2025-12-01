@@ -297,7 +297,5 @@ function processUsers(data: unknown): User[] {
 	}))
 }
 
-const users = processUsers([
-	{ id: '550e8400-e29b-41d4-a716-446655440000', email: 'ALICE@EXAMPLE.COM', age: 30 },
-])
+const users = processUsers([{ id: '550e8400-e29b-41d4-a716-446655440000', email: 'ALICE@EXAMPLE.COM', age: 30 }])
 console.log('Processed users:', users)

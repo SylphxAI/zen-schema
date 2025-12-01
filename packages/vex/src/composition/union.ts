@@ -16,7 +16,7 @@ type UnionOutput<T extends readonly Parser<unknown>[]> = {
  * const validateStringOrNumber = union([str, num])
  */
 export const union = <T extends readonly [Parser<unknown>, ...Parser<unknown>[]]>(
-	schemas: T
+	schemas: T,
 ): Parser<UnionOutput<T>> => {
 	const msg = 'Value does not match any type in union'
 	const err: Result<never> = { ok: false, error: msg }
@@ -99,7 +99,7 @@ export const union = <T extends readonly [Parser<unknown>, ...Parser<unknown>[]]
  */
 export const discriminatedUnion = <K extends string, T extends readonly Parser<unknown>[]>(
 	_discriminator: K,
-	options: T
+	options: T,
 ): Parser<UnionOutput<T>> => {
 	const msg = `Invalid discriminator value`
 	const ERR_OBJECT: Result<never> = { ok: false, error: 'Expected object' }

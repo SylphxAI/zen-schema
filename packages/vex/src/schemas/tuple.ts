@@ -19,7 +19,7 @@ type TupleOutput<T extends readonly Parser<unknown>[]> = {
  * const validateEntry = tuple([str, num, bool])
  */
 export const tuple = <T extends readonly [Parser<unknown>, ...Parser<unknown>[]]>(
-	schemas: T
+	schemas: T,
 ): Parser<TupleOutput<T>> => {
 	const len = schemas.length
 
@@ -128,7 +128,7 @@ export const strictTuple = tuple
  * validatePoint([1, 2, 3]) // [1, 2] - extra element ignored
  */
 export const looseTuple = <T extends readonly [Parser<unknown>, ...Parser<unknown>[]]>(
-	schemas: T
+	schemas: T,
 ): Parser<TupleOutput<T>> => {
 	const len = schemas.length
 
@@ -236,7 +236,7 @@ export const tupleWithRest = <
 	R extends Parser<unknown>,
 >(
 	schemas: T,
-	rest: R
+	rest: R,
 ): Parser<[...TupleOutput<T>, ...(R extends Parser<infer O> ? O[] : never)]> => {
 	type Output = [...TupleOutput<T>, ...(R extends Parser<infer O> ? O[] : never)]
 	const len = schemas.length

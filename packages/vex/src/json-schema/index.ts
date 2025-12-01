@@ -2,10 +2,11 @@
 // JSON Schema Conversion
 // ============================================================
 
-import type { Parser, Validator } from '../core'
+import type { Parser } from '../core'
+import { getMeta, type Metadata } from '../core'
 
 // ============================================================
-// Schema Metadata Types
+// JSON Schema Types
 // ============================================================
 
 /** JSON Schema draft-07 types */
@@ -49,7 +50,7 @@ export interface JsonSchema {
 	if?: JsonSchema
 	then?: JsonSchema
 	else?: JsonSchema
-	// Metadata
+	// Metadata (documentation)
 	title?: string
 	description?: string
 	default?: unknown
@@ -60,41 +61,6 @@ export interface JsonSchema {
 }
 
 type JsonSchemaType = 'string' | 'number' | 'integer' | 'boolean' | 'null' | 'array' | 'object'
-
-/** Schema metadata stored on validators */
-export interface SchemaMetadata {
-	type: string
-	constraints?: Record<string, unknown>
-	inner?: Parser<unknown> | Parser<unknown>[] | Record<string, Parser<unknown>>
-}
-
-// Symbol for schema metadata
-const SCHEMA_META = '~schema' as const
-
-/** Type for validators with schema metadata */
-export type WithSchema<T> = T & { [SCHEMA_META]?: SchemaMetadata }
-
-// ============================================================
-// Schema Metadata Helpers
-// ============================================================
-
-/**
- * Add schema metadata to a validator
- */
-export function addSchemaMetadata<T extends Validator<unknown, unknown>>(
-	validator: T,
-	metadata: SchemaMetadata
-): T {
-	;(validator as WithSchema<T>)[SCHEMA_META] = metadata
-	return validator
-}
-
-/**
- * Get schema metadata from a validator
- */
-export function getSchemaMetadata(validator: unknown): SchemaMetadata | undefined {
-	return (validator as WithSchema<unknown>)?.[SCHEMA_META]
-}
 
 // ============================================================
 // toJsonSchema Options
@@ -119,11 +85,11 @@ export interface ToJsonSchemaOptions {
  * Convert a Vex schema to JSON Schema
  *
  * @example
- * const schema = pipe(str, email)
+ * const schema = pipe(str(), email)
  * toJsonSchema(schema) // { type: "string", format: "email" }
  *
  * @example
- * const userSchema = object({ name: str, age: num })
+ * const userSchema = object({ name: str(), age: num() })
  * toJsonSchema(userSchema)
  * // {
  * //   type: "object",
@@ -133,7 +99,7 @@ export interface ToJsonSchemaOptions {
  */
 export function toJsonSchema(
 	schema: Parser<unknown>,
-	options: ToJsonSchemaOptions = {}
+	options: ToJsonSchemaOptions = {},
 ): JsonSchema {
 	const { $schema: includeSchema = true, draft = 'draft-07', definitions } = options
 
@@ -160,7 +126,7 @@ export function toJsonSchema(
  * Convert only definitions without a root schema
  */
 export function toJsonSchemaDefs(
-	definitions: Record<string, Parser<unknown>>
+	definitions: Record<string, Parser<unknown>>,
 ): Record<string, JsonSchema> {
 	const result: Record<string, JsonSchema> = {}
 	for (const [name, schema] of Object.entries(definitions)) {
@@ -212,17 +178,27 @@ function getSchemaUrl(draft: string): string {
 }
 
 function convertSchema(schema: Parser<unknown>): JsonSchema {
-	const meta = getSchemaMetadata(schema)
+	const meta = getMeta(schema)
 
 	if (!meta) {
 		// Try to infer from function name or return empty schema
 		return inferSchema(schema)
 	}
 
-	return convertByType(meta)
+	const result = convertByType(meta)
+
+	// Add documentation metadata
+	if (meta.description !== undefined) result.description = meta.description
+	if (meta.title !== undefined) result.title = meta.title
+	if (meta.examples !== undefined) result.examples = meta.examples
+	if (meta.default !== undefined) result.default = meta.default
+	if (meta.deprecated !== undefined) result.deprecated = meta.deprecated
+	if (meta.readonly !== undefined) result.readOnly = meta.readonly
+
+	return result
 }
 
-function convertByType(meta: SchemaMetadata): JsonSchema {
+function convertByType(meta: Metadata): JsonSchema {
 	const { type, constraints = {}, inner } = meta
 
 	switch (type) {
@@ -292,14 +268,14 @@ function convertByType(meta: SchemaMetadata): JsonSchema {
 function convertString(constraints: Record<string, unknown>): JsonSchema {
 	const result: JsonSchema = { type: 'string' }
 
-	if (constraints.minLength !== undefined) result.minLength = constraints.minLength as number
-	if (constraints.maxLength !== undefined) result.maxLength = constraints.maxLength as number
-	if (constraints.length !== undefined) {
-		result.minLength = constraints.length as number
-		result.maxLength = constraints.length as number
+	if (constraints['minLength'] !== undefined) result.minLength = constraints['minLength'] as number
+	if (constraints['maxLength'] !== undefined) result.maxLength = constraints['maxLength'] as number
+	if (constraints['length'] !== undefined) {
+		result.minLength = constraints['length'] as number
+		result.maxLength = constraints['length'] as number
 	}
-	if (constraints.pattern !== undefined) result.pattern = constraints.pattern as string
-	if (constraints.format !== undefined) result.format = constraints.format as string
+	if (constraints['pattern'] !== undefined) result.pattern = constraints['pattern'] as string
+	if (constraints['format'] !== undefined) result.format = constraints['format'] as string
 
 	return result
 }
@@ -307,14 +283,15 @@ function convertString(constraints: Record<string, unknown>): JsonSchema {
 function convertNumber(constraints: Record<string, unknown>): JsonSchema {
 	const result: JsonSchema = { type: 'number' }
 
-	if (constraints.minimum !== undefined) result.minimum = constraints.minimum as number
-	if (constraints.maximum !== undefined) result.maximum = constraints.maximum as number
-	if (constraints.exclusiveMinimum !== undefined)
-		result.exclusiveMinimum = constraints.exclusiveMinimum as number
-	if (constraints.exclusiveMaximum !== undefined)
-		result.exclusiveMaximum = constraints.exclusiveMaximum as number
-	if (constraints.multipleOf !== undefined) result.multipleOf = constraints.multipleOf as number
-	if (constraints.integer) result.type = 'integer'
+	if (constraints['minimum'] !== undefined) result.minimum = constraints['minimum'] as number
+	if (constraints['maximum'] !== undefined) result.maximum = constraints['maximum'] as number
+	if (constraints['exclusiveMinimum'] !== undefined)
+		result.exclusiveMinimum = constraints['exclusiveMinimum'] as number
+	if (constraints['exclusiveMaximum'] !== undefined)
+		result.exclusiveMaximum = constraints['exclusiveMaximum'] as number
+	if (constraints['multipleOf'] !== undefined)
+		result.multipleOf = constraints['multipleOf'] as number
+	if (constraints['integer']) result.type = 'integer'
 
 	return result
 }
@@ -326,20 +303,21 @@ function convertArray(constraints: Record<string, unknown>, items?: Parser<unkno
 		result.items = convertSchema(items)
 	}
 
-	if (constraints.minItems !== undefined) result.minItems = constraints.minItems as number
-	if (constraints.maxItems !== undefined) result.maxItems = constraints.maxItems as number
-	if (constraints.length !== undefined) {
-		result.minItems = constraints.length as number
-		result.maxItems = constraints.length as number
+	if (constraints['minItems'] !== undefined) result.minItems = constraints['minItems'] as number
+	if (constraints['maxItems'] !== undefined) result.maxItems = constraints['maxItems'] as number
+	if (constraints['length'] !== undefined) {
+		result.minItems = constraints['length'] as number
+		result.maxItems = constraints['length'] as number
 	}
-	if (constraints.uniqueItems !== undefined) result.uniqueItems = constraints.uniqueItems as boolean
+	if (constraints['uniqueItems'] !== undefined)
+		result.uniqueItems = constraints['uniqueItems'] as boolean
 
 	return result
 }
 
 function convertObject(
 	constraints: Record<string, unknown>,
-	shape?: Record<string, Parser<unknown>>
+	shape?: Record<string, Parser<unknown>>,
 ): JsonSchema {
 	const result: JsonSchema = { type: 'object' }
 
@@ -348,7 +326,7 @@ function convertObject(
 		const required: string[] = []
 
 		for (const [key, validator] of Object.entries(shape)) {
-			const propMeta = getSchemaMetadata(validator)
+			const propMeta = getMeta(validator)
 			result.properties[key] = convertSchema(validator)
 
 			// Check if property is optional
@@ -362,21 +340,21 @@ function convertObject(
 		}
 	}
 
-	if (constraints.additionalProperties !== undefined) {
-		result.additionalProperties = constraints.additionalProperties as boolean
+	if (constraints['additionalProperties'] !== undefined) {
+		result.additionalProperties = constraints['additionalProperties'] as boolean
 	}
 
-	if (constraints.minProperties !== undefined)
-		result.minProperties = constraints.minProperties as number
-	if (constraints.maxProperties !== undefined)
-		result.maxProperties = constraints.maxProperties as number
+	if (constraints['minProperties'] !== undefined)
+		result.minProperties = constraints['minProperties'] as number
+	if (constraints['maxProperties'] !== undefined)
+		result.maxProperties = constraints['maxProperties'] as number
 
 	return result
 }
 
 function convertTuple(
 	_constraints: Record<string, unknown>,
-	items?: Parser<unknown>[]
+	items?: Parser<unknown>[],
 ): JsonSchema {
 	const result: JsonSchema = { type: 'array' }
 
@@ -391,7 +369,7 @@ function convertTuple(
 
 function convertRecord(
 	_constraints: Record<string, unknown>,
-	valueSchema?: Parser<unknown>
+	valueSchema?: Parser<unknown>,
 ): JsonSchema {
 	const result: JsonSchema = { type: 'object' }
 
@@ -415,8 +393,8 @@ function convertSet(constraints: Record<string, unknown>, items?: Parser<unknown
 		result.items = convertSchema(items)
 	}
 
-	if (constraints.minSize !== undefined) result.minItems = constraints.minSize as number
-	if (constraints.maxSize !== undefined) result.maxItems = constraints.maxSize as number
+	if (constraints['minSize'] !== undefined) result.minItems = constraints['minSize'] as number
+	if (constraints['maxSize'] !== undefined) result.maxItems = constraints['maxSize'] as number
 
 	return result
 }
@@ -438,15 +416,15 @@ function convertIntersect(schemas?: Parser<unknown>[]): JsonSchema {
 }
 
 function convertLiteral(constraints: Record<string, unknown>): JsonSchema {
-	if (constraints.value !== undefined) {
-		return { const: constraints.value }
+	if (constraints['value'] !== undefined) {
+		return { const: constraints['value'] }
 	}
 	return {}
 }
 
 function convertEnum(constraints: Record<string, unknown>): JsonSchema {
-	if (constraints.values !== undefined) {
-		return { enum: constraints.values as unknown[] }
+	if (constraints['values'] !== undefined) {
+		return { enum: constraints['values'] as unknown[] }
 	}
 	return {}
 }
@@ -480,7 +458,7 @@ function convertLazy(inner?: Parser<unknown>): JsonSchema {
 
 function convertPipe(
 	_constraints: Record<string, unknown>,
-	schemas?: Parser<unknown>[]
+	schemas?: Parser<unknown>[],
 ): JsonSchema {
 	if (!schemas || schemas.length === 0) return {}
 
@@ -490,7 +468,7 @@ function convertPipe(
 
 	// Apply constraints from subsequent validators
 	for (let i = 1; i < schemas.length; i++) {
-		const meta = getSchemaMetadata(schemas[i])
+		const meta = getMeta(schemas[i])
 		if (meta?.constraints) {
 			result = { ...result, ...convertConstraints(meta.type, meta.constraints) }
 		}
@@ -503,14 +481,14 @@ function convertConstraints(type: string, constraints: Record<string, unknown>):
 	switch (type) {
 		case 'min':
 		case 'minLength':
-			return { minLength: constraints.value as number }
+			return { minLength: constraints['value'] as number }
 		case 'max':
 		case 'maxLength':
-			return { maxLength: constraints.value as number }
+			return { maxLength: constraints['value'] as number }
 		case 'length':
 			return {
-				minLength: constraints.value as number,
-				maxLength: constraints.value as number,
+				minLength: constraints['value'] as number,
+				maxLength: constraints['value'] as number,
 			}
 		case 'email':
 			return { format: 'email' }
@@ -533,21 +511,21 @@ function convertConstraints(type: string, constraints: Record<string, unknown>):
 			return { format: 'ipv6' }
 		case 'regex':
 		case 'pattern':
-			return { pattern: constraints.pattern as string }
+			return { pattern: constraints['pattern'] as string }
 		case 'gte':
 		case 'minimum':
-			return { minimum: constraints.value as number }
+			return { minimum: constraints['value'] as number }
 		case 'gt':
 		case 'exclusiveMinimum':
-			return { exclusiveMinimum: constraints.value as number }
+			return { exclusiveMinimum: constraints['value'] as number }
 		case 'lte':
 		case 'maximum':
-			return { maximum: constraints.value as number }
+			return { maximum: constraints['value'] as number }
 		case 'lt':
 		case 'exclusiveMaximum':
-			return { exclusiveMaximum: constraints.value as number }
+			return { exclusiveMaximum: constraints['value'] as number }
 		case 'multipleOf':
-			return { multipleOf: constraints.value as number }
+			return { multipleOf: constraints['value'] as number }
 		case 'integer':
 		case 'int':
 			return { type: 'integer' }
@@ -577,9 +555,3 @@ function inferSchema(schema: Parser<unknown>): JsonSchema {
 
 	return {}
 }
-
-// ============================================================
-// Exports
-// ============================================================
-
-export { SCHEMA_META }

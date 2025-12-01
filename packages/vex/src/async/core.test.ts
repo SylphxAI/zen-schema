@@ -171,7 +171,7 @@ describe('async/core', () => {
 		test('creates validator with parse and safeParse', async () => {
 			const validator = createAsyncValidator(
 				async (v: string) => v.toUpperCase(),
-				async (v: string) => ({ ok: true as const, value: v.toUpperCase() })
+				async (v: string) => ({ ok: true as const, value: v.toUpperCase() }),
 			)
 
 			expect(await validator('hello')).toBe('HELLO')
@@ -187,7 +187,7 @@ describe('async/core', () => {
 				async (v: unknown) => {
 					if (typeof v !== 'string') return { ok: false as const, error: 'Expected string' }
 					return { ok: true as const, value: v }
-				}
+				},
 			)
 
 			await expect(validator(123)).rejects.toThrow('Expected string')
@@ -197,7 +197,7 @@ describe('async/core', () => {
 		test('creates validator that transforms values', async () => {
 			const validator = createAsyncValidator(
 				async (v: number) => v * 2,
-				async (v: number) => ({ ok: true as const, value: v * 2 })
+				async (v: number) => ({ ok: true as const, value: v * 2 }),
 			)
 
 			expect(await validator(5)).toBe(10)
@@ -213,7 +213,7 @@ describe('async/core', () => {
 				async (v: string) => {
 					await new Promise((r) => setTimeout(r, 1))
 					return { ok: true as const, value: v.toLowerCase() }
-				}
+				},
 			)
 
 			expect(await validator('HELLO')).toBe('hello')
@@ -236,7 +236,7 @@ describe('async/core', () => {
 					if (typeof obj.name !== 'string') return { ok: false as const, error: 'Expected name' }
 					if (typeof obj.age !== 'number') return { ok: false as const, error: 'Expected age' }
 					return { ok: true as const, value: { name: obj.name, age: obj.age } }
-				}
+				},
 			)
 
 			expect(await validator({ name: 'John', age: 30 })).toEqual({ name: 'John', age: 30 })
@@ -256,7 +256,7 @@ describe('async/core', () => {
 				async (v: number) => {
 					if (v < 0) return { ok: false as const, error: 'Must be positive' }
 					return { ok: true as const, value: v }
-				}
+				},
 			)
 
 			expect(await validator.safe!(-1)).toEqual({ ok: false, error: 'Must be positive' })
@@ -266,7 +266,7 @@ describe('async/core', () => {
 		test('validator is callable', async () => {
 			const validator = createAsyncValidator(
 				async (v: string) => v,
-				async (v: string) => ({ ok: true as const, value: v })
+				async (v: string) => ({ ok: true as const, value: v }),
 			)
 
 			expect(typeof validator).toBe('function')
@@ -275,7 +275,7 @@ describe('async/core', () => {
 		test('validator has safe property', async () => {
 			const validator = createAsyncValidator(
 				async (v: string) => v,
-				async (v: string) => ({ ok: true as const, value: v })
+				async (v: string) => ({ ok: true as const, value: v }),
 			)
 
 			expect(typeof validator.safe).toBe('function')
@@ -290,7 +290,7 @@ describe('async/core', () => {
 				async (v: unknown) => {
 					if (v === null) return { ok: true as const, value: null }
 					return { ok: false as const, error: 'Expected null' }
-				}
+				},
 			)
 
 			expect(await validator(null)).toBe(null)
@@ -307,7 +307,7 @@ describe('async/core', () => {
 				async (v: unknown) => {
 					if (!Array.isArray(v)) return { ok: false as const, error: 'Expected array' }
 					return { ok: true as const, value: v.map((x) => x * 2) }
-				}
+				},
 			)
 
 			expect(await validator([1, 2, 3])).toEqual([2, 4, 6])
@@ -322,7 +322,7 @@ describe('async/core', () => {
 				},
 				async function (this: any, v: string) {
 					return { ok: true as const, value: v }
-				}
+				},
 			)
 
 			expect(await validator('test')).toBe('test')
@@ -389,7 +389,7 @@ describe('async/core', () => {
 				async (v: unknown) => {
 					if (typeof v !== 'string') return { ok: false as const, error: 'Expected string' }
 					return { ok: true as const, value: v }
-				}
+				},
 			)
 
 			const lengthValidator = createAsyncValidator(
@@ -400,7 +400,7 @@ describe('async/core', () => {
 				async (v: string) => {
 					if (v.length < 3) return { ok: false as const, error: 'Too short' }
 					return { ok: true as const, value: v }
-				}
+				},
 			)
 
 			// Chain validators
@@ -417,7 +417,7 @@ describe('async/core', () => {
 				},
 				async () => {
 					return { ok: false as const, error: 'Rejected' }
-				}
+				},
 			)
 
 			await expect(validator('test')).rejects.toThrow('Rejected')

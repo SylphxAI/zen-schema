@@ -1,17 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import {
-	array,
-	email,
-	int,
-	lower,
-	min,
-	num,
-	object,
-	optional,
-	pipe,
-	str,
-	trim,
-} from '..'
+import { array, email, int, lower, min, num, object, optional, pipe, str, trim } from '..'
 import {
 	brand,
 	description,
@@ -24,7 +12,6 @@ import {
 	metadata,
 	readonly,
 	title,
-	type ValidatorMetadata,
 } from './metadata'
 
 describe('Metadata Functions', () => {
@@ -44,7 +31,14 @@ describe('Metadata Functions', () => {
 		})
 
 		test('returns undefined for validators without metadata', () => {
-			expect(getMetadata(str())).toBeUndefined()
+			// Custom validator without metadata
+			const customValidator = ((v: unknown) => v) as any
+			expect(getMetadata(customValidator)).toBeUndefined()
+		})
+
+		test('str() has type metadata', () => {
+			// Built-in validators now have metadata
+			expect(getMetadata(str())?.type).toBe('string')
 		})
 
 		test('safe version delegates to inner safe', () => {
@@ -318,7 +312,7 @@ describe('Metadata Functions', () => {
 					name: str(),
 					age: num(int),
 				}),
-				'User object with name and age'
+				'User object with name and age',
 			)
 			expect(getDescription(userSchema)).toBe('User object with name and age')
 			expect(userSchema({ name: 'John', age: 30 })).toEqual({ name: 'John', age: 30 })
@@ -336,7 +330,7 @@ describe('Metadata Functions', () => {
 					street: str(),
 					city: str(),
 				}),
-				'Address'
+				'Address',
 			)
 			const userSchema = object({
 				name: str(),
@@ -497,7 +491,7 @@ describe('Metadata Functions', () => {
 			const validator = readonly(
 				object({
 					name: str(),
-				})
+				}),
 			)
 			const result: Readonly<{ name: string }> = validator({ name: 'John' })
 			expect(result.name).toBe('John')

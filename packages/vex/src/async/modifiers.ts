@@ -11,7 +11,7 @@ import type { AsyncParser, AsyncValidator } from './core'
 // ============================================================
 
 export const optionalAsync = <I, O>(
-	validator: AsyncValidator<I, O>
+	validator: AsyncValidator<I, O>,
 ): AsyncValidator<I | undefined, O | undefined> => {
 	const fn = (async (v: I | undefined) => {
 		if (v === undefined) return undefined
@@ -32,7 +32,7 @@ export const optionalAsync = <I, O>(
 }
 
 export const nullableAsync = <I, O>(
-	validator: AsyncValidator<I, O>
+	validator: AsyncValidator<I, O>,
 ): AsyncValidator<I | null, O | null> => {
 	const fn = (async (v: I | null) => {
 		if (v === null) return null
@@ -53,7 +53,7 @@ export const nullableAsync = <I, O>(
 }
 
 export const nullishAsync = <I, O>(
-	validator: AsyncValidator<I, O>
+	validator: AsyncValidator<I, O>,
 ): AsyncValidator<I | null | undefined, O | null | undefined> => {
 	const fn = (async (v: I | null | undefined) => {
 		if (v === null || v === undefined) return v
@@ -76,7 +76,7 @@ export const nullishAsync = <I, O>(
 export const undefinedableAsync = optionalAsync
 
 export const exactOptionalAsync = <I, O>(
-	validator: AsyncValidator<I, O>
+	validator: AsyncValidator<I, O>,
 ): AsyncValidator<I | undefined, O | undefined> => {
 	const fn = (async (v: I | undefined) => {
 		if (v === undefined) return undefined
@@ -101,7 +101,7 @@ export const exactOptionalAsync = <I, O>(
 // ============================================================
 
 export const nonNullableAsync = <I, O>(
-	validator: AsyncValidator<I | null, O | null>
+	validator: AsyncValidator<I | null, O | null>,
 ): AsyncValidator<I, Exclude<O, null>> => {
 	const fn = (async (v: I) => {
 		const result = await validator(v)
@@ -129,7 +129,7 @@ export const nonNullableAsync = <I, O>(
 }
 
 export const nonNullishAsync = <I, O>(
-	validator: AsyncValidator<I | null | undefined, O | null | undefined>
+	validator: AsyncValidator<I | null | undefined, O | null | undefined>,
 ): AsyncValidator<I, Exclude<O, null | undefined>> => {
 	const fn = (async (v: I) => {
 		const result = await validator(v)
@@ -163,7 +163,7 @@ export const nonNullishAsync = <I, O>(
 }
 
 export const nonOptionalAsync = <I, O>(
-	validator: AsyncValidator<I | undefined, O | undefined>
+	validator: AsyncValidator<I | undefined, O | undefined>,
 ): AsyncValidator<I, Exclude<O, undefined>> => {
 	const fn = (async (v: I) => {
 		const result = await validator(v)
@@ -196,7 +196,7 @@ export const nonOptionalAsync = <I, O>(
 
 export const fallbackAsync = <I, O>(
 	validator: AsyncValidator<I, O>,
-	fallbackValue: O | (() => O) | (() => Promise<O>)
+	fallbackValue: O | (() => O) | (() => Promise<O>),
 ): AsyncValidator<I, O> => {
 	const getFallback = async (): Promise<O> => {
 		if (typeof fallbackValue === 'function') {
@@ -234,7 +234,7 @@ export const fallbackAsync = <I, O>(
 // ============================================================
 
 export const partialAsync = <T extends Record<string, unknown>>(
-	schema: AsyncParser<T>
+	schema: AsyncParser<T>,
 ): AsyncParser<Partial<T>> => {
 	const fn = (async (value: unknown) => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -258,7 +258,7 @@ export const partialAsync = <T extends Record<string, unknown>>(
 }
 
 export const requiredAsync = <T extends Record<string, unknown>>(
-	schema: AsyncParser<Partial<T>>
+	schema: AsyncParser<Partial<T>>,
 ): AsyncParser<Required<T>> => {
 	const fn = (async (value: unknown) => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {

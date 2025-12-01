@@ -15,7 +15,7 @@ export const toInt: Validator<string, number> = createValidator(
 	(v) => {
 		const n = Number.parseInt(v, 10)
 		return Number.isNaN(n) ? { ok: false, error: 'Invalid integer' } : { ok: true, value: n }
-	}
+	},
 )
 
 /** Parse to float */
@@ -28,7 +28,7 @@ export const toFloat: Validator<string, number> = createValidator(
 	(v) => {
 		const n = Number.parseFloat(v)
 		return Number.isNaN(n) ? { ok: false, error: 'Invalid number' } : { ok: true, value: n }
-	}
+	},
 )
 
 /** Parse to Date */
@@ -41,7 +41,7 @@ export const toDate: Validator<string, Date> = createValidator(
 	(v) => {
 		const d = new Date(v)
 		return Number.isNaN(d.getTime()) ? { ok: false, error: 'Invalid date' } : { ok: true, value: d }
-	}
+	},
 )
 
 /**
@@ -51,7 +51,7 @@ export const toDate: Validator<string, Date> = createValidator(
 export const toMaxValue = <T extends number | bigint | Date>(max: T): Validator<T, T> =>
 	createValidator(
 		(v) => (v > max ? max : v) as T,
-		(v) => ({ ok: true, value: (v > max ? max : v) as T })
+		(v) => ({ ok: true, value: (v > max ? max : v) as T }),
 	)
 
 /**
@@ -61,5 +61,5 @@ export const toMaxValue = <T extends number | bigint | Date>(max: T): Validator<
 export const toMinValue = <T extends number | bigint | Date>(min: T): Validator<T, T> =>
 	createValidator(
 		(v) => (v < min ? min : v) as T,
-		(v) => ({ ok: true, value: (v < min ? min : v) as T })
+		(v) => ({ ok: true, value: (v < min ? min : v) as T }),
 	)

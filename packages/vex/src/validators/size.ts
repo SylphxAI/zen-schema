@@ -18,7 +18,7 @@ export const size = <T extends Sized>(n: number): Validator<T> => {
 			if (getSize(v) !== n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (getSize(v) === n ? { ok: true, value: v } : err)
+		(v) => (getSize(v) === n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -31,7 +31,7 @@ export const minSize = <T extends Sized>(n: number): Validator<T> => {
 			if (getSize(v) < n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (getSize(v) >= n ? { ok: true, value: v } : err)
+		(v) => (getSize(v) >= n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -44,7 +44,7 @@ export const maxSize = <T extends Sized>(n: number): Validator<T> => {
 			if (getSize(v) > n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (getSize(v) <= n ? { ok: true, value: v } : err)
+		(v) => (getSize(v) <= n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -57,6 +57,6 @@ export const notSize = <T extends Sized>(n: number): Validator<T> => {
 			if (getSize(v) === n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (getSize(v) !== n ? { ok: true, value: v } : err)
+		(v) => (getSize(v) !== n ? { ok: true, value: v } : err),
 	)
 }

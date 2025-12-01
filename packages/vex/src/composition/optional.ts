@@ -3,13 +3,15 @@
 // ============================================================
 
 import type { Result, Validator } from '../core'
-import { addSchemaMetadata, addStandardSchema } from '../core'
+import { addStandardSchema, getMeta, setMeta, wrapMeta } from '../core'
 
 /**
  * Make a validator optional (allows undefined)
+ *
+ * Preserves metadata (description, title, etc.) from inner validator.
  */
 export const optional = <I, O>(
-	validator: Validator<I, O>
+	validator: Validator<I, O>,
 ): Validator<I | undefined, O | undefined> => {
 	const fn = ((v: I | undefined) => {
 		if (v === undefined) return undefined
@@ -26,14 +28,16 @@ export const optional = <I, O>(
 		}
 	}
 
-	// Add schema metadata for JSON Schema conversion
-	addSchemaMetadata(fn, { type: 'optional', inner: validator })
+	// Use wrapMeta to preserve documentation from inner validator
+	setMeta(fn, wrapMeta('optional', getMeta(validator), validator))
 
 	return addStandardSchema(fn)
 }
 
 /**
  * Make a validator nullable (allows null)
+ *
+ * Preserves metadata (description, title, etc.) from inner validator.
  */
 export const nullable = <I, O>(validator: Validator<I, O>): Validator<I | null, O | null> => {
 	const fn = ((v: I | null) => {
@@ -51,17 +55,19 @@ export const nullable = <I, O>(validator: Validator<I, O>): Validator<I | null, 
 		}
 	}
 
-	// Add schema metadata for JSON Schema conversion
-	addSchemaMetadata(fn, { type: 'nullable', inner: validator })
+	// Use wrapMeta to preserve documentation from inner validator
+	setMeta(fn, wrapMeta('nullable', getMeta(validator), validator))
 
 	return addStandardSchema(fn)
 }
 
 /**
  * Make a validator nullish (allows null or undefined)
+ *
+ * Preserves metadata (description, title, etc.) from inner validator.
  */
 export const nullish = <I, O>(
-	validator: Validator<I, O>
+	validator: Validator<I, O>,
 ): Validator<I | null | undefined, O | null | undefined> => {
 	const fn = ((v: I | null | undefined) => {
 		if (v === null || v === undefined) return v
@@ -78,18 +84,20 @@ export const nullish = <I, O>(
 		}
 	}
 
-	// Add schema metadata for JSON Schema conversion
-	addSchemaMetadata(fn, { type: 'nullish', inner: validator })
+	// Use wrapMeta to preserve documentation from inner validator
+	setMeta(fn, wrapMeta('nullish', getMeta(validator), validator))
 
 	return addStandardSchema(fn)
 }
 
 /**
  * Provide a default value when undefined
+ *
+ * Preserves metadata (description, title, etc.) from inner validator.
  */
 export const withDefault = <I, O>(
 	validator: Validator<I, O>,
-	defaultValue: O
+	defaultValue: O,
 ): Validator<I | undefined, O> => {
 	const fn = ((v: I | undefined) => {
 		if (v === undefined) return defaultValue
@@ -106,12 +114,8 @@ export const withDefault = <I, O>(
 		}
 	}
 
-	// Add schema metadata for JSON Schema conversion
-	addSchemaMetadata(fn, {
-		type: 'default',
-		inner: validator,
-		constraints: { default: defaultValue },
-	})
+	// Use wrapMeta to preserve documentation from inner validator
+	setMeta(fn, wrapMeta('default', getMeta(validator), validator, { default: defaultValue }))
 
 	return addStandardSchema(fn)
 }
@@ -124,9 +128,11 @@ export { optional as undefinedable }
 /**
  * Remove null from a nullable type (opposite of nullable)
  * Throws if value is null
+ *
+ * Preserves metadata (description, title, etc.) from inner validator.
  */
 export const nonNullable = <I, O>(
-	validator: Validator<I | null, O | null>
+	validator: Validator<I | null, O | null>,
 ): Validator<I, Exclude<O, null>> => {
 	const fn = ((v: I) => {
 		const result = validator(v)
@@ -150,8 +156,8 @@ export const nonNullable = <I, O>(
 		}
 	}
 
-	// Add schema metadata for JSON Schema conversion
-	addSchemaMetadata(fn, { type: 'nonNullable', inner: validator })
+	// Use wrapMeta to preserve documentation from inner validator
+	setMeta(fn, wrapMeta('nonNullable', getMeta(validator), validator))
 
 	return addStandardSchema(fn)
 }
@@ -159,9 +165,11 @@ export const nonNullable = <I, O>(
 /**
  * Remove null and undefined from a nullish type (opposite of nullish)
  * Throws if value is null or undefined
+ *
+ * Preserves metadata (description, title, etc.) from inner validator.
  */
 export const nonNullish = <I, O>(
-	validator: Validator<I | null | undefined, O | null | undefined>
+	validator: Validator<I | null | undefined, O | null | undefined>,
 ): Validator<I, Exclude<O, null | undefined>> => {
 	const fn = ((v: I) => {
 		const result = validator(v)
@@ -188,8 +196,8 @@ export const nonNullish = <I, O>(
 		}
 	}
 
-	// Add schema metadata for JSON Schema conversion
-	addSchemaMetadata(fn, { type: 'nonNullish', inner: validator })
+	// Use wrapMeta to preserve documentation from inner validator
+	setMeta(fn, wrapMeta('nonNullish', getMeta(validator), validator))
 
 	return addStandardSchema(fn)
 }
@@ -197,9 +205,11 @@ export const nonNullish = <I, O>(
 /**
  * Remove undefined from an optional type (opposite of optional)
  * Throws if value is undefined
+ *
+ * Preserves metadata (description, title, etc.) from inner validator.
  */
 export const nonOptional = <I, O>(
-	validator: Validator<I | undefined, O | undefined>
+	validator: Validator<I | undefined, O | undefined>,
 ): Validator<I, Exclude<O, undefined>> => {
 	const fn = ((v: I) => {
 		const result = validator(v)
@@ -223,8 +233,8 @@ export const nonOptional = <I, O>(
 		}
 	}
 
-	// Add schema metadata for JSON Schema conversion
-	addSchemaMetadata(fn, { type: 'nonOptional', inner: validator })
+	// Use wrapMeta to preserve documentation from inner validator
+	setMeta(fn, wrapMeta('nonOptional', getMeta(validator), validator))
 
 	return addStandardSchema(fn)
 }
@@ -234,13 +244,15 @@ export const nonOptional = <I, O>(
  * This is useful for strict object validation where you want to distinguish
  * between a missing property and an explicitly undefined value
  *
+ * Preserves metadata (description, title, etc.) from inner validator.
+ *
  * @example
  * const schema = object({ name: exactOptional(str) })
  * schema({ name: undefined }) // OK
  * schema({}) // Error - name is required but can be undefined
  */
 export const exactOptional = <I, O>(
-	validator: Validator<I, O>
+	validator: Validator<I, O>,
 ): Validator<I | undefined, O | undefined> => {
 	const fn = ((v: I | undefined) => {
 		if (v === undefined) return undefined
@@ -257,14 +269,16 @@ export const exactOptional = <I, O>(
 		}
 	}
 
-	// Add schema metadata for JSON Schema conversion
-	addSchemaMetadata(fn, { type: 'exactOptional', inner: validator })
+	// Use wrapMeta to preserve documentation from inner validator
+	setMeta(fn, wrapMeta('exactOptional', getMeta(validator), validator))
 
 	return addStandardSchema(fn)
 }
 
 /**
  * Provide a fallback value when validation fails
+ *
+ * Preserves metadata (description, title, etc.) from inner validator.
  */
 export const fallback = <I, O>(validator: Validator<I, O>, fallbackValue: O): Validator<I, O> => {
 	const fn = ((v: I) => {
@@ -288,12 +302,8 @@ export const fallback = <I, O>(validator: Validator<I, O>, fallbackValue: O): Va
 		}
 	}
 
-	// Add schema metadata for JSON Schema conversion
-	addSchemaMetadata(fn, {
-		type: 'fallback',
-		inner: validator,
-		constraints: { fallback: fallbackValue },
-	})
+	// Use wrapMeta to preserve documentation from inner validator
+	setMeta(fn, wrapMeta('fallback', getMeta(validator), validator, { fallback: fallbackValue }))
 
 	return addStandardSchema(fn)
 }

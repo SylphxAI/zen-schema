@@ -24,7 +24,7 @@ export const literal = <T extends Primitive>(value: T): Parser<T> => {
 			return value
 		},
 		(v) => (v === value ? { ok: true, value } : err),
-		{ type: 'literal', constraints: { value } }
+		{ type: 'literal', constraints: { value } },
 	)
 
 	return validator
@@ -37,7 +37,7 @@ export const literal = <T extends Primitive>(value: T): Parser<T> => {
  * const validateRole = enum_(['admin', 'user', 'guest'] as const)
  */
 export const enum_ = <T extends readonly [Primitive, ...Primitive[]]>(
-	values: T
+	values: T,
 ): Parser<T[number]> => {
 	const valuesSet = new Set<Primitive>(values)
 	const msg = `Expected one of: ${values.map((v) => JSON.stringify(v)).join(', ')}`
@@ -49,7 +49,7 @@ export const enum_ = <T extends readonly [Primitive, ...Primitive[]]>(
 			return v as T[number]
 		},
 		(v) => (valuesSet.has(v as Primitive) ? { ok: true, value: v as T[number] } : err),
-		{ type: 'enum', constraints: { values: [...values] } }
+		{ type: 'enum', constraints: { values: [...values] } },
 	)
 
 	return validator

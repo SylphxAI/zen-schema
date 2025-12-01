@@ -36,13 +36,18 @@ export {
 export { intersect } from './intersect'
 export {
 	brand,
+	deprecated,
 	description,
 	examples,
 	flavor,
+	getBrand,
 	getDescription,
 	getExamples,
+	getFlavor,
+	getMeta,
 	getMetadata,
 	getTitle,
+	type Metadata,
 	metadata,
 	readonly,
 	title,

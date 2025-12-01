@@ -13,7 +13,7 @@ import { addStandardSchema, getSchemaMetadata, ValidationError } from '../core'
  */
 export const message = <I, O>(
 	validator: Validator<I, O>,
-	errorMessage: string | ((issue: { input: I }) => string)
+	errorMessage: string | ((issue: { input: I }) => string),
 ): Validator<I, O> => {
 	const getMsg = typeof errorMessage === 'function' ? errorMessage : () => errorMessage
 
@@ -55,7 +55,7 @@ export const rawCheck = <T>(
 	check: (ctx: {
 		input: T
 		addIssue: (issue: { message: string; path?: PropertyKey[] }) => void
-	}) => void
+	}) => void,
 ): Validator<T, T> => {
 	const fn = ((value: T) => {
 		const issues: { message: string; path?: PropertyKey[] }[] = []
@@ -93,7 +93,7 @@ export const rawCheck = <T>(
  * })
  */
 export const rawTransform = <I, O>(
-	transform: (ctx: { input: I; addIssue: (issue: { message: string }) => void }) => O
+	transform: (ctx: { input: I; addIssue: (issue: { message: string }) => void }) => O,
 ): Validator<I, O> => {
 	const fn = ((value: I) => {
 		const issues: { message: string }[] = []
@@ -139,7 +139,7 @@ export const rawTransform = <I, O>(
 export const partialCheck = <T extends Record<string, unknown>>(
 	_paths: PropertyKey[][],
 	check: (input: T) => boolean,
-	errorMessage = 'Partial check failed'
+	errorMessage = 'Partial check failed',
 ): Validator<T, T> => {
 	const err: Result<never> = { ok: false, error: errorMessage }
 
@@ -225,7 +225,7 @@ export const returns = <T>(schema: Parser<T>): Parser<T> => schema
 export const getDefault = <T>(schema: Parser<T>): T | undefined => {
 	const metadata = getSchemaMetadata(schema)
 	if (metadata?.type === 'default' && metadata.constraints) {
-		return metadata.constraints.default as T
+		return metadata.constraints['default'] as T
 	}
 	return undefined
 }
@@ -234,7 +234,7 @@ export const getDefault = <T>(schema: Parser<T>): T | undefined => {
  * Get all defaults from an object schema
  */
 export const getDefaults = <T extends Record<string, unknown>>(
-	schema: Parser<T>
+	schema: Parser<T>,
 ): Partial<T> | undefined => {
 	const metadata = getSchemaMetadata(schema)
 	if (metadata?.type !== 'object' || !metadata.inner) {
@@ -248,7 +248,7 @@ export const getDefaults = <T extends Record<string, unknown>>(
 	for (const [key, fieldSchema] of Object.entries(shape)) {
 		const fieldMeta = getSchemaMetadata(fieldSchema as Parser<unknown>)
 		if (fieldMeta?.type === 'default' && fieldMeta.constraints) {
-			;(defaults as Record<string, unknown>)[key] = fieldMeta.constraints.default
+			;(defaults as Record<string, unknown>)[key] = fieldMeta.constraints['default']
 			hasDefaults = true
 		}
 	}
@@ -262,7 +262,7 @@ export const getDefaults = <T extends Record<string, unknown>>(
 export const getFallback = <T>(schema: Parser<T>): T | undefined => {
 	const metadata = getSchemaMetadata(schema)
 	if (metadata?.type === 'fallback' && metadata.constraints) {
-		return metadata.constraints.fallback as T
+		return metadata.constraints['fallback'] as T
 	}
 	return undefined
 }
@@ -271,7 +271,7 @@ export const getFallback = <T>(schema: Parser<T>): T | undefined => {
  * Get all fallbacks from an object schema
  */
 export const getFallbacks = <T extends Record<string, unknown>>(
-	schema: Parser<T>
+	schema: Parser<T>,
 ): Partial<T> | undefined => {
 	const metadata = getSchemaMetadata(schema)
 	if (metadata?.type !== 'object' || !metadata.inner) {
@@ -285,7 +285,7 @@ export const getFallbacks = <T extends Record<string, unknown>>(
 	for (const [key, fieldSchema] of Object.entries(shape)) {
 		const fieldMeta = getSchemaMetadata(fieldSchema as Parser<unknown>)
 		if (fieldMeta?.type === 'fallback' && fieldMeta.constraints) {
-			;(fallbacks as Record<string, unknown>)[key] = fieldMeta.constraints.fallback
+			;(fallbacks as Record<string, unknown>)[key] = fieldMeta.constraints['fallback']
 			hasFallbacks = true
 		}
 	}
@@ -323,7 +323,7 @@ export const unwrap = <T>(schema: Parser<T>): Parser<NonNullable<T>> => {
  * Flatten validation errors into a simple structure
  */
 export const flatten = <_T>(
-	error: { message: string } | { issues?: { message: string; path?: PropertyKey[] }[] }
+	error: { message: string } | { issues?: { message: string; path?: PropertyKey[] }[] },
 ): { root?: string[]; nested?: Record<string, string[]> } => {
 	if ('message' in error && !('issues' in error)) {
 		return { root: [error.message] }
@@ -371,7 +371,7 @@ export const summarize = <T>(schema: Parser<T>): Record<string, unknown> => {
  * Get all defaults from an object schema (async version)
  */
 export const getDefaultsAsync = async <T extends Record<string, unknown>>(
-	_schema: Parser<T>
+	_schema: Parser<T>,
 ): Promise<Partial<T> | undefined> => {
 	return undefined // Object schemas don't store defaults in vex
 }
@@ -380,7 +380,7 @@ export const getDefaultsAsync = async <T extends Record<string, unknown>>(
  * Get all fallbacks from an object schema (async version)
  */
 export const getFallbacksAsync = async <T extends Record<string, unknown>>(
-	_schema: Parser<T>
+	_schema: Parser<T>,
 ): Promise<Partial<T> | undefined> => {
 	return undefined
 }

@@ -1,15 +1,9 @@
 import { beforeEach, describe, expect, test } from 'bun:test'
+import { getMeta } from '../core'
 import { literal } from '../validators/literal'
 import { arr, bigInt, bool, date, num, obj, str } from '../validators/primitives'
 import { any, never, nullType, unknown, voidType } from '../validators/special'
-import {
-	addGlobalDefs,
-	clearGlobalDefs,
-	getGlobalDefs,
-	getSchemaMetadata,
-	toJsonSchema,
-	toJsonSchemaDefs,
-} from './index'
+import { addGlobalDefs, clearGlobalDefs, getGlobalDefs, toJsonSchema, toJsonSchemaDefs } from './index'
 
 describe('toJsonSchema', () => {
 	describe('primitive types', () => {
@@ -126,19 +120,19 @@ describe('toJsonSchema', () => {
 
 	describe('schema metadata', () => {
 		test('str() has schema metadata', () => {
-			const meta = getSchemaMetadata(str())
+			const meta = getMeta(str())
 			expect(meta).toBeDefined()
 			expect(meta?.type).toBe('string')
 		})
 
 		test('num() has schema metadata', () => {
-			const meta = getSchemaMetadata(num())
+			const meta = getMeta(num())
 			expect(meta).toBeDefined()
 			expect(meta?.type).toBe('number')
 		})
 
 		test('bool() has schema metadata', () => {
-			const meta = getSchemaMetadata(bool())
+			const meta = getMeta(bool())
 			expect(meta).toBeDefined()
 			expect(meta?.type).toBe('boolean')
 		})
@@ -215,56 +209,56 @@ describe('complex schemas', () => {
 describe('string format validators', () => {
 	test('email has format metadata', () => {
 		const { email } = require('../validators/string')
-		const meta = getSchemaMetadata(email)
+		const meta = getMeta(email)
 		expect(meta?.type).toBe('email')
 		expect(meta?.constraints?.format).toBe('email')
 	})
 
 	test('url has format metadata', () => {
 		const { url } = require('../validators/string')
-		const meta = getSchemaMetadata(url)
+		const meta = getMeta(url)
 		expect(meta?.type).toBe('url')
 		expect(meta?.constraints?.format).toBe('uri')
 	})
 
 	test('uuid has format metadata', () => {
 		const { uuid } = require('../validators/string')
-		const meta = getSchemaMetadata(uuid)
+		const meta = getMeta(uuid)
 		expect(meta?.type).toBe('uuid')
 		expect(meta?.constraints?.format).toBe('uuid')
 	})
 
 	test('datetime has format metadata', () => {
 		const { datetime } = require('../validators/string')
-		const meta = getSchemaMetadata(datetime)
+		const meta = getMeta(datetime)
 		expect(meta?.type).toBe('datetime')
 		expect(meta?.constraints?.format).toBe('date-time')
 	})
 
 	test('dateOnly has format metadata', () => {
 		const { dateOnly } = require('../validators/string')
-		const meta = getSchemaMetadata(dateOnly)
+		const meta = getMeta(dateOnly)
 		expect(meta?.type).toBe('isoDate')
 		expect(meta?.constraints?.format).toBe('date')
 	})
 
 	test('time has format metadata', () => {
 		const { time } = require('../validators/string')
-		const meta = getSchemaMetadata(time)
+		const meta = getMeta(time)
 		expect(meta?.type).toBe('isoTime')
 		expect(meta?.constraints?.format).toBe('time')
 	})
 
 	test('ipv4 has format metadata', () => {
 		const { ipv4 } = require('../validators/string')
-		const meta = getSchemaMetadata(ipv4)
+		const meta = getMeta(ipv4)
 		expect(meta?.type).toBe('ipv4')
 		expect(meta?.constraints?.format).toBe('ipv4')
 	})
 
 	test('ipv6 has format metadata', () => {
 		const { ipv6 } = require('../validators/string')
-		const meta = getSchemaMetadata(ipv6)
+		const meta = getMeta(ipv6)
 		expect(meta?.type).toBe('ipv6')
 		expect(meta?.constraints?.format).toBe('ipv6')
 	})
@@ -274,7 +268,7 @@ describe('string length validators', () => {
 	test('min has minLength metadata', () => {
 		const { min } = require('../validators/string')
 		const minValidator = min(5)
-		const meta = getSchemaMetadata(minValidator)
+		const meta = getMeta(minValidator)
 		expect(meta?.type).toBe('minLength')
 		expect(meta?.constraints?.minLength).toBe(5)
 	})
@@ -282,7 +276,7 @@ describe('string length validators', () => {
 	test('max has maxLength metadata', () => {
 		const { max } = require('../validators/string')
 		const maxValidator = max(10)
-		const meta = getSchemaMetadata(maxValidator)
+		const meta = getMeta(maxValidator)
 		expect(meta?.type).toBe('maxLength')
 		expect(meta?.constraints?.maxLength).toBe(10)
 	})
@@ -290,14 +284,14 @@ describe('string length validators', () => {
 	test('len has length metadata', () => {
 		const { len } = require('../validators/string')
 		const lenValidator = len(8)
-		const meta = getSchemaMetadata(lenValidator)
+		const meta = getMeta(lenValidator)
 		expect(meta?.type).toBe('length')
 		expect(meta?.constraints?.length).toBe(8)
 	})
 
 	test('nonempty has minLength 1 metadata', () => {
 		const { nonempty } = require('../validators/string')
-		const meta = getSchemaMetadata(nonempty)
+		const meta = getMeta(nonempty)
 		expect(meta?.type).toBe('minLength')
 		expect(meta?.constraints?.minLength).toBe(1)
 	})

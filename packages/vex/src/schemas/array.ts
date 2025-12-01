@@ -126,7 +126,7 @@ export const minLength = <T>(n: number): Validator<T[], T[]> => {
 			return v
 		},
 		(v) => (v.length >= n ? { ok: true, value: v } : err),
-		{ type: 'minItems', constraints: { minItems: n } }
+		{ type: 'minItems', constraints: { minItems: n } },
 	)
 }
 
@@ -140,7 +140,7 @@ export const maxLength = <T>(n: number): Validator<T[], T[]> => {
 			return v
 		},
 		(v) => (v.length <= n ? { ok: true, value: v } : err),
-		{ type: 'maxItems', constraints: { maxItems: n } }
+		{ type: 'maxItems', constraints: { maxItems: n } },
 	)
 }
 
@@ -154,7 +154,7 @@ export const exactLength = <T>(n: number): Validator<T[], T[]> => {
 			return v
 		},
 		(v) => (v.length === n ? { ok: true, value: v } : err),
-		{ type: 'exactItems', constraints: { minItems: n, maxItems: n } }
+		{ type: 'exactItems', constraints: { minItems: n, maxItems: n } },
 	)
 }
 
@@ -166,6 +166,6 @@ export const nonemptyArray = <T>(): Validator<T[], [T, ...T[]]> => {
 			return v as [T, ...T[]]
 		},
 		(v) => (v.length > 0 ? { ok: true, value: v as [T, ...T[]] } : ERR_NONEMPTY),
-		{ type: 'minItems', constraints: { minItems: 1 } }
+		{ type: 'minItems', constraints: { minItems: 1 } },
 	) as Validator<T[], [T, ...T[]]>
 }

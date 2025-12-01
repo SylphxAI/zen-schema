@@ -2,39 +2,9 @@
 // Helper Functions
 // ============================================================
 
+import { type Metadata, setMeta } from './metadata'
 import type { StandardSchemaV1 } from './standard'
 import type { Result, Validator } from './types'
-
-// ============================================================
-// Schema Metadata
-// ============================================================
-
-/** Schema metadata for JSON Schema conversion */
-export interface SchemaMetadata {
-	type: string
-	constraints?: Record<string, unknown>
-	inner?: unknown
-}
-
-const SCHEMA_META = '~schema' as const
-
-/**
- * Add schema metadata to a validator
- */
-export function addSchemaMetadata<I, O>(
-	fn: Validator<I, O>,
-	metadata: SchemaMetadata
-): Validator<I, O> {
-	;(fn as unknown as Record<string, unknown>)[SCHEMA_META] = metadata
-	return fn
-}
-
-/**
- * Get schema metadata from a validator
- */
-export function getSchemaMetadata(validator: unknown): SchemaMetadata | undefined {
-	return (validator as Record<string, unknown>)?.[SCHEMA_META] as SchemaMetadata | undefined
-}
 
 // ============================================================
 // Standard Schema Support
@@ -73,12 +43,12 @@ export function addStandardSchema<I, O>(fn: Validator<I, O>): Validator<I, O> {
 export function createValidator<I, O>(
 	validate: (value: I) => O,
 	safeValidate: (value: I) => Result<O>,
-	metadata?: SchemaMetadata
+	metadata?: Metadata,
 ): Validator<I, O> {
 	const fn = validate as Validator<I, O>
 	fn.safe = safeValidate
 	if (metadata) {
-		addSchemaMetadata(fn, metadata)
+		setMeta(fn, metadata)
 	}
 	return addStandardSchema(fn)
 }

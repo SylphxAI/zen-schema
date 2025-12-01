@@ -79,7 +79,7 @@ export const entriesFromObjects = <
 >(
 	objects: readonly T[],
 	keyProp: K,
-	valueProp: V
+	valueProp: V,
 ): [T[K], T[V]][] => {
 	return objects.map((obj) => [obj[keyProp], obj[valueProp]])
 }

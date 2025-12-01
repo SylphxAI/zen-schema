@@ -9,14 +9,14 @@ import { createValidator, ValidationError } from '../core'
 export const any: Parser<unknown> = createValidator(
 	(v) => v,
 	(v) => ({ ok: true, value: v }),
-	{ type: 'any' }
+	{ type: 'any' },
 )
 
 /** unknown - accepts any value (same as any but stricter type) */
 export const unknown: Parser<unknown> = createValidator(
 	(v) => v,
 	(v) => ({ ok: true, value: v }),
-	{ type: 'unknown' }
+	{ type: 'unknown' },
 )
 
 /** never - always fails */
@@ -25,7 +25,7 @@ export const never: Parser<never> = createValidator(
 		throw new ValidationError('Value not allowed')
 	},
 	() => ({ ok: false, error: 'Value not allowed' }),
-	{ type: 'never' }
+	{ type: 'never' },
 )
 
 /** void - accepts undefined */
@@ -36,7 +36,7 @@ export const voidType: Parser<void> = createValidator(
 	},
 	(v) =>
 		v === undefined ? { ok: true, value: undefined } : { ok: false, error: 'Expected undefined' },
-	{ type: 'void' }
+	{ type: 'void' },
 )
 
 /** null - accepts null */
@@ -46,7 +46,7 @@ export const nullType: Parser<null> = createValidator(
 		return null
 	},
 	(v) => (v === null ? { ok: true, value: null } : { ok: false, error: 'Expected null' }),
-	{ type: 'null' }
+	{ type: 'null' },
 )
 
 /** undefined - accepts undefined */
@@ -57,7 +57,7 @@ export const undefinedType: Parser<undefined> = createValidator(
 	},
 	(v) =>
 		v === undefined ? { ok: true, value: undefined } : { ok: false, error: 'Expected undefined' },
-	{ type: 'undefined' }
+	{ type: 'undefined' },
 )
 
 /** NaN - accepts only NaN */
@@ -70,7 +70,7 @@ export const nan: Parser<number> = createValidator(
 		typeof v === 'number' && Number.isNaN(v)
 			? { ok: true, value: v }
 			: { ok: false, error: 'Expected NaN' },
-	{ type: 'nan' }
+	{ type: 'nan' },
 )
 
 /** symbol - accepts symbol */
@@ -80,7 +80,7 @@ export const symbol: Parser<symbol> = createValidator(
 		return v
 	},
 	(v) => (typeof v === 'symbol' ? { ok: true, value: v } : { ok: false, error: 'Expected symbol' }),
-	{ type: 'symbol' }
+	{ type: 'symbol' },
 )
 
 /** function - accepts function */
@@ -95,7 +95,7 @@ export const func: Parser<Function> = createValidator(
 		// biome-ignore lint/complexity/noBannedTypes: intentional for validator
 		typeof v === 'function'
 			? { ok: true, value: v as Function }
-			: { ok: false, error: 'Expected function' }
+			: { ok: false, error: 'Expected function' },
 )
 
 /** promise - accepts Promise */
@@ -104,7 +104,7 @@ export const promise: Parser<Promise<unknown>> = createValidator(
 		if (!(v instanceof Promise)) throw new ValidationError('Expected Promise')
 		return v
 	},
-	(v) => (v instanceof Promise ? { ok: true, value: v } : { ok: false, error: 'Expected Promise' })
+	(v) => (v instanceof Promise ? { ok: true, value: v } : { ok: false, error: 'Expected Promise' }),
 )
 
 /**
@@ -123,7 +123,7 @@ export const instance = <T>(ctor: new (...args: unknown[]) => T): Parser<T> => {
 			if (!(v instanceof ctor)) throw new ValidationError(msg)
 			return v as T
 		},
-		(v) => (v instanceof ctor ? { ok: true, value: v as T } : { ok: false, error: msg })
+		(v) => (v instanceof ctor ? { ok: true, value: v as T } : { ok: false, error: msg }),
 	)
 }
 
@@ -133,7 +133,7 @@ export const blob: Parser<Blob> = createValidator(
 		if (!(v instanceof Blob)) throw new ValidationError('Expected Blob')
 		return v
 	},
-	(v) => (v instanceof Blob ? { ok: true, value: v } : { ok: false, error: 'Expected Blob' })
+	(v) => (v instanceof Blob ? { ok: true, value: v } : { ok: false, error: 'Expected Blob' }),
 )
 
 /** file - accepts File */
@@ -142,7 +142,7 @@ export const file: Parser<File> = createValidator(
 		if (!(v instanceof File)) throw new ValidationError('Expected File')
 		return v
 	},
-	(v) => (v instanceof File ? { ok: true, value: v } : { ok: false, error: 'Expected File' })
+	(v) => (v instanceof File ? { ok: true, value: v } : { ok: false, error: 'Expected File' }),
 )
 
 /**
@@ -164,6 +164,6 @@ export const mimeType = (types: readonly string[]): Parser<Blob> => {
 			if (!(v instanceof Blob)) return { ok: false, error: 'Expected Blob' }
 			if (!typeSet.has(v.type)) return { ok: false, error: msg }
 			return { ok: true, value: v }
-		}
+		},
 	)
 }

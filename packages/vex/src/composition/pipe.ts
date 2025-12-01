@@ -2,35 +2,42 @@
 // Pipe Composition
 // ============================================================
 
-import type { Result, SchemaMetadata, Validator } from '../core'
-import { addSchemaMetadata, addStandardSchema, getSchemaMetadata } from '../core'
+import type { Result, Validator } from '../core'
+import { addStandardSchema, getMeta, mergeMeta, setMeta } from '../core'
 
 /**
  * Pipe validators together (left to right)
  *
+ * Metadata semantics:
+ * - type: First validator's type (base type)
+ * - constraints: Merge all (accumulate)
+ * - description/title/examples: Last one wins (most specific)
+ * - brand/flavor: Last one wins
+ *
  * @example
- * const validateEmail = pipe(str, email)
- * const validateAge = pipe(num, int, gte(0), lte(150))
+ * const validateEmail = pipe(str(), email)
+ * const validateAge = pipe(num(), int, gte(0), lte(150))
+ * const documented = pipe(str(), description(str(), 'User email'))
  */
 export function pipe<A, B>(v1: Validator<A, B>): Validator<A, B>
 export function pipe<A, B, C>(v1: Validator<A, B>, v2: Validator<B, C>): Validator<A, C>
 export function pipe<A, B, C, D>(
 	v1: Validator<A, B>,
 	v2: Validator<B, C>,
-	v3: Validator<C, D>
+	v3: Validator<C, D>,
 ): Validator<A, D>
 export function pipe<A, B, C, D, E>(
 	v1: Validator<A, B>,
 	v2: Validator<B, C>,
 	v3: Validator<C, D>,
-	v4: Validator<D, E>
+	v4: Validator<D, E>,
 ): Validator<A, E>
 export function pipe<A, B, C, D, E, F>(
 	v1: Validator<A, B>,
 	v2: Validator<B, C>,
 	v3: Validator<C, D>,
 	v4: Validator<D, E>,
-	v5: Validator<E, F>
+	v5: Validator<E, F>,
 ): Validator<A, F>
 export function pipe<A, B, C, D, E, F, G>(
 	v1: Validator<A, B>,
@@ -38,7 +45,7 @@ export function pipe<A, B, C, D, E, F, G>(
 	v3: Validator<C, D>,
 	v4: Validator<D, E>,
 	v5: Validator<E, F>,
-	v6: Validator<F, G>
+	v6: Validator<F, G>,
 ): Validator<A, G>
 export function pipe(...validators: Validator<unknown, unknown>[]): Validator<unknown, unknown> {
 	const len = validators.length
@@ -120,31 +127,12 @@ export function pipe(...validators: Validator<unknown, unknown>[]): Validator<un
 		}
 	}
 
-	// Collect schema metadata from all validators in the pipe
-	// The first validator provides the base type, subsequent validators add constraints
-	const metadataSteps = validators
-		.map((v) => getSchemaMetadata(v))
-		.filter((m): m is NonNullable<typeof m> => m !== undefined)
+	// Merge metadata from all validators using unified metadata system
+	const metadataSteps = validators.map((v) => getMeta(v))
+	const merged = mergeMeta(metadataSteps)
 
-	if (metadataSteps.length > 0) {
-		// Merge constraints from all validators
-		const first = metadataSteps[0]!
-		const mergedConstraints: Record<string, unknown> = {}
-		for (const step of metadataSteps) {
-			if (step.constraints) {
-				Object.assign(mergedConstraints, step.constraints)
-			}
-		}
-		const metadata: SchemaMetadata = { type: first.type }
-		if (Object.keys(mergedConstraints).length > 0) {
-			metadata.constraints = mergedConstraints
-		}
-		if (metadataSteps.length > 1) {
-			metadata.inner = metadataSteps
-		} else if (first.inner !== undefined) {
-			metadata.inner = first.inner
-		}
-		addSchemaMetadata(fn, metadata)
+	if (merged) {
+		setMeta(fn, merged)
 	}
 
 	return addStandardSchema(fn)

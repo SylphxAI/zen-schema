@@ -13,7 +13,7 @@ import { addStandardSchema, ValidationError } from '../core'
  */
 export const everyItem = <T>(
 	check: (item: T, index: number) => boolean,
-	message = 'Not all items passed validation'
+	message = 'Not all items passed validation',
 ): Validator<T[], T[]> => {
 	const err: Result<never> = { ok: false, error: message }
 	const fn = ((v: T[]) => {
@@ -34,7 +34,7 @@ export const everyItem = <T>(
  */
 export const someItem = <T>(
 	check: (item: T, index: number) => boolean,
-	message = 'No items passed validation'
+	message = 'No items passed validation',
 ): Validator<T[], T[]> => {
 	const err: Result<never> = { ok: false, error: message }
 	const fn = ((v: T[]) => {
@@ -55,7 +55,7 @@ export const someItem = <T>(
  */
 export const checkItems = <T>(
 	check: (items: T[]) => boolean,
-	message = 'Items validation failed'
+	message = 'Items validation failed',
 ): Validator<T[], T[]> => {
 	const err: Result<never> = { ok: false, error: message }
 	const fn = ((v: T[]) => {
@@ -75,7 +75,7 @@ export const checkItems = <T>(
  * const onlyPositive = pipe(array(num), filterItems((n) => n > 0))
  */
 export const filterItems = <T>(
-	predicate: (item: T, index: number) => boolean
+	predicate: (item: T, index: number) => boolean,
 ): Validator<T[], T[]> => {
 	const fn = ((v: T[]) => v.filter(predicate)) as Validator<T[], T[]>
 
@@ -91,7 +91,7 @@ export const filterItems = <T>(
  * const findFirst = pipe(array(num), findItem((n) => n > 0))
  */
 export const findItem = <T>(
-	predicate: (item: T, index: number) => boolean
+	predicate: (item: T, index: number) => boolean,
 ): Validator<T[], T | undefined> => {
 	const fn = ((v: T[]) => v.find(predicate)) as Validator<T[], T | undefined>
 
@@ -122,7 +122,7 @@ export const mapItems = <T, U>(mapper: (item: T, index: number) => U): Validator
  */
 export const reduceItems = <T, U>(
 	reducer: (acc: U, item: T, index: number) => U,
-	initial: U
+	initial: U,
 ): Validator<T[], U> => {
 	const fn = ((v: T[]) => v.reduce(reducer, initial)) as Validator<T[], U>
 
@@ -153,7 +153,7 @@ export const sortItems = <T>(compareFn?: (a: T, b: T) => number): Validator<T[],
  */
 export const excludes = <T>(
 	values: T[],
-	message = 'Array contains excluded values'
+	message = 'Array contains excluded values',
 ): Validator<T[], T[]> => {
 	const valuesSet = new Set(values)
 	const err: Result<never> = { ok: false, error: message }
@@ -192,7 +192,7 @@ export const entries = (n: number): Validator<Record<string, unknown>, Record<st
  * Validate minimum entries count
  */
 export const minEntries = (
-	n: number
+	n: number,
 ): Validator<Record<string, unknown>, Record<string, unknown>> => {
 	const msg = `Must have at least ${n} entries`
 	const err: Result<never> = { ok: false, error: msg }
@@ -211,7 +211,7 @@ export const minEntries = (
  * Validate maximum entries count
  */
 export const maxEntries = (
-	n: number
+	n: number,
 ): Validator<Record<string, unknown>, Record<string, unknown>> => {
 	const msg = `Must have at most ${n} entries`
 	const err: Result<never> = { ok: false, error: msg }
@@ -230,7 +230,7 @@ export const maxEntries = (
  * Validate entries count is not n
  */
 export const notEntries = (
-	n: number
+	n: number,
 ): Validator<Record<string, unknown>, Record<string, unknown>> => {
 	const msg = `Must not have ${n} entries`
 	const err: Result<never> = { ok: false, error: msg }

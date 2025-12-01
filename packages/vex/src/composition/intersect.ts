@@ -24,7 +24,7 @@ type IntersectOutput<T extends readonly Parser<unknown>[]> = T extends readonly 
  * ])
  */
 export const intersect = <T extends readonly [Parser<unknown>, ...Parser<unknown>[]]>(
-	schemas: T
+	schemas: T,
 ): Parser<IntersectOutput<T>> => {
 	const msg = 'Value does not match all schemas in intersect'
 

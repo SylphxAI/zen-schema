@@ -24,7 +24,7 @@ export const graphemes = (n: number): Validator<string> => {
 			if (getGraphemeCount(v) !== n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (getGraphemeCount(v) === n ? { ok: true, value: v } : err)
+		(v) => (getGraphemeCount(v) === n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -37,7 +37,7 @@ export const minGraphemes = (n: number): Validator<string> => {
 			if (getGraphemeCount(v) < n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (getGraphemeCount(v) >= n ? { ok: true, value: v } : err)
+		(v) => (getGraphemeCount(v) >= n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -50,7 +50,7 @@ export const maxGraphemes = (n: number): Validator<string> => {
 			if (getGraphemeCount(v) > n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (getGraphemeCount(v) <= n ? { ok: true, value: v } : err)
+		(v) => (getGraphemeCount(v) <= n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -73,7 +73,7 @@ export const words = (n: number): Validator<string> => {
 			if (getWordCount(v) !== n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (getWordCount(v) === n ? { ok: true, value: v } : err)
+		(v) => (getWordCount(v) === n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -86,7 +86,7 @@ export const minWords = (n: number): Validator<string> => {
 			if (getWordCount(v) < n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (getWordCount(v) >= n ? { ok: true, value: v } : err)
+		(v) => (getWordCount(v) >= n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -99,7 +99,7 @@ export const maxWords = (n: number): Validator<string> => {
 			if (getWordCount(v) > n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (getWordCount(v) <= n ? { ok: true, value: v } : err)
+		(v) => (getWordCount(v) <= n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -112,7 +112,7 @@ export const notGraphemes = (n: number): Validator<string> => {
 			if (getGraphemeCount(v) === n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (getGraphemeCount(v) !== n ? { ok: true, value: v } : err)
+		(v) => (getGraphemeCount(v) !== n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -125,6 +125,6 @@ export const notWords = (n: number): Validator<string> => {
 			if (getWordCount(v) === n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (getWordCount(v) !== n ? { ok: true, value: v } : err)
+		(v) => (getWordCount(v) !== n ? { ok: true, value: v } : err),
 	)
 }

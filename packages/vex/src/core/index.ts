@@ -1,13 +1,22 @@
 // Core exports
 
 export { type PathSegment, ValidationError, type ValidationIssue, ValiError } from './error'
+export { addStandardSchema, createValidator } from './helpers'
 export {
+	// Legacy compatibility (deprecated)
 	addSchemaMetadata,
-	addStandardSchema,
-	createValidator,
+	// New unified metadata API
+	getMeta,
 	getSchemaMetadata,
+	META_KEY,
+	type Metadata,
+	mergeMeta,
 	type SchemaMetadata,
-} from './helpers'
+	setMeta,
+	updateMeta,
+	type WithMeta,
+	wrapMeta,
+} from './metadata'
 export type { StandardSchemaV1 } from './standard'
 export type { Parser, Result, StandardValidator, Validator } from './types'
 

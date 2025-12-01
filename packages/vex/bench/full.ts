@@ -32,7 +32,7 @@ function runBench(
 	vexFn: () => void,
 	zodFn: () => void,
 	valibotFn: () => void,
-	iterations = ITERATIONS
+	iterations = ITERATIONS,
 ) {
 	const vexOps = bench('vex', vexFn, iterations)
 	const zodOps = bench('zod', zodFn, iterations)
@@ -44,7 +44,7 @@ function runBench(
 	const _vexVsValibot = vexOps / valibotOps
 
 	console.log(
-		`${name.padEnd(30)} Vex: ${(vexOps / 1e6).toFixed(1).padStart(5)}M  Zod: ${(zodOps / 1e6).toFixed(1).padStart(5)}M  Valibot: ${(valibotOps / 1e6).toFixed(1).padStart(5)}M`
+		`${name.padEnd(30)} Vex: ${(vexOps / 1e6).toFixed(1).padStart(5)}M  Zod: ${(zodOps / 1e6).toFixed(1).padStart(5)}M  Valibot: ${(valibotOps / 1e6).toFixed(1).padStart(5)}M`,
 	)
 }
 
@@ -116,7 +116,7 @@ const valNumber = v.pipe(v.number(), v.integer(), v.minValue(1))
 
 console.log('='.repeat(90))
 console.log(
-	`⚡ Vex vs Zod vs Valibot Benchmark (${typeof Bun !== 'undefined' ? 'Bun' : 'Node.js'})`
+	`⚡ Vex vs Zod vs Valibot Benchmark (${typeof Bun !== 'undefined' ? 'Bun' : 'Node.js'})`,
 )
 console.log('='.repeat(90))
 console.log()
@@ -126,19 +126,19 @@ runBench(
 	'create string',
 	() => str(),
 	() => z.string(),
-	() => v.string()
+	() => v.string(),
 )
 runBench(
 	'create string + email',
 	() => str(email),
 	() => z.string().email(),
-	() => v.pipe(v.string(), v.email())
+	() => v.pipe(v.string(), v.email()),
 )
 runBench(
 	'create number + int + positive',
 	() => num(int, positive),
 	() => z.number().int().positive(),
-	() => v.pipe(v.number(), v.integer(), v.minValue(1))
+	() => v.pipe(v.number(), v.integer(), v.minValue(1)),
 )
 runBench(
 	'create object (4 fields)',
@@ -162,7 +162,7 @@ runBench(
 			name: v.pipe(v.string(), v.minLength(1)),
 			email: v.pipe(v.string(), v.email()),
 			age: v.pipe(v.number(), v.integer()),
-		})
+		}),
 )
 
 console.log()
@@ -172,38 +172,38 @@ runBench(
 	'parse string',
 	() => strValidator('hello'),
 	() => z.string().parse('hello'),
-	() => v.parse(v.string(), 'hello')
+	() => v.parse(v.string(), 'hello'),
 )
 runBench(
 	'parse email',
 	() => vexEmail('test@example.com'),
 	() => zodEmail.parse('test@example.com'),
-	() => v.parse(valEmail, 'test@example.com')
+	() => v.parse(valEmail, 'test@example.com'),
 )
 runBench(
 	'parse number.int.positive',
 	() => vexNumber(42),
 	() => zodNumber.parse(42),
-	() => v.parse(valNumber, 42)
+	() => v.parse(valNumber, 42),
 )
 runBench(
 	'parse simple object',
 	() => vexSimple(simpleData),
 	() => zodSimple.parse(simpleData),
-	() => v.parse(valSimple, simpleData)
+	() => v.parse(valSimple, simpleData),
 )
 runBench(
 	'parse complex object',
 	() => vexUser(validUser),
 	() => zodUser.parse(validUser),
-	() => v.parse(valUser, validUser)
+	() => v.parse(valUser, validUser),
 )
 runBench(
 	'parse array (100 objects)',
 	() => vexUsers(users100),
 	() => zodUsers.parse(users100),
 	() => v.parse(valUsers, users100),
-	ITERATIONS / 10
+	ITERATIONS / 10,
 )
 
 console.log()
@@ -212,13 +212,13 @@ runBench(
 	'safeParse valid',
 	() => safeParse(vexUser)(validUser),
 	() => zodUser.safeParse(validUser),
-	() => v.safeParse(valUser, validUser)
+	() => v.safeParse(valUser, validUser),
 )
 runBench(
 	'safeParse invalid',
 	() => safeParse(vexUser)(invalidUser),
 	() => zodUser.safeParse(invalidUser),
-	() => v.safeParse(valUser, invalidUser)
+	() => v.safeParse(valUser, invalidUser),
 )
 
 // ============================================================
@@ -232,17 +232,17 @@ console.log('='.repeat(90))
 console.log()
 
 console.log(
-	'| Benchmark                      | Vex        | Zod        | Valibot    | Vex/Zod | Vex/Val |'
+	'| Benchmark                      | Vex        | Zod        | Valibot    | Vex/Zod | Vex/Val |',
 )
 console.log(
-	'|--------------------------------|------------|------------|------------|---------|---------|'
+	'|--------------------------------|------------|------------|------------|---------|---------|',
 )
 
 for (const r of results) {
 	const vexVsZod = r.vex / r.zod
 	const vexVsVal = r.vex / r.valibot
 	console.log(
-		`| ${r.name.padEnd(30)} | ${(r.vex / 1e6).toFixed(1).padStart(8)}M | ${(r.zod / 1e6).toFixed(1).padStart(8)}M | ${(r.valibot / 1e6).toFixed(1).padStart(8)}M | ${vexVsZod.toFixed(1).padStart(5)}x | ${vexVsVal.toFixed(1).padStart(5)}x |`
+		`| ${r.name.padEnd(30)} | ${(r.vex / 1e6).toFixed(1).padStart(8)}M | ${(r.zod / 1e6).toFixed(1).padStart(8)}M | ${(r.valibot / 1e6).toFixed(1).padStart(8)}M | ${vexVsZod.toFixed(1).padStart(5)}x | ${vexVsVal.toFixed(1).padStart(5)}x |`,
 	)
 }
 
@@ -263,6 +263,6 @@ console.log(
 	JSON.stringify(
 		{ avgVsZod: avgVsZod.toFixed(1), avgVsValibot: avgVsValibot.toFixed(1), results },
 		null,
-		2
-	)
+		2,
+	),
 )

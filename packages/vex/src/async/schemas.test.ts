@@ -27,7 +27,7 @@ const strAsync = createAsyncValidator(
 	async (v: unknown) => {
 		if (typeof v !== 'string') return { ok: false, error: 'Expected string' }
 		return { ok: true, value: v }
-	}
+	},
 )
 
 const numAsync = createAsyncValidator(
@@ -38,7 +38,7 @@ const numAsync = createAsyncValidator(
 	async (v: unknown) => {
 		if (typeof v !== 'number') return { ok: false, error: 'Expected number' }
 		return { ok: true, value: v }
-	}
+	},
 )
 
 describe('async/schemas', () => {
@@ -617,11 +617,11 @@ describe('async/schemas', () => {
 		test('intersects schemas', async () => {
 			const a = createAsyncValidator(
 				async (v: unknown) => ({ ...(v as object), a: 1 }),
-				async (v: unknown) => ({ ok: true, value: { ...(v as object), a: 1 } })
+				async (v: unknown) => ({ ok: true, value: { ...(v as object), a: 1 } }),
 			)
 			const b = createAsyncValidator(
 				async (v: unknown) => ({ ...(v as object), b: 2 }),
-				async (v: unknown) => ({ ok: true, value: { ...(v as object), b: 2 } })
+				async (v: unknown) => ({ ok: true, value: { ...(v as object), b: 2 } }),
 			)
 			const validator = intersectAsync([a, b])
 			expect(await validator({})).toEqual({ a: 1, b: 2 })
@@ -630,7 +630,7 @@ describe('async/schemas', () => {
 		test('safe version works', async () => {
 			const a = createAsyncValidator(
 				async (v: unknown) => ({ ...(v as object), a: 1 }),
-				async (v: unknown) => ({ ok: true, value: { ...(v as object), a: 1 } })
+				async (v: unknown) => ({ ok: true, value: { ...(v as object), a: 1 } }),
 			)
 			const validator = intersectAsync([a])
 			expect(await validator.safe!({})).toEqual({ ok: true, value: { a: 1 } })
@@ -641,7 +641,7 @@ describe('async/schemas', () => {
 				async () => {
 					throw new Error('Failed')
 				},
-				async () => ({ ok: false, error: 'Failed' })
+				async () => ({ ok: false, error: 'Failed' }),
 			)
 			const validator = intersectAsync([fails])
 			expect(await validator.safe!({})).toEqual({ ok: false, error: 'Failed' })
@@ -708,7 +708,7 @@ describe('async/schemas', () => {
 						if (v !== 'cat') throw new Error('Not cat')
 						return v as 'cat'
 					},
-					async (v: unknown) => (v === 'cat' ? { ok: true, value: v as 'cat' } : { ok: false, error: 'Not cat' })
+					async (v: unknown) => (v === 'cat' ? { ok: true, value: v as 'cat' } : { ok: false, error: 'Not cat' }),
 				),
 				name: strAsync,
 			})
@@ -718,7 +718,7 @@ describe('async/schemas', () => {
 						if (v !== 'dog') throw new Error('Not dog')
 						return v as 'dog'
 					},
-					async (v: unknown) => (v === 'dog' ? { ok: true, value: v as 'dog' } : { ok: false, error: 'Not dog' })
+					async (v: unknown) => (v === 'dog' ? { ok: true, value: v as 'dog' } : { ok: false, error: 'Not dog' }),
 				),
 				name: strAsync,
 			})
@@ -743,7 +743,7 @@ describe('async/schemas', () => {
 						if (v !== 'cat') throw new Error('Not cat')
 						return v as 'cat'
 					},
-					async (v: unknown) => (v === 'cat' ? { ok: true, value: v as 'cat' } : { ok: false, error: 'Not cat' })
+					async (v: unknown) => (v === 'cat' ? { ok: true, value: v as 'cat' } : { ok: false, error: 'Not cat' }),
 				),
 			})
 			const validator = variantAsync('type', [catAsync])
@@ -757,7 +757,7 @@ describe('async/schemas', () => {
 						if (v !== 'cat') throw new Error('Not cat')
 						return v as 'cat'
 					},
-					async (v: unknown) => (v === 'cat' ? { ok: true, value: v as 'cat' } : { ok: false, error: 'Not cat' })
+					async (v: unknown) => (v === 'cat' ? { ok: true, value: v as 'cat' } : { ok: false, error: 'Not cat' }),
 				),
 				name: strAsync,
 			})

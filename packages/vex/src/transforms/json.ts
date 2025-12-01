@@ -100,7 +100,7 @@ export const stringifyJson: Validator<unknown, string> = (() => {
  */
 export const stringifyJsonWith = (
 	space?: string | number,
-	replacer?: (key: string, value: unknown) => unknown
+	replacer?: (key: string, value: unknown) => unknown,
 ): Validator<unknown, string> => {
 	const fn = ((v: unknown) => {
 		try {

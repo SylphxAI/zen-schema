@@ -323,6 +323,22 @@ parseDate('2024-01-15')  // Date object
 | `withDefault(schema, value)` | Default value |
 | `pipe(...validators)` | Chain validators (for transforms) |
 
+### Metadata
+
+| Function | Description |
+|----------|-------------|
+| `description(schema, text)` | Add description |
+| `title(schema, text)` | Add title |
+| `examples(schema, values)` | Add examples |
+| `brand(schema, name)` | Nominal typing (strict) |
+| `flavor(schema, name)` | Nominal typing (weak) |
+| `deprecated(schema)` | Mark as deprecated |
+| `readonly(schema)` | Mark as readonly |
+| `getDescription(schema)` | Get description |
+| `getTitle(schema)` | Get title |
+| `getExamples(schema)` | Get examples |
+| `getMeta(schema)` | Get all metadata |
+
 ### Utilities
 
 | Function | Description |
@@ -399,6 +415,52 @@ toJsonSchema(schema, {
 - **Form builders**: Auto-generate forms from schemas
 - **Code generation**: Generate types for other languages
 - **Validation interop**: Share schemas with non-JS systems
+
+## Schema Metadata
+
+Add documentation metadata to your schemas:
+
+```typescript
+import { str, email, description, title, examples, pipe, toJsonSchema } from '@sylphx/vex'
+
+// Add metadata to schemas
+const emailSchema = pipe(
+  str(email),
+  title('Email'),
+  description('User email address'),
+  examples(['user@example.com', 'admin@test.com'])
+)
+
+// Metadata is preserved through pipe composition
+const validated = pipe(str(), description(str(), 'Preserved'))
+getDescription(validated) // 'Preserved'
+
+// Metadata flows to JSON Schema
+toJsonSchema(emailSchema)
+// {
+//   "type": "string",
+//   "format": "email",
+//   "title": "Email",
+//   "description": "User email address",
+//   "examples": ["user@example.com", "admin@test.com"]
+// }
+```
+
+### Nominal Typing
+
+Use `brand` for strict nominal types or `flavor` for weak nominal types:
+
+```typescript
+import { str, uuid, brand, flavor, pipe } from '@sylphx/vex'
+
+// Strict brand - types are incompatible
+type UserId = string & { __brand: 'UserId' }
+const userId = brand(pipe(str(), uuid), 'UserId')
+
+// Weak flavor - types are compatible but distinguishable
+type Email = string & { __flavor?: 'Email' }
+const email = flavor(str(email), 'Email')
+```
 
 ## Performance
 

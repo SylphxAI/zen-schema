@@ -43,7 +43,7 @@ export const getGlobalMessage = ():
  * Set global error message
  */
 export const setGlobalMessage = (
-	message: string | ((issue: { message: string }) => string)
+	message: string | ((issue: { message: string }) => string),
 ): void => {
 	globalMessage = message
 }
@@ -59,7 +59,7 @@ export const deleteGlobalMessage = (): void => {
  * Get schema-specific error message
  */
 export const getSchemaMessage = (
-	schema: string
+	schema: string,
 ): string | ((issue: { message: string }) => string) | undefined => {
 	return schemaMessages.get(schema)
 }
@@ -69,7 +69,7 @@ export const getSchemaMessage = (
  */
 export const setSchemaMessage = (
 	schema: string,
-	message: string | ((issue: { message: string }) => string)
+	message: string | ((issue: { message: string }) => string),
 ): void => {
 	schemaMessages.set(schema, message)
 }
@@ -85,7 +85,7 @@ export const deleteSchemaMessage = (schema: string): void => {
  * Get specific error message by key
  */
 export const getSpecificMessage = (
-	key: string
+	key: string,
 ): string | ((issue: { message: string }) => string) | undefined => {
 	return specificMessages.get(key)
 }
@@ -95,7 +95,7 @@ export const getSpecificMessage = (
  */
 export const setSpecificMessage = (
 	key: string,
-	message: string | ((issue: { message: string }) => string)
+	message: string | ((issue: { message: string }) => string),
 ): void => {
 	specificMessages.set(key, message)
 }

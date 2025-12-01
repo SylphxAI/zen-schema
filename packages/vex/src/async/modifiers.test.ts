@@ -22,7 +22,7 @@ const strAsync = createAsyncValidator(
 	async (v: unknown) => {
 		if (typeof v !== 'string') return { ok: false, error: 'Expected string' }
 		return { ok: true, value: v }
-	}
+	},
 )
 
 describe('async/modifiers', () => {
@@ -222,7 +222,7 @@ describe('async/modifiers', () => {
 		test('throws on null result', async () => {
 			const maybeNull = createAsyncValidator(
 				async (v: unknown) => (v === 'null' ? null : (v as string)),
-				async (v: unknown) => ({ ok: true, value: v === 'null' ? null : (v as string) })
+				async (v: unknown) => ({ ok: true, value: v === 'null' ? null : (v as string) }),
 			)
 			const validator = nonNullableAsync(maybeNull)
 			await expect(validator('null')).rejects.toThrow('Value cannot be null')
@@ -231,7 +231,7 @@ describe('async/modifiers', () => {
 		test('passes non-null value', async () => {
 			const maybeNull = createAsyncValidator(
 				async (v: unknown) => v as string,
-				async (v: unknown) => ({ ok: true, value: v as string })
+				async (v: unknown) => ({ ok: true, value: v as string }),
 			)
 			const validator = nonNullableAsync(maybeNull)
 			expect(await validator('hello')).toBe('hello')
@@ -240,7 +240,7 @@ describe('async/modifiers', () => {
 		test('safe version returns error on null', async () => {
 			const maybeNull = createAsyncValidator(
 				async (v: unknown) => (v === 'null' ? null : (v as string)),
-				async (v: unknown) => ({ ok: true, value: v === 'null' ? null : (v as string) })
+				async (v: unknown) => ({ ok: true, value: v === 'null' ? null : (v as string) }),
 			)
 			const validator = nonNullableAsync(maybeNull)
 			expect(await validator.safe!('null')).toEqual({
@@ -277,7 +277,7 @@ describe('async/modifiers', () => {
 				async () => {
 					throw new Error('fail')
 				},
-				async () => ({ ok: false, error: 'fail' })
+				async () => ({ ok: false, error: 'fail' }),
 			)
 			const validator = nonNullableAsync(failing)
 			expect(await validator.safe!('test')).toEqual({ ok: false, error: 'fail' })
@@ -286,7 +286,7 @@ describe('async/modifiers', () => {
 		test('safe returns success when validator.safe passes with non-null value', async () => {
 			const maybeNull = createAsyncValidator(
 				async (v: unknown) => v as string,
-				async (v: unknown) => ({ ok: true, value: v as string })
+				async (v: unknown) => ({ ok: true, value: v as string }),
 			)
 			const validator = nonNullableAsync(maybeNull)
 			expect(await validator.safe!('hello')).toEqual({ ok: true, value: 'hello' })
@@ -297,7 +297,7 @@ describe('async/modifiers', () => {
 		test('throws on null result', async () => {
 			const maybeNull = createAsyncValidator(
 				async (v: unknown) => (v === 'null' ? null : (v as string)),
-				async (v: unknown) => ({ ok: true, value: v === 'null' ? null : (v as string) })
+				async (v: unknown) => ({ ok: true, value: v === 'null' ? null : (v as string) }),
 			)
 			const validator = nonNullishAsync(maybeNull)
 			await expect(validator('null')).rejects.toThrow('Value cannot be null or undefined')
@@ -306,7 +306,7 @@ describe('async/modifiers', () => {
 		test('throws on undefined result', async () => {
 			const maybeUndef = createAsyncValidator(
 				async (v: unknown) => (v === 'undef' ? undefined : (v as string)),
-				async (v: unknown) => ({ ok: true, value: v === 'undef' ? undefined : (v as string) })
+				async (v: unknown) => ({ ok: true, value: v === 'undef' ? undefined : (v as string) }),
 			)
 			const validator = nonNullishAsync(maybeUndef)
 			await expect(validator('undef')).rejects.toThrow('Value cannot be null or undefined')
@@ -320,7 +320,7 @@ describe('async/modifiers', () => {
 		test('safe version returns error', async () => {
 			const maybeNull = createAsyncValidator(
 				async (v: unknown) => (v === 'null' ? null : (v as string)),
-				async (v: unknown) => ({ ok: true, value: v === 'null' ? null : (v as string) })
+				async (v: unknown) => ({ ok: true, value: v === 'null' ? null : (v as string) }),
 			)
 			const validator = nonNullishAsync(maybeNull)
 			expect(await validator.safe!('null')).toEqual({
@@ -364,7 +364,7 @@ describe('async/modifiers', () => {
 		test('safe returns success when validator.safe passes with non-nullish value', async () => {
 			const maybeNull = createAsyncValidator(
 				async (v: unknown) => v as string,
-				async (v: unknown) => ({ ok: true, value: v as string })
+				async (v: unknown) => ({ ok: true, value: v as string }),
 			)
 			const validator = nonNullishAsync(maybeNull)
 			expect(await validator.safe!('hello')).toEqual({ ok: true, value: 'hello' })
@@ -373,7 +373,7 @@ describe('async/modifiers', () => {
 		test('safe returns error when validator.safe returns undefined', async () => {
 			const maybeUndef = createAsyncValidator(
 				async (v: unknown) => (v === 'undef' ? undefined : (v as string)),
-				async (v: unknown) => ({ ok: true, value: v === 'undef' ? undefined : (v as string) })
+				async (v: unknown) => ({ ok: true, value: v === 'undef' ? undefined : (v as string) }),
 			)
 			const validator = nonNullishAsync(maybeUndef)
 			expect(await validator.safe!('undef')).toEqual({
@@ -387,7 +387,7 @@ describe('async/modifiers', () => {
 		test('throws on undefined result', async () => {
 			const maybeUndef = createAsyncValidator(
 				async (v: unknown) => (v === 'undef' ? undefined : (v as string)),
-				async (v: unknown) => ({ ok: true, value: v === 'undef' ? undefined : (v as string) })
+				async (v: unknown) => ({ ok: true, value: v === 'undef' ? undefined : (v as string) }),
 			)
 			const validator = nonOptionalAsync(maybeUndef)
 			await expect(validator('undef')).rejects.toThrow('Value cannot be undefined')
@@ -401,7 +401,7 @@ describe('async/modifiers', () => {
 		test('safe version returns error', async () => {
 			const maybeUndef = createAsyncValidator(
 				async (v: unknown) => (v === 'undef' ? undefined : (v as string)),
-				async (v: unknown) => ({ ok: true, value: v === 'undef' ? undefined : (v as string) })
+				async (v: unknown) => ({ ok: true, value: v === 'undef' ? undefined : (v as string) }),
 			)
 			const validator = nonOptionalAsync(maybeUndef)
 			expect(await validator.safe!('undef')).toEqual({
@@ -436,7 +436,7 @@ describe('async/modifiers', () => {
 		test('safe returns success when validator.safe passes with defined value', async () => {
 			const maybeUndef = createAsyncValidator(
 				async (v: unknown) => v as string,
-				async (v: unknown) => ({ ok: true, value: v as string })
+				async (v: unknown) => ({ ok: true, value: v as string }),
 			)
 			const validator = nonOptionalAsync(maybeUndef)
 			expect(await validator.safe!('hello')).toEqual({ ok: true, value: 'hello' })
@@ -494,7 +494,7 @@ describe('async/modifiers', () => {
 		test('validates partial object', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name: string },
-				async (v: unknown) => ({ ok: true, value: v as { name: string } })
+				async (v: unknown) => ({ ok: true, value: v as { name: string } }),
 			)
 			const validator = partialAsync(objAsync)
 			expect(await validator({ name: 'test' })).toEqual({ name: 'test' })
@@ -503,7 +503,7 @@ describe('async/modifiers', () => {
 		test('throws on non-object', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name: string },
-				async (v: unknown) => ({ ok: true, value: v as { name: string } })
+				async (v: unknown) => ({ ok: true, value: v as { name: string } }),
 			)
 			const validator = partialAsync(objAsync)
 			await expect(validator('not an object')).rejects.toThrow('Expected object')
@@ -512,7 +512,7 @@ describe('async/modifiers', () => {
 		test('throws on null', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name: string },
-				async (v: unknown) => ({ ok: true, value: v as { name: string } })
+				async (v: unknown) => ({ ok: true, value: v as { name: string } }),
 			)
 			const validator = partialAsync(objAsync)
 			await expect(validator(null)).rejects.toThrow('Expected object')
@@ -521,7 +521,7 @@ describe('async/modifiers', () => {
 		test('throws on array', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name: string },
-				async (v: unknown) => ({ ok: true, value: v as { name: string } })
+				async (v: unknown) => ({ ok: true, value: v as { name: string } }),
 			)
 			const validator = partialAsync(objAsync)
 			await expect(validator([])).rejects.toThrow('Expected object')
@@ -530,7 +530,7 @@ describe('async/modifiers', () => {
 		test('safe version works', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name: string },
-				async (v: unknown) => ({ ok: true, value: v as { name: string } })
+				async (v: unknown) => ({ ok: true, value: v as { name: string } }),
 			)
 			const validator = partialAsync(objAsync)
 			expect(await validator.safe!({ name: 'test' })).toEqual({
@@ -542,7 +542,7 @@ describe('async/modifiers', () => {
 		test('safe version returns error on non-object', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name: string },
-				async (v: unknown) => ({ ok: true, value: v as { name: string } })
+				async (v: unknown) => ({ ok: true, value: v as { name: string } }),
 			)
 			const validator = partialAsync(objAsync)
 			expect(await validator.safe!('not an object')).toEqual({
@@ -554,7 +554,7 @@ describe('async/modifiers', () => {
 		test('uses schema.safe when available and passes', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name: string },
-				async (v: unknown) => ({ ok: true, value: v as { name: string } })
+				async (v: unknown) => ({ ok: true, value: v as { name: string } }),
 			)
 			const validator = partialAsync(objAsync)
 			expect(await validator({ name: 'test' })).toEqual({ name: 'test' })
@@ -571,7 +571,7 @@ describe('async/modifiers', () => {
 					const o = v as { name?: string }
 					if (!o.name) return { ok: false, error: 'name required' }
 					return { ok: true, value: o as { name: string } }
-				}
+				},
 			)
 			const validator = partialAsync(objAsync)
 			// partial should return the value as-is even if underlying schema fails
@@ -583,7 +583,7 @@ describe('async/modifiers', () => {
 		test('validates required object', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name: string },
-				async (v: unknown) => ({ ok: true, value: v as { name: string } })
+				async (v: unknown) => ({ ok: true, value: v as { name: string } }),
 			)
 			const validator = requiredAsync(objAsync)
 			expect(await validator({ name: 'test' })).toEqual({ name: 'test' })
@@ -592,7 +592,7 @@ describe('async/modifiers', () => {
 		test('throws on non-object', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name: string },
-				async (v: unknown) => ({ ok: true, value: v as { name: string } })
+				async (v: unknown) => ({ ok: true, value: v as { name: string } }),
 			)
 			const validator = requiredAsync(objAsync)
 			await expect(validator('not an object')).rejects.toThrow('Expected object')
@@ -601,7 +601,7 @@ describe('async/modifiers', () => {
 		test('throws on undefined field', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name?: string },
-				async (v: unknown) => ({ ok: true, value: v as { name?: string } })
+				async (v: unknown) => ({ ok: true, value: v as { name?: string } }),
 			)
 			const validator = requiredAsync(objAsync)
 			await expect(validator({ name: undefined })).rejects.toThrow('name: Required')
@@ -610,7 +610,7 @@ describe('async/modifiers', () => {
 		test('safe version returns error on undefined field', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name?: string },
-				async (v: unknown) => ({ ok: true, value: v as { name?: string } })
+				async (v: unknown) => ({ ok: true, value: v as { name?: string } }),
 			)
 			const validator = requiredAsync(objAsync)
 			expect(await validator.safe!({ name: undefined })).toEqual({
@@ -622,7 +622,7 @@ describe('async/modifiers', () => {
 		test('safe version returns error on non-object', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name: string },
-				async (v: unknown) => ({ ok: true, value: v as { name: string } })
+				async (v: unknown) => ({ ok: true, value: v as { name: string } }),
 			)
 			const validator = requiredAsync(objAsync)
 			expect(await validator.safe!('not an object')).toEqual({
@@ -663,7 +663,7 @@ describe('async/modifiers', () => {
 		test('safe returns success when schema.safe passes with all defined values', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name: string; age: number },
-				async (v: unknown) => ({ ok: true, value: v as { name: string; age: number } })
+				async (v: unknown) => ({ ok: true, value: v as { name: string; age: number } }),
 			)
 			const validator = requiredAsync(objAsync)
 			expect(await validator.safe!({ name: 'test', age: 25 })).toEqual({
@@ -675,7 +675,7 @@ describe('async/modifiers', () => {
 		test('safe returns error when schema.safe passes but value has undefined field', async () => {
 			const objAsync = createAsyncValidator(
 				async (v: unknown) => v as { name?: string },
-				async (v: unknown) => ({ ok: true, value: v as { name?: string } })
+				async (v: unknown) => ({ ok: true, value: v as { name?: string } }),
 			)
 			const validator = requiredAsync(objAsync)
 			expect(await validator.safe!({ name: undefined })).toEqual({
@@ -689,7 +689,7 @@ describe('async/modifiers', () => {
 				async () => {
 					throw new Error('schema error')
 				},
-				async () => ({ ok: false, error: 'schema error' })
+				async () => ({ ok: false, error: 'schema error' }),
 			)
 			const validator = requiredAsync(failing)
 			expect(await validator.safe!({ name: 'test' })).toEqual({

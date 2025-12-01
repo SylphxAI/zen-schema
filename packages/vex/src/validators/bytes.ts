@@ -20,7 +20,7 @@ export const bytes = (n: number): Validator<string> => {
 			if (len !== n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (new TextEncoder().encode(v).length === n ? { ok: true, value: v } : err)
+		(v) => (new TextEncoder().encode(v).length === n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -39,7 +39,7 @@ export const minBytes = (n: number): Validator<string> => {
 			if (len < n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (new TextEncoder().encode(v).length >= n ? { ok: true, value: v } : err)
+		(v) => (new TextEncoder().encode(v).length >= n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -58,7 +58,7 @@ export const maxBytes = (n: number): Validator<string> => {
 			if (len > n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (new TextEncoder().encode(v).length <= n ? { ok: true, value: v } : err)
+		(v) => (new TextEncoder().encode(v).length <= n ? { ok: true, value: v } : err),
 	)
 }
 
@@ -77,6 +77,6 @@ export const notBytes = (n: number): Validator<string> => {
 			if (len === n) throw new ValidationError(msg)
 			return v
 		},
-		(v) => (new TextEncoder().encode(v).length !== n ? { ok: true, value: v } : err)
+		(v) => (new TextEncoder().encode(v).length !== n ? { ok: true, value: v } : err),
 	)
 }

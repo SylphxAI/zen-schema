@@ -15,7 +15,7 @@ import { addStandardSchema, ValidationError } from '../core'
 export const refine = <I, O>(
 	validator: Validator<I, O>,
 	check: (value: O) => boolean,
-	message = 'Validation failed'
+	message = 'Validation failed',
 ): Validator<I, O> => {
 	const err: Result<never> = { ok: false, error: message }
 
@@ -51,7 +51,7 @@ export const refine = <I, O>(
  */
 export const transform = <I, O, T>(
 	validator: Validator<I, O>,
-	transformFn: (value: O) => T
+	transformFn: (value: O) => T,
 ): Validator<I, T> => {
 	const result = ((value: I) => {
 		const validated = validator(value)
