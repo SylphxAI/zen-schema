@@ -7,7 +7,8 @@
 				"noNonNullAssertion": "off"
 			},
 			"suspicious": {
-				"noControlCharactersInRegex": "off"
+				"noControlCharactersInRegex": "off",
+				"noThenProperty": "off"
 			}
 		}
 	}
