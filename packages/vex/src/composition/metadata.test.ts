@@ -1,5 +1,17 @@
 import { describe, expect, test } from 'bun:test'
-import { email, str } from '..'
+import {
+	array,
+	email,
+	int,
+	lower,
+	min,
+	num,
+	object,
+	optional,
+	pipe,
+	str,
+	trim,
+} from '..'
 import {
 	brand,
 	description,
@@ -12,6 +24,7 @@ import {
 	metadata,
 	readonly,
 	title,
+	type ValidatorMetadata,
 } from './metadata'
 
 describe('Metadata Functions', () => {
@@ -295,6 +308,199 @@ describe('Metadata Functions', () => {
 			const v1 = description(str(), 'First description')
 			const v2 = description(v1, 'Second description')
 			expect(getDescription(v2)).toBe('Second description')
+		})
+	})
+
+	describe('description with complex validators', () => {
+		test('works with object validators', () => {
+			const userSchema = description(
+				object({
+					name: str(),
+					age: num(int),
+				}),
+				'User object with name and age'
+			)
+			expect(getDescription(userSchema)).toBe('User object with name and age')
+			expect(userSchema({ name: 'John', age: 30 })).toEqual({ name: 'John', age: 30 })
+		})
+
+		test('works with array validators', () => {
+			const numbersSchema = description(array(num()), 'List of numbers')
+			expect(getDescription(numbersSchema)).toBe('List of numbers')
+			expect(numbersSchema([1, 2, 3])).toEqual([1, 2, 3])
+		})
+
+		test('works with nested objects', () => {
+			const addressSchema = description(
+				object({
+					street: str(),
+					city: str(),
+				}),
+				'Address'
+			)
+			const userSchema = object({
+				name: str(),
+				address: addressSchema,
+			})
+			// Check that nested description is preserved
+			expect(getDescription(addressSchema)).toBe('Address')
+			expect(userSchema({ name: 'John', address: { street: '123 Main', city: 'NYC' } })).toEqual({
+				name: 'John',
+				address: { street: '123 Main', city: 'NYC' },
+			})
+		})
+
+		test('works with pipe and transforms', () => {
+			const emailValidator = description(pipe(str(), trim, lower, email), 'Valid email address')
+			expect(getDescription(emailValidator)).toBe('Valid email address')
+			expect(emailValidator('  USER@EXAMPLE.COM  ')).toBe('user@example.com')
+		})
+
+		test('works with optional validators', () => {
+			const optionalName = description(optional(str()), 'Optional name field')
+			expect(getDescription(optionalName)).toBe('Optional name field')
+			expect(optionalName(undefined)).toBeUndefined()
+			expect(optionalName('John')).toBe('John')
+		})
+
+		test('works with constrained validators', () => {
+			const nameValidator = description(str(min(2)), 'Name must be at least 2 characters')
+			expect(getDescription(nameValidator)).toBe('Name must be at least 2 characters')
+			expect(nameValidator('Jo')).toBe('Jo')
+			expect(() => nameValidator('J')).toThrow()
+		})
+	})
+
+	describe('edge cases', () => {
+		test('empty string description', () => {
+			const validator = description(str(), '')
+			expect(getDescription(validator)).toBe('')
+		})
+
+		test('description with special characters', () => {
+			const validator = description(str(), 'Description with "quotes" and \'apostrophes\'')
+			expect(getDescription(validator)).toBe('Description with "quotes" and \'apostrophes\'')
+		})
+
+		test('description with unicode', () => {
+			const validator = description(str(), '描述 📝 Описание')
+			expect(getDescription(validator)).toBe('描述 📝 Описание')
+		})
+
+		test('description with newlines', () => {
+			const validator = description(str(), 'Line 1\nLine 2\nLine 3')
+			expect(getDescription(validator)).toBe('Line 1\nLine 2\nLine 3')
+		})
+
+		test('very long description', () => {
+			const longDesc = 'A'.repeat(10000)
+			const validator = description(str(), longDesc)
+			expect(getDescription(validator)).toBe(longDesc)
+		})
+
+		test('metadata with null values', () => {
+			const validator = metadata(str(), { customField: null } as ValidatorMetadata)
+			expect(getMetadata(validator)?.customField).toBeNull()
+		})
+
+		test('metadata with undefined values', () => {
+			const validator = metadata(str(), { description: undefined })
+			expect(getMetadata(validator)?.description).toBeUndefined()
+		})
+
+		test('chaining many metadata operations', () => {
+			let validator = str()
+			for (let i = 0; i < 100; i++) {
+				validator = description(validator, `Description ${i}`)
+			}
+			expect(getDescription(validator)).toBe('Description 99')
+		})
+	})
+
+	describe('metadata inheritance', () => {
+		test('metadata is not shared between instances', () => {
+			const base = str()
+			const v1 = description(base, 'First')
+			const v2 = description(base, 'Second')
+			expect(getDescription(v1)).toBe('First')
+			expect(getDescription(v2)).toBe('Second')
+			expect(getDescription(base)).toBeUndefined()
+		})
+
+		test('modifying metadata creates new validator', () => {
+			const v1 = description(str(), 'Original')
+			const v2 = title(v1, 'Title')
+			// v1 should still only have description
+			expect(getTitle(v1)).toBeUndefined()
+			expect(getDescription(v1)).toBe('Original')
+			// v2 should have both
+			expect(getTitle(v2)).toBe('Title')
+			expect(getDescription(v2)).toBe('Original')
+		})
+	})
+
+	describe('Standard Schema integration', () => {
+		test('metadata validator has ~standard property', () => {
+			const validator = description(str(), 'Test')
+			expect(validator['~standard']).toBeDefined()
+			expect(validator['~standard']?.version).toBe(1)
+			expect(validator['~standard']?.vendor).toBe('vex')
+		})
+
+		test('~standard.validate works with valid input', () => {
+			const validator = description(str(email), 'Email address')
+			const result = validator['~standard']!.validate('test@example.com')
+			expect(result.value).toBe('test@example.com')
+			expect(result.issues).toBeUndefined()
+		})
+
+		test('~standard.validate returns issues for invalid input', () => {
+			const validator = description(str(email), 'Email address')
+			const result = validator['~standard']!.validate('invalid')
+			expect(result.issues).toBeDefined()
+			expect(result.issues!.length).toBeGreaterThan(0)
+		})
+
+		test('title validator has ~standard property', () => {
+			const validator = title(str(), 'String')
+			expect(validator['~standard']).toBeDefined()
+		})
+
+		test('examples validator has ~standard property', () => {
+			const validator = examples(str(), ['a', 'b'])
+			expect(validator['~standard']).toBeDefined()
+		})
+	})
+
+	describe('type safety', () => {
+		test('description preserves input/output types', () => {
+			const validator = description(str(), 'A string')
+			const result: string = validator('test')
+			expect(result).toBe('test')
+		})
+
+		test('brand adds type brand', () => {
+			type Email = string & { __brand: 'Email' }
+			const validateEmail = brand(str(email), 'Email')
+			const result: Email = validateEmail('test@example.com')
+			expect(result).toBe('test@example.com')
+		})
+
+		test('flavor adds optional flavor type', () => {
+			type UserId = string & { __flavor?: 'UserId' }
+			const validateUserId = flavor(str(), 'UserId')
+			const result: UserId = validateUserId('123')
+			expect(result).toBe('123')
+		})
+
+		test('readonly makes output readonly', () => {
+			const validator = readonly(
+				object({
+					name: str(),
+				})
+			)
+			const result: Readonly<{ name: string }> = validator({ name: 'John' })
+			expect(result.name).toBe('John')
 		})
 	})
 })
