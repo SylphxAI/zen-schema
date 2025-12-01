@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.6 (2025-12-01)
+
+### ✨ Features
+
+- **vex:** MetaAction pattern for consistent metadata API ([362f633](https://github.com/SylphxAI/vex/commit/362f633830a0947fca6157fd46ae7aac581d93fd))
+
 ## 0.1.5 (2025-12-01)
 
 ### ♻️ Refactoring
