@@ -7,6 +7,7 @@ import {
 	addSchemaMetadata,
 	addStandardSchema,
 	applyMetaActions,
+	getErrorMsg,
 	type Metadata,
 	ValidationError,
 } from '../core'
@@ -31,6 +32,10 @@ export const object = <T extends Record<string, unknown>>(
 	const validators = keys.map((k) => shape[k]) as Parser<unknown>[]
 	const len = keys.length
 
+	// Pre-compute safe methods for monomorphic path (avoids branch per field)
+	const safeMethods = validators.map((v) => v.safe)
+	const allHaveSafe = safeMethods.every((s): s is NonNullable<typeof s> => s !== undefined)
+
 	const fn = ((value: unknown) => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
 			throw new ValidationError('Expected object')
@@ -45,46 +50,64 @@ export const object = <T extends Record<string, unknown>>(
 			try {
 				result[key] = validator(input[key as string]) as T[keyof T]
 			} catch (e) {
-				const msg = e instanceof Error ? e.message : 'Unknown error'
-				throw new ValidationError(`${String(key)}: ${msg}`)
+				throw new ValidationError(`${String(key)}: ${getErrorMsg(e)}`)
 			}
 		}
 
 		return result
 	}) as Parser<T>
 
-	fn.safe = (value: unknown): Result<T> => {
-		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-			return ERR_OBJECT as Result<T>
-		}
-
-		const input = value as Record<string, unknown>
-		const result = {} as T
-
-		for (let i = 0; i < len; i++) {
-			const key = keys[i]!
-			const validator = validators[i]!
-			const v = input[key as string]
-			if (validator.safe) {
-				const r = validator.safe(v)
-				if (!r.ok) {
-					return { ok: false, error: `${String(key)}: ${r.error}` }
+	// Monomorphic fast path when all validators have .safe (JIT can inline)
+	fn.safe = allHaveSafe
+		? (value: unknown): Result<T> => {
+				if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+					return ERR_OBJECT as Result<T>
 				}
-				result[key] = r.value as T[keyof T]
-			} else {
-				try {
-					result[key] = validator(v) as T[keyof T]
-				} catch (e) {
-					return {
-						ok: false,
-						error: `${String(key)}: ${e instanceof Error ? e.message : 'Unknown error'}`,
+
+				const input = value as Record<string, unknown>
+				const result = {} as T
+
+				for (let i = 0; i < len; i++) {
+					const r = safeMethods[i]!(input[keys[i]! as string])
+					if (!r.ok) {
+						return { ok: false, error: `${String(keys[i])}: ${r.error}` }
+					}
+					result[keys[i]!] = r.value as T[keyof T]
+				}
+
+				return { ok: true, value: result }
+			}
+		: // Polymorphic fallback for mixed validators
+			(value: unknown): Result<T> => {
+				if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+					return ERR_OBJECT as Result<T>
+				}
+
+				const input = value as Record<string, unknown>
+				const result = {} as T
+
+				for (let i = 0; i < len; i++) {
+					const key = keys[i]!
+					const validator = validators[i]!
+					const v = input[key as string]
+					const safe = validator.safe
+					if (safe) {
+						const r = safe(v)
+						if (!r.ok) {
+							return { ok: false, error: `${String(key)}: ${r.error}` }
+						}
+						result[key] = r.value as T[keyof T]
+					} else {
+						try {
+							result[key] = validator(v) as T[keyof T]
+						} catch (e) {
+							return { ok: false, error: `${String(key)}: ${getErrorMsg(e)}` }
+						}
 					}
 				}
-			}
-		}
 
-		return { ok: true, value: result }
-	}
+				return { ok: true, value: result }
+			}
 
 	// Add Standard Schema with path support
 	;(fn as unknown as Record<string, unknown>)['~standard'] = {
@@ -118,12 +141,7 @@ export const object = <T extends Record<string, unknown>>(
 						result[key] = validator(input[key as string]) as T[keyof T]
 					} catch (e) {
 						return {
-							issues: [
-								{
-									message: e instanceof Error ? e.message : 'Unknown error',
-									path: [key as PropertyKey],
-								},
-							],
+							issues: [{ message: getErrorMsg(e), path: [key as PropertyKey] }],
 						}
 					}
 				}
@@ -205,7 +223,7 @@ export const passthrough = <T extends Record<string, unknown>>(
 			const validated = schema(value)
 			return { ok: true, value: { ...value, ...validated } as T & Record<string, unknown> }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 
@@ -342,7 +360,7 @@ export const required = <T extends Record<string, unknown>>(
 			}
 			return { ok: true, value: result as Required<T> }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 
@@ -415,8 +433,7 @@ export const looseObject = <T extends Record<string, unknown>>(
 			try {
 				result[key] = validator(input[key as string]) as T[keyof T]
 			} catch (e) {
-				const msg = e instanceof Error ? e.message : 'Unknown error'
-				throw new ValidationError(`${String(key)}: ${msg}`)
+				throw new ValidationError(`${String(key)}: ${getErrorMsg(e)}`)
 			}
 		}
 
@@ -445,10 +462,7 @@ export const looseObject = <T extends Record<string, unknown>>(
 				try {
 					result[key] = validator(v) as T[keyof T]
 				} catch (e) {
-					return {
-						ok: false,
-						error: `${String(key)}: ${e instanceof Error ? e.message : 'Unknown error'}`,
-					}
+					return { ok: false, error: `${String(key)}: ${getErrorMsg(e)}` }
 				}
 			}
 		}
@@ -492,8 +506,7 @@ export const objectWithRest = <T extends Record<string, unknown>, R>(
 			try {
 				result[key as string] = validator(input[key as string])
 			} catch (e) {
-				const msg = e instanceof Error ? e.message : 'Unknown error'
-				throw new ValidationError(`${String(key)}: ${msg}`)
+				throw new ValidationError(`${String(key)}: ${getErrorMsg(e)}`)
 			}
 		}
 
@@ -505,8 +518,7 @@ export const objectWithRest = <T extends Record<string, unknown>, R>(
 				try {
 					result[key] = rest(input[key])
 				} catch (e) {
-					const msg = e instanceof Error ? e.message : 'Unknown error'
-					throw new ValidationError(`${key}: ${msg}`)
+					throw new ValidationError(`${key}: ${getErrorMsg(e)}`)
 				}
 			}
 		}
@@ -537,10 +549,7 @@ export const objectWithRest = <T extends Record<string, unknown>, R>(
 				try {
 					result[key as string] = validator(v)
 				} catch (e) {
-					return {
-						ok: false,
-						error: `${String(key)}: ${e instanceof Error ? e.message : 'Unknown error'}`,
-					}
+					return { ok: false, error: `${String(key)}: ${getErrorMsg(e)}` }
 				}
 			}
 		}
@@ -566,10 +575,7 @@ export const objectWithRest = <T extends Record<string, unknown>, R>(
 					try {
 						result[key] = rest(input[key])
 					} catch (e) {
-						return {
-							ok: false,
-							error: `${key}: ${e instanceof Error ? e.message : 'Unknown error'}`,
-						}
+						return { ok: false, error: `${key}: ${getErrorMsg(e)}` }
 					}
 				}
 			}
