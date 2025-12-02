@@ -5,6 +5,10 @@
 /** Path segment (string for object keys, number for array indices) */
 export type PathSegment = string | number
 
+/** Extract error message from unknown error (helper to reduce code duplication) */
+export const getErrorMsg = (e: unknown, fallback = 'Unknown error'): string =>
+	e instanceof Error ? e.message : fallback
+
 /** Single validation issue with path and message */
 export interface ValidationIssue {
 	/** Error message */
