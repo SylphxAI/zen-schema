@@ -210,11 +210,12 @@ export const time: Validator<string> = createValidator(
 // ============================================================
 
 /** IPv4 address (e.g., 192.168.1.1) */
+const DIGIT_RE = /^\d+$/
 const isValidIPv4 = (v: string): boolean => {
 	const parts = v.split('.')
 	if (parts.length !== 4) return false
 	for (const part of parts) {
-		if (!/^\d+$/.test(part)) return false
+		if (!DIGIT_RE.test(part)) return false
 		const num = Number.parseInt(part, 10)
 		if (num < 0 || num > 255) return false
 		if (part.length > 1 && part[0] === '0') return false // no leading zeros
