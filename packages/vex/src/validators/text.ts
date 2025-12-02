@@ -6,14 +6,18 @@ import type { Result, Validator } from '../core'
 import { createValidator, ValidationError } from '../core'
 
 // ============================================================
+// Cached Segmenters (created once, reused)
+// ============================================================
+
+const GRAPHEME_SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+const WORD_SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'word' })
+
+// ============================================================
 // Grapheme Validators
 // ============================================================
 
-/** Get grapheme count using Intl.Segmenter */
-const getGraphemeCount = (v: string): number => {
-	const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
-	return [...segmenter.segment(v)].length
-}
+/** Get grapheme count using cached Intl.Segmenter */
+const getGraphemeCount = (v: string): number => [...GRAPHEME_SEGMENTER.segment(v)].length
 
 /** Exact grapheme count */
 export const graphemes = (n: number): Validator<string> => {
@@ -58,11 +62,9 @@ export const maxGraphemes = (n: number): Validator<string> => {
 // Word Validators
 // ============================================================
 
-/** Get word count using Intl.Segmenter */
-const getWordCount = (v: string): number => {
-	const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' })
-	return [...segmenter.segment(v)].filter((s) => s.isWordLike).length
-}
+/** Get word count using cached Intl.Segmenter */
+const getWordCount = (v: string): number =>
+	[...WORD_SEGMENTER.segment(v)].filter((s) => s.isWordLike).length
 
 /** Exact word count */
 export const words = (n: number): Validator<string> => {
