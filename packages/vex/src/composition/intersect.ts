@@ -81,7 +81,7 @@ export function intersect(...args: IntersectArg[]): Parser<unknown> {
 		for (const schema of schemas) {
 			const validated = schema(value)
 			if (typeof validated === 'object' && validated !== null && typeof result === 'object') {
-				result = { ...result, ...validated }
+				Object.assign(result, validated)
 			} else {
 				result = validated
 			}
@@ -98,7 +98,7 @@ export function intersect(...args: IntersectArg[]): Parser<unknown> {
 				const r = schema.safe(value)
 				if (!r.ok) return { ok: false, error: r.error }
 				if (typeof r.value === 'object' && r.value !== null && typeof result === 'object') {
-					result = { ...result, ...r.value }
+					Object.assign(result, r.value)
 				} else {
 					result = r.value
 				}
@@ -106,7 +106,7 @@ export function intersect(...args: IntersectArg[]): Parser<unknown> {
 				try {
 					const validated = schema(value)
 					if (typeof validated === 'object' && validated !== null && typeof result === 'object') {
-						result = { ...result, ...validated }
+						Object.assign(result, validated)
 					} else {
 						result = validated
 					}
@@ -132,7 +132,7 @@ export function intersect(...args: IntersectArg[]): Parser<unknown> {
 					const r = std.validate(value) as StandardSchemaV1.Result<unknown>
 					if (r.issues) return r
 					if (typeof r.value === 'object' && r.value !== null && typeof result === 'object') {
-						result = { ...result, ...r.value }
+						Object.assign(result, r.value)
 					} else {
 						result = r.value
 					}
@@ -140,7 +140,7 @@ export function intersect(...args: IntersectArg[]): Parser<unknown> {
 					const r = schema.safe(value)
 					if (!r.ok) return { issues: [{ message: r.error }] }
 					if (typeof r.value === 'object' && r.value !== null && typeof result === 'object') {
-						result = { ...result, ...r.value }
+						Object.assign(result, r.value)
 					} else {
 						result = r.value
 					}
@@ -148,7 +148,7 @@ export function intersect(...args: IntersectArg[]): Parser<unknown> {
 					try {
 						const validated = schema(value)
 						if (typeof validated === 'object' && validated !== null && typeof result === 'object') {
-							result = { ...result, ...validated }
+							Object.assign(result, validated)
 						} else {
 							result = validated
 						}
