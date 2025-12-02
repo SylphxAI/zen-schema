@@ -7,6 +7,7 @@ import {
 	addSchemaMetadata,
 	applyMetaActions,
 	createValidator,
+	getErrorMsg,
 	type Metadata,
 	ValidationError,
 } from '../core'
@@ -35,8 +36,7 @@ export const array = <T>(itemValidator: Parser<T>, ...metaActions: MetaAction[])
 			try {
 				result[i] = itemValidator(value[i])
 			} catch (e) {
-				const msg = e instanceof Error ? e.message : 'Unknown error'
-				throw new ValidationError(`[${i}]: ${msg}`)
+				throw new ValidationError(`[${i}]: ${getErrorMsg(e)}`)
 			}
 		}
 
@@ -63,7 +63,7 @@ export const array = <T>(itemValidator: Parser<T>, ...metaActions: MetaAction[])
 				try {
 					result[i] = itemValidator(value[i])
 				} catch (e) {
-					return { ok: false, error: `[${i}]: ${e instanceof Error ? e.message : 'Unknown error'}` }
+					return { ok: false, error: `[${i}]: ${getErrorMsg(e)}` }
 				}
 			}
 		}
@@ -102,9 +102,7 @@ export const array = <T>(itemValidator: Parser<T>, ...metaActions: MetaAction[])
 					try {
 						result[i] = itemValidator(value[i])
 					} catch (e) {
-						return {
-							issues: [{ message: e instanceof Error ? e.message : 'Unknown error', path: [i] }],
-						}
+						return { issues: [{ message: getErrorMsg(e), path: [i] }] }
 					}
 				}
 			}

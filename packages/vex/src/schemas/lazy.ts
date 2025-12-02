@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { Parser, Result, StandardSchemaV1 } from '../core'
-import { addSchemaMetadata } from '../core'
+import { addSchemaMetadata, getErrorMsg } from '../core'
 
 /**
  * Create a lazy validator for recursive schemas
@@ -33,7 +33,7 @@ export const lazy = <T>(factory: () => Parser<T>): Parser<T> => {
 		try {
 			return { ok: true, value: validator(value) }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 
@@ -53,7 +53,7 @@ export const lazy = <T>(factory: () => Parser<T>): Parser<T> => {
 			try {
 				return { value: validator(value) }
 			} catch (e) {
-				return { issues: [{ message: e instanceof Error ? e.message : 'Unknown error' }] }
+				return { issues: [{ message: getErrorMsg(e) }] }
 			}
 		},
 	}

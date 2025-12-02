@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { Parser, Result, StandardSchemaV1 } from '../core'
-import { addSchemaMetadata, ValidationError } from '../core'
+import { addSchemaMetadata, getErrorMsg, ValidationError } from '../core'
 
 const ERR_SET: Result<never> = { ok: false, error: 'Expected Set' }
 
@@ -52,7 +52,7 @@ export const set = <T>(itemValidator: Parser<T>): Parser<Set<T>> => {
 				} catch (e) {
 					return {
 						ok: false,
-						error: `Set[${i}]: ${e instanceof Error ? e.message : 'Unknown error'}`,
+						error: `Set[${i}]: ${getErrorMsg(e)}`,
 					}
 				}
 			}
@@ -92,7 +92,7 @@ export const set = <T>(itemValidator: Parser<T>): Parser<Set<T>> => {
 						result.add(itemValidator(item))
 					} catch (e) {
 						return {
-							issues: [{ message: e instanceof Error ? e.message : 'Unknown error', path: [i] }],
+							issues: [{ message: getErrorMsg(e), path: [i] }],
 						}
 					}
 				}

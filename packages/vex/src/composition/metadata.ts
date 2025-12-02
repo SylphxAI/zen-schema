@@ -16,6 +16,7 @@ import {
 	addStandardSchema,
 	applyMetaActions,
 	createMetaAction,
+	getErrorMsg,
 	getMeta,
 	type MetaAction,
 	type Metadata,
@@ -174,7 +175,7 @@ export const brand = <I, O, B extends string>(
 		try {
 			return { ok: true, value: validator(value) as O & { __brand: B } }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 
@@ -214,7 +215,7 @@ export const flavor = <I, O, F extends string>(
 		try {
 			return { ok: true, value: validator(value) as O & { __flavor?: F } }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 
@@ -250,7 +251,7 @@ export const readonly = <O>(validator: Parser<O>): Parser<Readonly<O>> => {
 		try {
 			return { ok: true, value: validator(value) as Readonly<O> }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 

@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { Result, Validator } from '../core'
-import { addStandardSchema, ValidationError } from '../core'
+import { addStandardSchema, getErrorMsg, ValidationError } from '../core'
 
 /**
  * Add a custom validation check
@@ -35,7 +35,7 @@ export const refine = <I, O>(
 			const result = validator(value)
 			return check(result) ? { ok: true, value: result } : err
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 
@@ -72,7 +72,7 @@ export const transform = <I, O, T>(
 			const validated = validator(value)
 			return { ok: true, value: transformFn(validated) }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 

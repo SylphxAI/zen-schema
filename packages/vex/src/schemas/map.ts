@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { Parser, Result, StandardSchemaV1 } from '../core'
-import { addSchemaMetadata, ValidationError } from '../core'
+import { addSchemaMetadata, getErrorMsg, ValidationError } from '../core'
 
 const ERR_MAP: Result<never> = { ok: false, error: 'Expected Map' }
 
@@ -64,7 +64,7 @@ export const map = <K, V>(
 				} catch (e) {
 					return {
 						ok: false,
-						error: `Map key: ${e instanceof Error ? e.message : 'Unknown error'}`,
+						error: `Map key: ${getErrorMsg(e)}`,
 					}
 				}
 			}
@@ -81,7 +81,7 @@ export const map = <K, V>(
 				} catch (e) {
 					return {
 						ok: false,
-						error: `Map[${String(key)}]: ${e instanceof Error ? e.message : 'Unknown error'}`,
+						error: `Map[${String(key)}]: ${getErrorMsg(e)}`,
 					}
 				}
 			}
@@ -140,7 +140,7 @@ export const map = <K, V>(
 						return {
 							issues: [
 								{
-									message: e instanceof Error ? e.message : 'Unknown error',
+									message: getErrorMsg(e),
 									path: [key as PropertyKey],
 								},
 							],

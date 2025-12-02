@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { MetaAction, Parser, Result, StandardSchemaV1 } from '../core'
-import { addSchemaMetadata, applyMetaActions, type Metadata, ValidationError } from '../core'
+import { addSchemaMetadata, applyMetaActions, getErrorMsg, type Metadata, ValidationError } from '../core'
 
 const ERR_OBJECT: Result<never> = { ok: false, error: 'Expected object' }
 
@@ -40,7 +40,7 @@ export const record = <K extends string, V>(
 				try {
 					result[validKey] = valueValidator(val)
 				} catch (e) {
-					const msg = e instanceof Error ? e.message : 'Unknown error'
+					const msg = getErrorMsg(e)
 					throw new ValidationError(`[${key}]: ${msg}`)
 				}
 			} catch (e) {
@@ -91,7 +91,7 @@ export const record = <K extends string, V>(
 				} catch (e) {
 					return {
 						ok: false,
-						error: `[${key}]: ${e instanceof Error ? e.message : 'Unknown error'}`,
+						error: `[${key}]: ${getErrorMsg(e)}`,
 					}
 				}
 			}
@@ -107,7 +107,7 @@ export const record = <K extends string, V>(
 					}
 					result[validKey] = valResult.value
 				} catch (e) {
-					return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+					return { ok: false, error: getErrorMsg(e) }
 				}
 			}
 		} else {
@@ -117,7 +117,7 @@ export const record = <K extends string, V>(
 					const validKey = keyValidator(key)
 					result[validKey] = valueValidator(input[key])
 				} catch (e) {
-					return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+					return { ok: false, error: getErrorMsg(e) }
 				}
 			}
 		}
@@ -168,7 +168,7 @@ export const record = <K extends string, V>(
 						result[key as K] = valueValidator(input[key])
 					} catch (e) {
 						return {
-							issues: [{ message: e instanceof Error ? e.message : 'Unknown error', path: [key] }],
+							issues: [{ message: getErrorMsg(e), path: [key] }],
 						}
 					}
 				}

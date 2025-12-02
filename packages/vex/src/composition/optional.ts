@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { Result, Validator } from '../core'
-import { addStandardSchema, getMeta, setMeta, wrapMeta } from '../core'
+import { addStandardSchema, getErrorMsg, getMeta, setMeta, wrapMeta } from '../core'
 
 /**
  * Make a validator optional (allows undefined)
@@ -24,7 +24,7 @@ export const optional = <I, O>(
 		try {
 			return { ok: true, value: validator(v) }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 
@@ -51,7 +51,7 @@ export const nullable = <I, O>(validator: Validator<I, O>): Validator<I | null, 
 		try {
 			return { ok: true, value: validator(v) }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 
@@ -80,7 +80,7 @@ export const nullish = <I, O>(
 		try {
 			return { ok: true, value: validator(v) }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 
@@ -110,7 +110,7 @@ export const withDefault = <I, O>(
 		try {
 			return { ok: true, value: validator(v) }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 
@@ -152,7 +152,7 @@ export const nonNullable = <I, O>(
 			if (result === null) return { ok: false, error: 'Value cannot be null' }
 			return { ok: true, value: result as Exclude<O, null> }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 
@@ -192,7 +192,7 @@ export const nonNullish = <I, O>(
 				return { ok: false, error: 'Value cannot be null or undefined' }
 			return { ok: true, value: result as Exclude<O, null | undefined> }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 
@@ -229,7 +229,7 @@ export const nonOptional = <I, O>(
 			if (result === undefined) return { ok: false, error: 'Value cannot be undefined' }
 			return { ok: true, value: result as Exclude<O, undefined> }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 
@@ -265,7 +265,7 @@ export const exactOptional = <I, O>(
 		try {
 			return { ok: true, value: validator(v) }
 		} catch (e) {
-			return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+			return { ok: false, error: getErrorMsg(e) }
 		}
 	}
 

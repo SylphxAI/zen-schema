@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { MetaAction, Parser, Result, StandardSchemaV1 } from '../core'
-import { addSchemaMetadata, applyMetaActions, isMetaAction, type Metadata } from '../core'
+import { addSchemaMetadata, applyMetaActions, getErrorMsg, isMetaAction, type Metadata } from '../core'
 
 /** Argument type for intersect - can be a schema or MetaAction */
 type IntersectArg = Parser<unknown> | MetaAction
@@ -111,7 +111,7 @@ export function intersect(...args: IntersectArg[]): Parser<unknown> {
 						result = validated
 					}
 				} catch (e) {
-					return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
+					return { ok: false, error: getErrorMsg(e) }
 				}
 			}
 		}

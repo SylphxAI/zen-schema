@@ -6,6 +6,7 @@ import type { MetaAction, Parser, Result, StandardSchemaV1 } from '../core'
 import {
 	addSchemaMetadata,
 	applyMetaActions,
+	getErrorMsg,
 	isMetaAction,
 	type Metadata,
 	ValidationError,
@@ -93,7 +94,7 @@ export function tuple(...args: TupleArg[]): Parser<unknown[]> {
 				// biome-ignore lint/style/noNonNullAssertion: index is within bounds
 				result[i] = schemas[i]!(value[i])
 			} catch (e) {
-				const msg = e instanceof Error ? e.message : 'Unknown error'
+				const msg = getErrorMsg(e)
 				throw new ValidationError(`[${i}]: ${msg}`)
 			}
 		}
@@ -117,7 +118,7 @@ export function tuple(...args: TupleArg[]): Parser<unknown[]> {
 				try {
 					result[i] = schema(value[i])
 				} catch (e) {
-					return { ok: false, error: `[${i}]: ${e instanceof Error ? e.message : 'Unknown error'}` }
+					return { ok: false, error: `[${i}]: ${getErrorMsg(e)}` }
 				}
 			}
 		}
@@ -157,7 +158,7 @@ export function tuple(...args: TupleArg[]): Parser<unknown[]> {
 						result[i] = schema(value[i])
 					} catch (e) {
 						return {
-							issues: [{ message: e instanceof Error ? e.message : 'Unknown error', path: [i] }],
+							issues: [{ message: getErrorMsg(e), path: [i] }],
 						}
 					}
 				}
@@ -210,7 +211,7 @@ export const looseTuple = <T extends readonly [Parser<unknown>, ...Parser<unknow
 				// biome-ignore lint/style/noNonNullAssertion: index is within bounds
 				result[i] = schemas[i]!(value[i])
 			} catch (e) {
-				const msg = e instanceof Error ? e.message : 'Unknown error'
+				const msg = getErrorMsg(e)
 				throw new ValidationError(`[${i}]: ${msg}`)
 			}
 		}
@@ -234,7 +235,7 @@ export const looseTuple = <T extends readonly [Parser<unknown>, ...Parser<unknow
 				try {
 					result[i] = schema(value[i])
 				} catch (e) {
-					return { ok: false, error: `[${i}]: ${e instanceof Error ? e.message : 'Unknown error'}` }
+					return { ok: false, error: `[${i}]: ${getErrorMsg(e)}` }
 				}
 			}
 		}
@@ -274,7 +275,7 @@ export const looseTuple = <T extends readonly [Parser<unknown>, ...Parser<unknow
 						result[i] = schema(value[i])
 					} catch (e) {
 						return {
-							issues: [{ message: e instanceof Error ? e.message : 'Unknown error', path: [i] }],
+							issues: [{ message: getErrorMsg(e), path: [i] }],
 						}
 					}
 				}
@@ -330,7 +331,7 @@ export const tupleWithRest = <
 				// biome-ignore lint/style/noNonNullAssertion: index is within bounds
 				result[i] = schemas[i]!(value[i])
 			} catch (e) {
-				const msg = e instanceof Error ? e.message : 'Unknown error'
+				const msg = getErrorMsg(e)
 				throw new ValidationError(`[${i}]: ${msg}`)
 			}
 		}
@@ -340,7 +341,7 @@ export const tupleWithRest = <
 			try {
 				result[i] = rest(value[i])
 			} catch (e) {
-				const msg = e instanceof Error ? e.message : 'Unknown error'
+				const msg = getErrorMsg(e)
 				throw new ValidationError(`[${i}]: ${msg}`)
 			}
 		}
@@ -367,7 +368,7 @@ export const tupleWithRest = <
 				try {
 					result[i] = schema(value[i])
 				} catch (e) {
-					return { ok: false, error: `[${i}]: ${e instanceof Error ? e.message : 'Unknown error'}` }
+					return { ok: false, error: `[${i}]: ${getErrorMsg(e)}` }
 				}
 			}
 		}
@@ -385,7 +386,7 @@ export const tupleWithRest = <
 				try {
 					result[i] = rest(value[i])
 				} catch (e) {
-					return { ok: false, error: `[${i}]: ${e instanceof Error ? e.message : 'Unknown error'}` }
+					return { ok: false, error: `[${i}]: ${getErrorMsg(e)}` }
 				}
 			}
 		}
@@ -427,7 +428,7 @@ export const tupleWithRest = <
 						result[i] = schema(value[i])
 					} catch (e) {
 						return {
-							issues: [{ message: e instanceof Error ? e.message : 'Unknown error', path: [i] }],
+							issues: [{ message: getErrorMsg(e), path: [i] }],
 						}
 					}
 				}
@@ -452,7 +453,7 @@ export const tupleWithRest = <
 						result[i] = rest(value[i])
 					} catch (e) {
 						return {
-							issues: [{ message: e instanceof Error ? e.message : 'Unknown error', path: [i] }],
+							issues: [{ message: getErrorMsg(e), path: [i] }],
 						}
 					}
 				}
