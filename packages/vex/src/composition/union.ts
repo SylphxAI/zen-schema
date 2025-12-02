@@ -2,43 +2,19 @@
 // Union Types
 // ============================================================
 
-import type { MetaAction, Parser, Result, StandardSchemaV1 } from '../core'
+import type { MetaAction, Parser, Result, SchemaOrMetaAction, StandardSchemaV1 } from '../core'
 import {
 	addSchemaMetadata,
 	addStandardSchema,
 	applyMetaActions,
-	isMetaAction,
 	type Metadata,
+	separateMetaActions,
 	ValidationError,
 } from '../core'
 
 type UnionOutput<T extends readonly Parser<unknown>[]> = {
 	[K in keyof T]: T[K] extends Parser<infer O> ? O : never
 }[number]
-
-/** Argument type for union - can be a schema or MetaAction */
-type UnionArg = Parser<unknown> | MetaAction
-
-/**
- * Separate schemas from MetaActions in union arguments
- */
-function separateUnionArgs(args: UnionArg[]): {
-	schemas: Parser<unknown>[]
-	metaActions: MetaAction[]
-} {
-	const schemas: Parser<unknown>[] = []
-	const metaActions: MetaAction[] = []
-
-	for (const arg of args) {
-		if (isMetaAction(arg)) {
-			metaActions.push(arg)
-		} else {
-			schemas.push(arg)
-		}
-	}
-
-	return { schemas, metaActions }
-}
 
 /**
  * Create a union validator (match one of multiple schemas)
@@ -70,8 +46,8 @@ export function union<A, B, C, D, E>(
 	e: Parser<E>,
 	...rest: MetaAction[]
 ): Parser<A | B | C | D | E>
-export function union(...args: UnionArg[]): Parser<unknown> {
-	const { schemas, metaActions } = separateUnionArgs(args)
+export function union(...args: SchemaOrMetaAction[]): Parser<unknown> {
+	const { schemas, metaActions } = separateMetaActions(args)
 
 	if (schemas.length === 0) {
 		throw new Error('union() requires at least one schema')

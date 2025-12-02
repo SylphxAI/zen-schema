@@ -1,7 +1,13 @@
 // Core exports
 
 export { getErrorMsg, type PathSegment, ValidationError, type ValidationIssue, ValiError } from './error'
-export { addStandardSchema, createValidator } from './helpers'
+export {
+	addStandardSchema,
+	createValidator,
+	type SchemaOrMetaAction,
+	type SeparatedArgs,
+	separateMetaActions,
+} from './helpers'
 export {
 	// Legacy compatibility (deprecated)
 	addSchemaMetadata,

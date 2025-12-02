@@ -2,9 +2,42 @@
 // Helper Functions
 // ============================================================
 
-import { type Metadata, setMeta } from './metadata'
+import { isMetaAction, type MetaAction, type Metadata, setMeta } from './metadata'
 import type { StandardSchemaV1 } from './standard'
-import type { Result, Validator } from './types'
+import type { Parser, Result, Validator } from './types'
+
+// ============================================================
+// MetaAction Separation (shared across union, intersect, tuple)
+// ============================================================
+
+/** Argument type that can be a schema or MetaAction */
+export type SchemaOrMetaAction = Parser<unknown> | MetaAction
+
+/** Result of separating schemas from MetaActions */
+export interface SeparatedArgs {
+	schemas: Parser<unknown>[]
+	metaActions: MetaAction[]
+}
+
+/**
+ * Separate schemas from MetaActions in mixed argument list
+ *
+ * Used by union(), intersect(), tuple() to handle trailing MetaAction args
+ */
+export function separateMetaActions(args: SchemaOrMetaAction[]): SeparatedArgs {
+	const schemas: Parser<unknown>[] = []
+	const metaActions: MetaAction[] = []
+
+	for (const arg of args) {
+		if (isMetaAction(arg)) {
+			metaActions.push(arg)
+		} else {
+			schemas.push(arg)
+		}
+	}
+
+	return { schemas, metaActions }
+}
 
 // ============================================================
 // Standard Schema Support

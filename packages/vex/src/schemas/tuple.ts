@@ -2,13 +2,13 @@
 // Tuple Schema
 // ============================================================
 
-import type { MetaAction, Parser, Result, StandardSchemaV1 } from '../core'
+import type { MetaAction, Parser, Result, SchemaOrMetaAction, StandardSchemaV1 } from '../core'
 import {
 	addSchemaMetadata,
 	applyMetaActions,
 	getErrorMsg,
-	isMetaAction,
 	type Metadata,
+	separateMetaActions,
 	ValidationError,
 } from '../core'
 
@@ -16,30 +16,6 @@ const ERR_ARRAY: Result<never> = { ok: false, error: 'Expected array' }
 
 type TupleOutput<T extends readonly Parser<unknown>[]> = {
 	[K in keyof T]: T[K] extends Parser<infer O> ? O : never
-}
-
-/** Argument type for tuple - can be a schema or MetaAction */
-type TupleArg = Parser<unknown> | MetaAction
-
-/**
- * Separate schemas from MetaActions in tuple arguments
- */
-function separateTupleArgs(args: TupleArg[]): {
-	schemas: Parser<unknown>[]
-	metaActions: MetaAction[]
-} {
-	const schemas: Parser<unknown>[] = []
-	const metaActions: MetaAction[] = []
-
-	for (const arg of args) {
-		if (isMetaAction(arg)) {
-			metaActions.push(arg)
-		} else {
-			schemas.push(arg)
-		}
-	}
-
-	return { schemas, metaActions }
 }
 
 /**
@@ -73,8 +49,8 @@ export function tuple<A, B, C, D, E>(
 	e: Parser<E>,
 	...rest: MetaAction[]
 ): Parser<[A, B, C, D, E]>
-export function tuple(...args: TupleArg[]): Parser<unknown[]> {
-	const { schemas, metaActions } = separateTupleArgs(args)
+export function tuple(...args: SchemaOrMetaAction[]): Parser<unknown[]> {
+	const { schemas, metaActions } = separateMetaActions(args)
 
 	if (schemas.length === 0) {
 		throw new Error('tuple() requires at least one schema')

@@ -2,32 +2,14 @@
 // Intersect Composition
 // ============================================================
 
-import type { MetaAction, Parser, Result, StandardSchemaV1 } from '../core'
-import { addSchemaMetadata, applyMetaActions, getErrorMsg, isMetaAction, type Metadata } from '../core'
-
-/** Argument type for intersect - can be a schema or MetaAction */
-type IntersectArg = Parser<unknown> | MetaAction
-
-/**
- * Separate schemas from MetaActions in intersect arguments
- */
-function separateIntersectArgs(args: IntersectArg[]): {
-	schemas: Parser<unknown>[]
-	metaActions: MetaAction[]
-} {
-	const schemas: Parser<unknown>[] = []
-	const metaActions: MetaAction[] = []
-
-	for (const arg of args) {
-		if (isMetaAction(arg)) {
-			metaActions.push(arg)
-		} else {
-			schemas.push(arg)
-		}
-	}
-
-	return { schemas, metaActions }
-}
+import type { MetaAction, Parser, Result, SchemaOrMetaAction, StandardSchemaV1 } from '../core'
+import {
+	addSchemaMetadata,
+	applyMetaActions,
+	getErrorMsg,
+	type Metadata,
+	separateMetaActions,
+} from '../core'
 
 /**
  * Create an intersect validator (value must match ALL schemas)
@@ -66,8 +48,8 @@ export function intersect<A, B, C, D, E>(
 	e: Parser<E>,
 	...rest: MetaAction[]
 ): Parser<A & B & C & D & E>
-export function intersect(...args: IntersectArg[]): Parser<unknown> {
-	const { schemas, metaActions } = separateIntersectArgs(args)
+export function intersect(...args: SchemaOrMetaAction[]): Parser<unknown> {
+	const { schemas, metaActions } = separateMetaActions(args)
 
 	if (schemas.length === 0) {
 		throw new Error('intersect() requires at least one schema')
