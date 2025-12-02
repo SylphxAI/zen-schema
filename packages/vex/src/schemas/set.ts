@@ -15,6 +15,9 @@ const ERR_SET: Result<never> = { ok: false, error: 'Expected Set' }
  * const validateStringSet = set(pipe(str, nonempty))
  */
 export const set = <T>(itemValidator: Parser<T>): Parser<Set<T>> => {
+	// Pre-compute safe method for monomorphic path
+	const itemSafe = itemValidator.safe
+
 	const fn = ((value: unknown) => {
 		if (!(value instanceof Set)) throw new ValidationError('Expected Set')
 
@@ -34,33 +37,38 @@ export const set = <T>(itemValidator: Parser<T>): Parser<Set<T>> => {
 		return result
 	}) as Parser<Set<T>>
 
-	fn.safe = (value: unknown): Result<Set<T>> => {
-		if (!(value instanceof Set)) return ERR_SET as Result<Set<T>>
+	// Monomorphic path split at initialization time
+	fn.safe = itemSafe
+		? (value: unknown): Result<Set<T>> => {
+				if (!(value instanceof Set)) return ERR_SET as Result<Set<T>>
 
-		const result = new Set<T>()
-		let i = 0
-		for (const item of value) {
-			if (itemValidator.safe) {
-				const r = itemValidator.safe(item)
-				if (!r.ok) {
-					return { ok: false, error: `Set[${i}]: ${r.error}` }
+				const result = new Set<T>()
+				let i = 0
+				for (const item of value) {
+					const r = itemSafe(item)
+					if (!r.ok) return { ok: false, error: `Set[${i}]: ${r.error}` }
+					result.add(r.value)
+					i++
 				}
-				result.add(r.value)
-			} else {
-				try {
-					result.add(itemValidator(item))
-				} catch (e) {
-					return {
-						ok: false,
-						error: `Set[${i}]: ${getErrorMsg(e)}`,
-					}
-				}
+
+				return { ok: true, value: result }
 			}
-			i++
-		}
+		: (value: unknown): Result<Set<T>> => {
+				if (!(value instanceof Set)) return ERR_SET as Result<Set<T>>
 
-		return { ok: true, value: result }
-	}
+				const result = new Set<T>()
+				let i = 0
+				for (const item of value) {
+					try {
+						result.add(itemValidator(item))
+					} catch (e) {
+						return { ok: false, error: `Set[${i}]: ${getErrorMsg(e)}` }
+					}
+					i++
+				}
+
+				return { ok: true, value: result }
+			}
 
 	// Add Standard Schema with path support
 	;(fn as unknown as Record<string, unknown>)['~standard'] = {
