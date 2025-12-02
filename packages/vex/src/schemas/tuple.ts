@@ -82,6 +82,10 @@ export function tuple(...args: TupleArg[]): Parser<unknown[]> {
 
 	const len = schemas.length
 
+	// Pre-compute safe methods for monomorphic path
+	const safeMethods = schemas.map((s) => s.safe)
+	const allHaveSafe = safeMethods.every((s): s is NonNullable<typeof s> => s !== undefined)
+
 	const fn = ((value: unknown) => {
 		if (!Array.isArray(value)) throw new ValidationError('Expected array')
 		if (value.length !== len) {
@@ -101,30 +105,46 @@ export function tuple(...args: TupleArg[]): Parser<unknown[]> {
 		return result as unknown[]
 	}) as Parser<unknown[]>
 
-	fn.safe = (value: unknown): Result<unknown[]> => {
-		if (!Array.isArray(value)) return ERR_ARRAY as Result<unknown[]>
-		if (value.length !== len) {
-			return { ok: false, error: `Expected ${len} items, got ${value.length}` }
-		}
-
-		const result = new Array(len)
-		for (let i = 0; i < len; i++) {
-			const schema = schemas[i]!
-			if (schema.safe) {
-				const r = schema.safe(value[i])
-				if (!r.ok) return { ok: false, error: `[${i}]: ${r.error}` }
-				result[i] = r.value
-			} else {
-				try {
-					result[i] = schema(value[i])
-				} catch (e) {
-					return { ok: false, error: `[${i}]: ${getErrorMsg(e)}` }
+	fn.safe = allHaveSafe
+		? (value: unknown): Result<unknown[]> => {
+				if (!Array.isArray(value)) return ERR_ARRAY as Result<unknown[]>
+				if (value.length !== len) {
+					return { ok: false, error: `Expected ${len} items, got ${value.length}` }
 				}
-			}
-		}
 
-		return { ok: true, value: result as unknown[] }
-	}
+				const result = new Array(len)
+				for (let i = 0; i < len; i++) {
+					const r = safeMethods[i]!(value[i])
+					if (!r.ok) return { ok: false, error: `[${i}]: ${r.error}` }
+					result[i] = r.value
+				}
+
+				return { ok: true, value: result as unknown[] }
+			}
+		: (value: unknown): Result<unknown[]> => {
+				if (!Array.isArray(value)) return ERR_ARRAY as Result<unknown[]>
+				if (value.length !== len) {
+					return { ok: false, error: `Expected ${len} items, got ${value.length}` }
+				}
+
+				const result = new Array(len)
+				for (let i = 0; i < len; i++) {
+					const schema = schemas[i]!
+					if (schema.safe) {
+						const r = schema.safe(value[i])
+						if (!r.ok) return { ok: false, error: `[${i}]: ${r.error}` }
+						result[i] = r.value
+					} else {
+						try {
+							result[i] = schema(value[i])
+						} catch (e) {
+							return { ok: false, error: `[${i}]: ${getErrorMsg(e)}` }
+						}
+					}
+				}
+
+				return { ok: true, value: result as unknown[] }
+			}
 
 	// Add Standard Schema with path support
 	;(fn as unknown as Record<string, unknown>)['~standard'] = {
