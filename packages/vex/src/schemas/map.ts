@@ -18,6 +18,10 @@ export const map = <K, V>(
 	keyValidator: Parser<K>,
 	valueValidator: Parser<V>,
 ): Parser<Map<K, V>> => {
+	// Pre-compute safe methods for monomorphic path
+	const keySafe = keyValidator.safe
+	const valSafe = valueValidator.safe
+
 	const fn = ((value: unknown) => {
 		if (!(value instanceof Map)) throw new ValidationError('Expected Map')
 
@@ -45,50 +49,79 @@ export const map = <K, V>(
 		return result
 	}) as Parser<Map<K, V>>
 
-	fn.safe = (value: unknown): Result<Map<K, V>> => {
-		if (!(value instanceof Map)) return ERR_MAP as Result<Map<K, V>>
+	// Monomorphic path split at initialization time (4 combinations)
+	fn.safe =
+		keySafe && valSafe
+			? (value: unknown): Result<Map<K, V>> => {
+					if (!(value instanceof Map)) return ERR_MAP as Result<Map<K, V>>
 
-		const result = new Map<K, V>()
-		for (const [key, val] of value) {
-			let validKey: K
-
-			if (keyValidator.safe) {
-				const kr = keyValidator.safe(key)
-				if (!kr.ok) {
-					return { ok: false, error: `Map key: ${kr.error}` }
-				}
-				validKey = kr.value
-			} else {
-				try {
-					validKey = keyValidator(key)
-				} catch (e) {
-					return {
-						ok: false,
-						error: `Map key: ${getErrorMsg(e)}`,
+					const result = new Map<K, V>()
+					for (const [key, val] of value) {
+						const kr = keySafe(key)
+						if (!kr.ok) return { ok: false, error: `Map key: ${kr.error}` }
+						const vr = valSafe(val)
+						if (!vr.ok) return { ok: false, error: `Map[${String(key)}]: ${vr.error}` }
+						result.set(kr.value, vr.value)
 					}
-				}
-			}
 
-			if (valueValidator.safe) {
-				const vr = valueValidator.safe(val)
-				if (!vr.ok) {
-					return { ok: false, error: `Map[${String(key)}]: ${vr.error}` }
+					return { ok: true, value: result }
 				}
-				result.set(validKey, vr.value)
-			} else {
-				try {
-					result.set(validKey, valueValidator(val))
-				} catch (e) {
-					return {
-						ok: false,
-						error: `Map[${String(key)}]: ${getErrorMsg(e)}`,
+			: keySafe
+				? (value: unknown): Result<Map<K, V>> => {
+						if (!(value instanceof Map)) return ERR_MAP as Result<Map<K, V>>
+
+						const result = new Map<K, V>()
+						for (const [key, val] of value) {
+							const kr = keySafe(key)
+							if (!kr.ok) return { ok: false, error: `Map key: ${kr.error}` }
+							try {
+								result.set(kr.value, valueValidator(val))
+							} catch (e) {
+								return { ok: false, error: `Map[${String(key)}]: ${getErrorMsg(e)}` }
+							}
+						}
+
+						return { ok: true, value: result }
 					}
-				}
-			}
-		}
+				: valSafe
+					? (value: unknown): Result<Map<K, V>> => {
+							if (!(value instanceof Map)) return ERR_MAP as Result<Map<K, V>>
 
-		return { ok: true, value: result }
-	}
+							const result = new Map<K, V>()
+							for (const [key, val] of value) {
+								let validKey: K
+								try {
+									validKey = keyValidator(key)
+								} catch (e) {
+									return { ok: false, error: `Map key: ${getErrorMsg(e)}` }
+								}
+								const vr = valSafe(val)
+								if (!vr.ok) return { ok: false, error: `Map[${String(key)}]: ${vr.error}` }
+								result.set(validKey, vr.value)
+							}
+
+							return { ok: true, value: result }
+						}
+					: (value: unknown): Result<Map<K, V>> => {
+							if (!(value instanceof Map)) return ERR_MAP as Result<Map<K, V>>
+
+							const result = new Map<K, V>()
+							for (const [key, val] of value) {
+								let validKey: K
+								try {
+									validKey = keyValidator(key)
+								} catch (e) {
+									return { ok: false, error: `Map key: ${getErrorMsg(e)}` }
+								}
+								try {
+									result.set(validKey, valueValidator(val))
+								} catch (e) {
+									return { ok: false, error: `Map[${String(key)}]: ${getErrorMsg(e)}` }
+								}
+							}
+
+							return { ok: true, value: result }
+						}
 
 	// Add Standard Schema
 	;(fn as unknown as Record<string, unknown>)['~standard'] = {
