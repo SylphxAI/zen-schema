@@ -47,32 +47,45 @@ export const safeParserAsync = <T>(
 // Pipe Async
 // ============================================================
 
-type PipeOutput<T extends readonly unknown[]> = T extends readonly [...infer _, infer Last]
-	? Last extends AsyncValidator<unknown, infer O>
-		? O
-		: never
-	: never
-
-export const pipeAsync = <
-	T extends readonly [AsyncValidator<unknown, unknown>, ...AsyncValidator<unknown, unknown>[]],
->(
-	...validators: T
-): AsyncParser<PipeOutput<T>> => {
+export function pipeAsync<A, B>(v1: AsyncValidator<A, B>): AsyncParser<B>
+export function pipeAsync<A, B, C>(
+	v1: AsyncValidator<A, B>,
+	v2: AsyncValidator<B, C>,
+): AsyncParser<C>
+export function pipeAsync<A, B, C, D>(
+	v1: AsyncValidator<A, B>,
+	v2: AsyncValidator<B, C>,
+	v3: AsyncValidator<C, D>,
+): AsyncParser<D>
+export function pipeAsync<A, B, C, D, E>(
+	v1: AsyncValidator<A, B>,
+	v2: AsyncValidator<B, C>,
+	v3: AsyncValidator<C, D>,
+	v4: AsyncValidator<D, E>,
+): AsyncParser<E>
+export function pipeAsync<A, B, C, D, E, F>(
+	v1: AsyncValidator<A, B>,
+	v2: AsyncValidator<B, C>,
+	v3: AsyncValidator<C, D>,
+	v4: AsyncValidator<D, E>,
+	v5: AsyncValidator<E, F>,
+): AsyncParser<F>
+export function pipeAsync(...validators: AsyncValidator<unknown, unknown>[]): AsyncParser<unknown> {
 	const fn = (async (value: unknown) => {
 		let result = value
 		for (const validator of validators) {
 			result = await validator(result)
 		}
-		return result as PipeOutput<T>
-	}) as AsyncParser<PipeOutput<T>>
+		return result
+	}) as AsyncParser<unknown>
 
-	fn.safe = async (value: unknown): Promise<Result<PipeOutput<T>>> => {
+	fn.safe = async (value: unknown): Promise<Result<unknown>> => {
 		let result = value
 		for (const validator of validators) {
 			try {
 				if (validator.safe) {
 					const r = await validator.safe(result)
-					if (!r.ok) return r as Result<PipeOutput<T>>
+					if (!r.ok) return r
 					result = r.value
 				} else {
 					result = await validator(result)
@@ -81,7 +94,7 @@ export const pipeAsync = <
 				return { ok: false, error: e instanceof Error ? e.message : 'Unknown error' }
 			}
 		}
-		return { ok: true, value: result as PipeOutput<T> }
+		return { ok: true, value: result }
 	}
 
 	return fn

@@ -156,10 +156,12 @@ export const looseObjectAsync = <T extends Record<string, unknown>>(
 
 export const strictObjectAsync = objectAsync
 
+type WithRest<T, R> = { [K in keyof T]: T[K] } & { [key: string]: T[keyof T] | R }
+
 export const objectWithRestAsync = <T extends Record<string, unknown>, R>(
 	shape: Shape<T>,
 	rest: AsyncValidator<unknown, R> | ((v: unknown) => Promise<R>),
-): AsyncParser<T & Record<string, R>> => {
+): AsyncParser<WithRest<T, R>> => {
 	const entries = Object.entries(shape) as [keyof T, AsyncValidator<unknown, unknown>][]
 	const knownKeys = new Set(Object.keys(shape))
 	const restValidator = rest as AsyncValidator<unknown, R>
