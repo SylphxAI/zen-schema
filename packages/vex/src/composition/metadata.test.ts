@@ -394,6 +394,10 @@ describe('Metadata Getter Functions', () => {
 	test('getMetadata returns full metadata', () => {
 		const validator = str(description('Test'), title('Title'))
 		const meta = getMetadata(validator)
+		// Debug: log what str actually is
+		console.log('str function:', str.toString().slice(0, 100))
+		console.log('str() result:', validator.toString().slice(0, 100))
+		console.log('meta:', JSON.stringify(meta))
 		expect(meta?.type).toBe('string')
 		expect(meta?.description).toBe('Test')
 		expect(meta?.title).toBe('Title')
@@ -405,11 +409,19 @@ describe('Metadata Getter Functions', () => {
 	})
 
 	test('str() has type metadata', () => {
-		expect(getMetadata(str())?.type).toBe('string')
+		const v = str()
+		const meta = getMetadata(v)
+		console.log('str() validator:', v.toString().slice(0, 100))
+		console.log('str() meta:', JSON.stringify(meta))
+		expect(meta?.type).toBe('string')
 	})
 
 	test('num() has type metadata', () => {
-		expect(getMetadata(num())?.type).toBe('number')
+		const v = num()
+		const meta = getMetadata(v)
+		console.log('num() validator:', v.toString().slice(0, 100))
+		console.log('num() meta:', JSON.stringify(meta))
+		expect(meta?.type).toBe('number')
 	})
 })
 
