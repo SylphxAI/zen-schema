@@ -66,7 +66,13 @@ export const coerceBigInt: Parser<bigint> = createValidator(
 )
 
 /** Coercion namespace */
-export const coerce = {
+export const coerce: {
+	string: Parser<string>
+	number: Parser<number>
+	boolean: Parser<boolean>
+	date: Parser<Date>
+	bigint: Parser<bigint>
+} = {
 	string: coerceString,
 	number: coerceNumber,
 	boolean: coerceBoolean,

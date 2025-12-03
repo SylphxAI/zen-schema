@@ -275,7 +275,7 @@ export function wrapMeta(
 // These are kept temporarily for migration, aliased to new functions
 
 /** @deprecated Use getMeta instead */
-export const getSchemaMetadata = getMeta
+export const getSchemaMetadata: typeof getMeta = getMeta
 
 /** @deprecated Use setMeta instead */
 export function addSchemaMetadata<I, O>(

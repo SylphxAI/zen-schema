@@ -60,4 +60,4 @@ export const customAsync = <T>(
  * @example
  * const positive = check((n: number) => n > 0, 'Must be positive')
  */
-export const check = custom
+export const check: typeof custom = custom

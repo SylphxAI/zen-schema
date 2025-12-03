@@ -39,7 +39,7 @@ export { getMeta, isMetaAction, type MetaAction, type Metadata } from '../core'
  * @example
  * const meta = getMetadata(validator)
  */
-export const getMetadata = getMeta
+export const getMetadata: typeof getMeta = getMeta
 
 /**
  * Get description from a validator

@@ -180,7 +180,7 @@ export function tuple(...args: SchemaOrMetaAction[]): Parser<unknown[]> {
 /**
  * Strict tuple - fails if extra elements present (same as tuple)
  */
-export const strictTuple = tuple
+export const strictTuple: typeof tuple = tuple
 
 /**
  * Loose tuple - allows extra elements (ignores them)

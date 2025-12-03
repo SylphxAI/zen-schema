@@ -305,7 +305,7 @@ export const extend = <
 /**
  * Merge two object shapes (alias for extend)
  */
-export const merge = extend
+export const merge: typeof extend = extend
 
 /**
  * Make all properties required (opposite of partial)
@@ -402,7 +402,7 @@ export const keyof = <T extends Record<string, Parser<unknown>>>(shape: T): Pars
 /**
  * Strict object - strips unknown properties (alias for object)
  */
-export const strictObject = object
+export const strictObject: typeof object = object
 
 /**
  * Loose object - allows and preserves unknown properties
