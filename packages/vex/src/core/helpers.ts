@@ -4,18 +4,18 @@
 
 import { isMetaAction, type MetaAction, type Metadata, setMeta } from './metadata'
 import type { StandardSchemaV1 } from './standard'
-import type { Parser, Result, Validator } from './types'
+import type { Result, Schema, Validator } from './types'
 
 // ============================================================
 // MetaAction Separation (shared across union, intersect, tuple)
 // ============================================================
 
 /** Argument type that can be a schema or MetaAction */
-export type SchemaOrMetaAction = Parser<unknown> | MetaAction
+export type SchemaOrMetaAction = Schema<unknown> | MetaAction
 
 /** Result of separating schemas from MetaActions */
 export interface SeparatedArgs {
-	schemas: Parser<unknown>[]
+	schemas: Schema<unknown>[]
 	metaActions: MetaAction[]
 }
 
@@ -25,7 +25,7 @@ export interface SeparatedArgs {
  * Used by union(), intersect(), tuple() to handle trailing MetaAction args
  */
 export function separateMetaActions(args: SchemaOrMetaAction[]): SeparatedArgs {
-	const schemas: Parser<unknown>[] = []
+	const schemas: Schema<unknown>[] = []
 	const metaActions: MetaAction[] = []
 
 	for (const arg of args) {

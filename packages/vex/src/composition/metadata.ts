@@ -11,7 +11,7 @@
 //
 // ============================================================
 
-import type { Parser, Result, Validator } from '../core'
+import type { Result, Schema, Validator } from '../core'
 import {
 	addStandardSchema,
 	applyMetaActions,
@@ -239,8 +239,8 @@ export const flavor = <I, O, F extends string>(
  * @example
  * const validateReadonlyUser = readonly(validateUser)
  */
-export const readonly = <O>(validator: Parser<O>): Parser<Readonly<O>> => {
-	const fn = ((value: unknown) => validator(value)) as Parser<Readonly<O>>
+export const readonly = <O>(validator: Schema<O>): Schema<Readonly<O>> => {
+	const fn = ((value: unknown) => validator(value)) as Schema<Readonly<O>>
 
 	fn.safe = (value: unknown): Result<Readonly<O>> => {
 		if (validator.safe) {

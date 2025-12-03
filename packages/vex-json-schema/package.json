@@ -1,0 +1,47 @@
+{
+	"name": "@sylphx/vex-json-schema",
+	"version": "0.0.0",
+	"description": "JSON Schema conversion for @sylphx/vex",
+	"type": "module",
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"scripts": {
+		"build": "bunup ./src/index.ts --dts --minify",
+		"test": "bun test",
+		"typecheck": "tsc --noEmit",
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"prepack": "bun run build",
+		"prepublishOnly": "bunx @sylphx/doctor prepublish"
+	},
+	"keywords": [
+		"vex",
+		"json-schema",
+		"schema",
+		"validation",
+		"typescript",
+		"converter"
+	],
+	"author": "Sylphx",
+	"license": "MIT",
+	"dependencies": {
+		"@sylphx/vex": "workspace:*"
+	},
+	"devDependencies": {
+		"bunup": "^0.16.10"
+	},
+	"peerDependencies": {
+		"typescript": ">=5.0.0"
+	}
+}

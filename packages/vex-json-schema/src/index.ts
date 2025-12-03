@@ -1,9 +1,9 @@
 // ============================================================
-// JSON Schema Conversion
+// JSON Schema Conversion for @sylphx/vex
 // ============================================================
 
-import type { Parser } from '../core'
-import { getMeta, type Metadata } from '../core'
+import type { Schema } from '@sylphx/vex'
+import { getMeta, type Metadata } from '@sylphx/vex'
 
 // ============================================================
 // JSON Schema Types
@@ -72,7 +72,7 @@ export interface ToJsonSchemaOptions {
 	/** JSON Schema draft version (default: 'draft-07') */
 	draft?: 'draft-07' | 'draft-2019-09' | 'draft-2020-12'
 	/** Named definitions to include */
-	definitions?: Record<string, Parser<unknown>>
+	definitions?: Record<string, Schema<unknown>>
 	/** Type mode: 'input' or 'output' (default: 'input') */
 	typeMode?: 'input' | 'output'
 }
@@ -85,10 +85,16 @@ export interface ToJsonSchemaOptions {
  * Convert a Vex schema to JSON Schema
  *
  * @example
+ * import { str, pipe, email } from '@sylphx/vex'
+ * import { toJsonSchema } from '@sylphx/vex-json-schema'
+ *
  * const schema = pipe(str(), email)
  * toJsonSchema(schema) // { type: "string", format: "email" }
  *
  * @example
+ * import { object, str, num } from '@sylphx/vex'
+ * import { toJsonSchema } from '@sylphx/vex-json-schema'
+ *
  * const userSchema = object({ name: str(), age: num() })
  * toJsonSchema(userSchema)
  * // {
@@ -98,7 +104,7 @@ export interface ToJsonSchemaOptions {
  * // }
  */
 export function toJsonSchema(
-	schema: Parser<unknown>,
+	schema: Schema<unknown>,
 	options: ToJsonSchemaOptions = {},
 ): JsonSchema {
 	const { $schema: includeSchema = true, draft = 'draft-07', definitions } = options
@@ -126,7 +132,7 @@ export function toJsonSchema(
  * Convert only definitions without a root schema
  */
 export function toJsonSchemaDefs(
-	definitions: Record<string, Parser<unknown>>,
+	definitions: Record<string, Schema<unknown>>,
 ): Record<string, JsonSchema> {
 	const result: Record<string, JsonSchema> = {}
 	for (const [name, schema] of Object.entries(definitions)) {
@@ -139,19 +145,19 @@ export function toJsonSchemaDefs(
 // Global Definitions
 // ============================================================
 
-let globalDefs: Record<string, Parser<unknown>> | null = null
+let globalDefs: Record<string, Schema<unknown>> | null = null
 
 /**
  * Add global schema definitions
  */
-export function addGlobalDefs(defs: Record<string, Parser<unknown>>): void {
+export function addGlobalDefs(defs: Record<string, Schema<unknown>>): void {
 	globalDefs = { ...globalDefs, ...defs }
 }
 
 /**
  * Get global schema definitions
  */
-export function getGlobalDefs(): Record<string, Parser<unknown>> | null {
+export function getGlobalDefs(): Record<string, Schema<unknown>> | null {
 	return globalDefs
 }
 
@@ -177,7 +183,7 @@ function getSchemaUrl(draft: string): string {
 	}
 }
 
-function convertSchema(schema: Parser<unknown>): JsonSchema {
+function convertSchema(schema: Schema<unknown>): JsonSchema {
 	const meta = getMeta(schema)
 
 	if (!meta) {
@@ -231,37 +237,37 @@ function convertByType(meta: Metadata): JsonSchema {
 
 		// Complex types
 		case 'array':
-			return convertArray(constraints, inner as Parser<unknown> | undefined)
+			return convertArray(constraints, inner as Schema<unknown> | undefined)
 		case 'object':
-			return convertObject(constraints, inner as Record<string, Parser<unknown>> | undefined)
+			return convertObject(constraints, inner as Record<string, Schema<unknown>> | undefined)
 		case 'tuple':
-			return convertTuple(constraints, inner as Parser<unknown>[] | undefined)
+			return convertTuple(constraints, inner as Schema<unknown>[] | undefined)
 		case 'record':
-			return convertRecord(constraints, inner as Parser<unknown> | undefined)
+			return convertRecord(constraints, inner as Schema<unknown> | undefined)
 		case 'map':
 			return convertMap(constraints)
 		case 'set':
-			return convertSet(constraints, inner as Parser<unknown> | undefined)
+			return convertSet(constraints, inner as Schema<unknown> | undefined)
 
 		// Composition
 		case 'union':
-			return convertUnion(inner as Parser<unknown>[] | undefined)
+			return convertUnion(inner as Schema<unknown>[] | undefined)
 		case 'intersect':
-			return convertIntersect(inner as Parser<unknown>[] | undefined)
+			return convertIntersect(inner as Schema<unknown>[] | undefined)
 		case 'literal':
 			return convertLiteral(constraints)
 		case 'enum':
 			return convertEnum(constraints)
 		case 'optional':
-			return convertOptional(inner as Parser<unknown> | undefined)
+			return convertOptional(inner as Schema<unknown> | undefined)
 		case 'nullable':
-			return convertNullable(inner as Parser<unknown> | undefined)
+			return convertNullable(inner as Schema<unknown> | undefined)
 		case 'lazy':
-			return convertLazy(inner as Parser<unknown> | undefined)
+			return convertLazy(inner as Schema<unknown> | undefined)
 
 		// Pipe (just return inner schema with constraints applied)
 		case 'pipe':
-			return convertPipe(constraints, inner as Parser<unknown>[] | undefined)
+			return convertPipe(constraints, inner as Schema<unknown>[] | undefined)
 
 		default:
 			return {}
@@ -299,7 +305,7 @@ function convertNumber(constraints: Record<string, unknown>): JsonSchema {
 	return result
 }
 
-function convertArray(constraints: Record<string, unknown>, items?: Parser<unknown>): JsonSchema {
+function convertArray(constraints: Record<string, unknown>, items?: Schema<unknown>): JsonSchema {
 	const result: JsonSchema = { type: 'array' }
 
 	if (items) {
@@ -320,7 +326,7 @@ function convertArray(constraints: Record<string, unknown>, items?: Parser<unkno
 
 function convertObject(
 	constraints: Record<string, unknown>,
-	shape?: Record<string, Parser<unknown>>,
+	shape?: Record<string, Schema<unknown>>,
 ): JsonSchema {
 	const result: JsonSchema = { type: 'object' }
 
@@ -357,7 +363,7 @@ function convertObject(
 
 function convertTuple(
 	_constraints: Record<string, unknown>,
-	items?: Parser<unknown>[],
+	items?: Schema<unknown>[],
 ): JsonSchema {
 	const result: JsonSchema = { type: 'array' }
 
@@ -372,7 +378,7 @@ function convertTuple(
 
 function convertRecord(
 	_constraints: Record<string, unknown>,
-	inner?: Parser<unknown> | { key?: Parser<unknown>; value?: Parser<unknown> },
+	inner?: Schema<unknown> | { key?: Schema<unknown>; value?: Schema<unknown> },
 ): JsonSchema {
 	const result: JsonSchema = { type: 'object' }
 
@@ -380,10 +386,10 @@ function convertRecord(
 		// Handle both single parser (legacy) and { key, value } structure
 		const valueSchema =
 			typeof inner === 'object' && 'value' in inner
-				? (inner as { value?: Parser<unknown> }).value
+				? (inner as { value?: Schema<unknown> }).value
 				: inner
 		if (valueSchema && typeof valueSchema === 'function') {
-			result.additionalProperties = convertSchema(valueSchema as Parser<unknown>)
+			result.additionalProperties = convertSchema(valueSchema as Schema<unknown>)
 		}
 	}
 
@@ -396,7 +402,7 @@ function convertMap(_constraints: Record<string, unknown>): JsonSchema {
 	return { type: 'object' }
 }
 
-function convertSet(constraints: Record<string, unknown>, items?: Parser<unknown>): JsonSchema {
+function convertSet(constraints: Record<string, unknown>, items?: Schema<unknown>): JsonSchema {
 	const result: JsonSchema = { type: 'array', uniqueItems: true }
 
 	if (items) {
@@ -409,7 +415,7 @@ function convertSet(constraints: Record<string, unknown>, items?: Parser<unknown
 	return result
 }
 
-function convertUnion(options?: Parser<unknown>[]): JsonSchema {
+function convertUnion(options?: Schema<unknown>[]): JsonSchema {
 	if (!options || options.length === 0) return {}
 
 	return {
@@ -417,7 +423,7 @@ function convertUnion(options?: Parser<unknown>[]): JsonSchema {
 	}
 }
 
-function convertIntersect(schemas?: Parser<unknown>[]): JsonSchema {
+function convertIntersect(schemas?: Schema<unknown>[]): JsonSchema {
 	if (!schemas || schemas.length === 0) return {}
 
 	return {
@@ -439,12 +445,12 @@ function convertEnum(constraints: Record<string, unknown>): JsonSchema {
 	return {}
 }
 
-function convertOptional(inner?: Parser<unknown>): JsonSchema {
+function convertOptional(inner?: Schema<unknown>): JsonSchema {
 	if (!inner) return {}
 	return convertSchema(inner)
 }
 
-function convertNullable(inner?: Parser<unknown>): JsonSchema {
+function convertNullable(inner?: Schema<unknown>): JsonSchema {
 	if (!inner) return { type: 'null' }
 
 	const innerSchema = convertSchema(inner)
@@ -460,7 +466,7 @@ function convertNullable(inner?: Parser<unknown>): JsonSchema {
 	return { anyOf: [innerSchema, { type: 'null' }] }
 }
 
-function convertLazy(inner?: Parser<unknown>): JsonSchema {
+function convertLazy(inner?: Schema<unknown>): JsonSchema {
 	// For lazy schemas, we need to evaluate them
 	if (!inner) return {}
 	return convertSchema(inner)
@@ -468,7 +474,7 @@ function convertLazy(inner?: Parser<unknown>): JsonSchema {
 
 function convertPipe(
 	_constraints: Record<string, unknown>,
-	schemas?: Parser<unknown>[],
+	schemas?: Schema<unknown>[],
 ): JsonSchema {
 	if (!schemas || schemas.length === 0) return {}
 
@@ -552,7 +558,7 @@ function convertConstraints(type: string, constraints: Record<string, unknown>):
 	}
 }
 
-function inferSchema(schema: Parser<unknown>): JsonSchema {
+function inferSchema(schema: Schema<unknown>): JsonSchema {
 	// Try to infer from function name or toString
 	const fnStr = schema.toString()
 

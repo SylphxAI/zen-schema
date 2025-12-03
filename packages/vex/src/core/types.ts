@@ -18,5 +18,11 @@ export type Validator<I, O = I> = ((value: I) => O) & {
 /** A validator with guaranteed Standard Schema support */
 export type StandardValidator<I, O = I> = Validator<I, O> & StandardSchemaV1<I, O>
 
-/** A validator that accepts unknown input */
-export type Parser<O> = Validator<unknown, O>
+/** A schema that validates unknown input and returns type O */
+export type Schema<O> = Validator<unknown, O>
+
+/**
+ * A schema that validates unknown input and returns type O
+ * @deprecated Use `Schema<O>` instead
+ */
+export type Parser<O> = Schema<O>

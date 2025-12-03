@@ -2,7 +2,7 @@
 // Set Schema
 // ============================================================
 
-import type { Parser, Result, StandardSchemaV1 } from '../core'
+import type { Result, Schema, StandardSchemaV1 } from '../core'
 import { addSchemaMetadata, getErrorMsg, ValidationError } from '../core'
 
 const ERR_SET: Result<never> = { ok: false, error: 'Expected Set' }
@@ -14,7 +14,7 @@ const ERR_SET: Result<never> = { ok: false, error: 'Expected Set' }
  * const validateNumberSet = set(num)
  * const validateStringSet = set(pipe(str, nonempty))
  */
-export const set = <T>(itemValidator: Parser<T>): Parser<Set<T>> => {
+export const set = <T>(itemValidator: Schema<T>): Schema<Set<T>> => {
 	// Pre-compute safe method for monomorphic path
 	const itemSafe = itemValidator.safe
 
@@ -35,7 +35,7 @@ export const set = <T>(itemValidator: Parser<T>): Parser<Set<T>> => {
 			i++
 		}
 		return result
-	}) as Parser<Set<T>>
+	}) as Schema<Set<T>>
 
 	// Monomorphic path split at initialization time
 	fn.safe = itemSafe

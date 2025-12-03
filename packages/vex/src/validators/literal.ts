@@ -2,7 +2,7 @@
 // Literal & Enum Validators
 // ============================================================
 
-import type { Parser, Result } from '../core'
+import type { Result, Schema } from '../core'
 import { createValidator, ValidationError } from '../core'
 
 type Primitive = string | number | boolean | null | undefined
@@ -14,7 +14,7 @@ type Primitive = string | number | boolean | null | undefined
  * const validateAdmin = literal('admin')
  * const validateTrue = literal(true)
  */
-export const literal = <T extends Primitive>(value: T): Parser<T> => {
+export const literal = <T extends Primitive>(value: T): Schema<T> => {
 	const msg = `Expected ${JSON.stringify(value)}`
 	const err: Result<never> = { ok: false, error: msg }
 
@@ -38,7 +38,7 @@ export const literal = <T extends Primitive>(value: T): Parser<T> => {
  */
 export const enum_ = <T extends readonly [Primitive, ...Primitive[]]>(
 	values: T,
-): Parser<T[number]> => {
+): Schema<T[number]> => {
 	const valuesSet = new Set<Primitive>(values)
 	const msg = `Expected one of: ${values.map((v) => JSON.stringify(v)).join(', ')}`
 	const err: Result<never> = { ok: false, error: msg }

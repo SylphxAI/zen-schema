@@ -2,7 +2,7 @@
 // Union Types
 // ============================================================
 
-import type { MetaAction, Parser, Result, SchemaOrMetaAction, StandardSchemaV1 } from '../core'
+import type { MetaAction, Result, Schema, SchemaOrMetaAction, StandardSchemaV1 } from '../core'
 import {
 	addSchemaMetadata,
 	addStandardSchema,
@@ -12,8 +12,8 @@ import {
 	ValidationError,
 } from '../core'
 
-type UnionOutput<T extends readonly Parser<unknown>[]> = {
-	[K in keyof T]: T[K] extends Parser<infer O> ? O : never
+type UnionOutput<T extends readonly Schema<unknown>[]> = {
+	[K in keyof T]: T[K] extends Schema<infer O> ? O : never
 }[number]
 
 /**
@@ -23,30 +23,30 @@ type UnionOutput<T extends readonly Parser<unknown>[]> = {
  * union(str(), num())                              // string | number
  * union(str(), num(), description('String or number'))  // with metadata
  */
-export function union<A>(a: Parser<A>, ...rest: MetaAction[]): Parser<A>
-export function union<A, B>(a: Parser<A>, b: Parser<B>, ...rest: MetaAction[]): Parser<A | B>
+export function union<A>(a: Schema<A>, ...rest: MetaAction[]): Schema<A>
+export function union<A, B>(a: Schema<A>, b: Schema<B>, ...rest: MetaAction[]): Schema<A | B>
 export function union<A, B, C>(
-	a: Parser<A>,
-	b: Parser<B>,
-	c: Parser<C>,
+	a: Schema<A>,
+	b: Schema<B>,
+	c: Schema<C>,
 	...rest: MetaAction[]
-): Parser<A | B | C>
+): Schema<A | B | C>
 export function union<A, B, C, D>(
-	a: Parser<A>,
-	b: Parser<B>,
-	c: Parser<C>,
-	d: Parser<D>,
+	a: Schema<A>,
+	b: Schema<B>,
+	c: Schema<C>,
+	d: Schema<D>,
 	...rest: MetaAction[]
-): Parser<A | B | C | D>
+): Schema<A | B | C | D>
 export function union<A, B, C, D, E>(
-	a: Parser<A>,
-	b: Parser<B>,
-	c: Parser<C>,
-	d: Parser<D>,
-	e: Parser<E>,
+	a: Schema<A>,
+	b: Schema<B>,
+	c: Schema<C>,
+	d: Schema<D>,
+	e: Schema<E>,
 	...rest: MetaAction[]
-): Parser<A | B | C | D | E>
-export function union(...args: SchemaOrMetaAction[]): Parser<unknown> {
+): Schema<A | B | C | D | E>
+export function union(...args: SchemaOrMetaAction[]): Schema<unknown> {
 	const { schemas, metaActions } = separateMetaActions(args)
 
 	if (schemas.length === 0) {
@@ -72,7 +72,7 @@ export function union(...args: SchemaOrMetaAction[]): Parser<unknown> {
 			}
 		}
 		throw new ValidationError(msg)
-	}) as Parser<unknown>
+	}) as Schema<unknown>
 
 	fn.safe = (value: unknown): Result<unknown> => {
 		for (let i = 0; i < len; i++) {
@@ -139,10 +139,10 @@ export function union(...args: SchemaOrMetaAction[]): Parser<unknown> {
  *   object({ type: literal('square'), side: num }),
  * ])
  */
-export const discriminatedUnion = <K extends string, T extends readonly Parser<unknown>[]>(
+export const discriminatedUnion = <K extends string, T extends readonly Schema<unknown>[]>(
 	_discriminator: K,
 	options: T,
-): Parser<UnionOutput<T>> => {
+): Schema<UnionOutput<T>> => {
 	const msg = `Invalid discriminator value`
 	const ERR_OBJECT: Result<never> = { ok: false, error: 'Expected object' }
 	const len = options.length
@@ -168,7 +168,7 @@ export const discriminatedUnion = <K extends string, T extends readonly Parser<u
 		}
 
 		throw new ValidationError(msg)
-	}) as Parser<UnionOutput<T>>
+	}) as Schema<UnionOutput<T>>
 
 	fn.safe = (value: unknown): Result<UnionOutput<T>> => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {

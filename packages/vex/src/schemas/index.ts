@@ -1,6 +1,6 @@
 // Schemas exports
 
-export { array, exactLength, maxLength, minLength, nonemptyArray } from './array'
+export { array, exactItems, maxItems, minItems, nonemptyArray } from './array'
 export { lazy } from './lazy'
 export { map } from './map'
 export {

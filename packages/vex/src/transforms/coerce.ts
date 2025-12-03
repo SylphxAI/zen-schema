@@ -2,17 +2,17 @@
 // Coercion Transforms
 // ============================================================
 
-import type { Parser } from '../core'
+import type { Schema } from '../core'
 import { createValidator, ValidationError } from '../core'
 
 /** Coerce value to string */
-export const coerceString: Parser<string> = createValidator(
+export const coerceString: Schema<string> = createValidator(
 	(v) => String(v),
 	(v) => ({ ok: true, value: String(v) }),
 )
 
 /** Coerce value to number */
-export const coerceNumber: Parser<number> = createValidator(
+export const coerceNumber: Schema<number> = createValidator(
 	(v) => {
 		const n = Number(v)
 		if (Number.isNaN(n)) throw new ValidationError('Cannot coerce to number')
@@ -27,13 +27,13 @@ export const coerceNumber: Parser<number> = createValidator(
 )
 
 /** Coerce value to boolean */
-export const coerceBoolean: Parser<boolean> = createValidator(
+export const coerceBoolean: Schema<boolean> = createValidator(
 	(v) => Boolean(v),
 	(v) => ({ ok: true, value: Boolean(v) }),
 )
 
 /** Coerce value to Date */
-export const coerceDate: Parser<Date> = createValidator(
+export const coerceDate: Schema<Date> = createValidator(
 	(v) => {
 		const d = v instanceof Date ? v : new Date(v as string | number)
 		if (Number.isNaN(d.getTime())) throw new ValidationError('Cannot coerce to Date')
@@ -48,7 +48,7 @@ export const coerceDate: Parser<Date> = createValidator(
 )
 
 /** Coerce value to BigInt */
-export const coerceBigInt: Parser<bigint> = createValidator(
+export const coerceBigInt: Schema<bigint> = createValidator(
 	(v) => {
 		try {
 			return BigInt(v as string | number | bigint | boolean)
@@ -67,11 +67,11 @@ export const coerceBigInt: Parser<bigint> = createValidator(
 
 /** Coercion namespace */
 export const coerce: {
-	string: Parser<string>
-	number: Parser<number>
-	boolean: Parser<boolean>
-	date: Parser<Date>
-	bigint: Parser<bigint>
+	string: Schema<string>
+	number: Schema<number>
+	boolean: Schema<boolean>
+	date: Schema<Date>
+	bigint: Schema<bigint>
 } = {
 	string: coerceString,
 	number: coerceNumber,

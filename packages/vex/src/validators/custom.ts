@@ -2,7 +2,7 @@
 // Custom Validators
 // ============================================================
 
-import type { Parser, Result } from '../core'
+import type { Result, Schema } from '../core'
 import { addStandardSchema, ValidationError } from '../core'
 
 /**
@@ -14,13 +14,13 @@ import { addStandardSchema, ValidationError } from '../core'
 export const custom = <T>(
 	checkFn: (value: T) => boolean,
 	message = 'Validation failed',
-): Parser<T> => {
+): Schema<T> => {
 	const err: Result<never> = { ok: false, error: message }
 
 	const fn = ((value: unknown) => {
 		if (!checkFn(value as T)) throw new ValidationError(message)
 		return value as T
-	}) as Parser<T>
+	}) as Schema<T>
 
 	fn.safe = (value: unknown): Result<T> => {
 		try {

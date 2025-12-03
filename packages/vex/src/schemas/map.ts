@@ -2,7 +2,7 @@
 // Map Schema
 // ============================================================
 
-import type { Parser, Result, StandardSchemaV1 } from '../core'
+import type { Result, Schema, StandardSchemaV1 } from '../core'
 import { addSchemaMetadata, getErrorMsg, ValidationError } from '../core'
 
 const ERR_MAP: Result<never> = { ok: false, error: 'Expected Map' }
@@ -15,9 +15,9 @@ const ERR_MAP: Result<never> = { ok: false, error: 'Expected Map' }
  * const validateIdToUser = map(pipe(str, uuid), userSchema)
  */
 export const map = <K, V>(
-	keyValidator: Parser<K>,
-	valueValidator: Parser<V>,
-): Parser<Map<K, V>> => {
+	keyValidator: Schema<K>,
+	valueValidator: Schema<V>,
+): Schema<Map<K, V>> => {
 	// Pre-compute safe methods for monomorphic path
 	const keySafe = keyValidator.safe
 	const valSafe = valueValidator.safe
@@ -47,7 +47,7 @@ export const map = <K, V>(
 			}
 		}
 		return result
-	}) as Parser<Map<K, V>>
+	}) as Schema<Map<K, V>>
 
 	// Monomorphic path split at initialization time (4 combinations)
 	fn.safe =

@@ -2,7 +2,7 @@
 // Intersect Composition
 // ============================================================
 
-import type { MetaAction, Parser, Result, SchemaOrMetaAction, StandardSchemaV1 } from '../core'
+import type { MetaAction, Result, Schema, SchemaOrMetaAction, StandardSchemaV1 } from '../core'
 import {
 	addSchemaMetadata,
 	applyMetaActions,
@@ -25,30 +25,30 @@ import {
  *   description('User with age')
  * )
  */
-export function intersect<A>(a: Parser<A>, ...rest: MetaAction[]): Parser<A>
-export function intersect<A, B>(a: Parser<A>, b: Parser<B>, ...rest: MetaAction[]): Parser<A & B>
+export function intersect<A>(a: Schema<A>, ...rest: MetaAction[]): Schema<A>
+export function intersect<A, B>(a: Schema<A>, b: Schema<B>, ...rest: MetaAction[]): Schema<A & B>
 export function intersect<A, B, C>(
-	a: Parser<A>,
-	b: Parser<B>,
-	c: Parser<C>,
+	a: Schema<A>,
+	b: Schema<B>,
+	c: Schema<C>,
 	...rest: MetaAction[]
-): Parser<A & B & C>
+): Schema<A & B & C>
 export function intersect<A, B, C, D>(
-	a: Parser<A>,
-	b: Parser<B>,
-	c: Parser<C>,
-	d: Parser<D>,
+	a: Schema<A>,
+	b: Schema<B>,
+	c: Schema<C>,
+	d: Schema<D>,
 	...rest: MetaAction[]
-): Parser<A & B & C & D>
+): Schema<A & B & C & D>
 export function intersect<A, B, C, D, E>(
-	a: Parser<A>,
-	b: Parser<B>,
-	c: Parser<C>,
-	d: Parser<D>,
-	e: Parser<E>,
+	a: Schema<A>,
+	b: Schema<B>,
+	c: Schema<C>,
+	d: Schema<D>,
+	e: Schema<E>,
 	...rest: MetaAction[]
-): Parser<A & B & C & D & E>
-export function intersect(...args: SchemaOrMetaAction[]): Parser<unknown> {
+): Schema<A & B & C & D & E>
+export function intersect(...args: SchemaOrMetaAction[]): Schema<unknown> {
 	const { schemas, metaActions } = separateMetaActions(args)
 
 	if (schemas.length === 0) {
@@ -75,7 +75,7 @@ export function intersect(...args: SchemaOrMetaAction[]): Parser<unknown> {
 		}
 
 		return result
-	}) as Parser<unknown>
+	}) as Schema<unknown>
 
 	fn.safe = (value: unknown): Result<unknown> => {
 		let result: unknown = {}

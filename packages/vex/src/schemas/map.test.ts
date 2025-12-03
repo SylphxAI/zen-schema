@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, expect, test } from 'bun:test'
-import { minLength, positive } from '..'
+import { min, positive } from '..'
 import { num, str } from '../validators/primitives'
 import { map } from './map'
 
@@ -138,13 +138,13 @@ describe('map', () => {
 
 	describe('piped validators', () => {
 		test('works with piped key validators', () => {
-			const schema = map(str(minLength(2)), num())
+			const schema = map(str(min(2)), num())
 			const input = new Map([['ab', 1]])
 			expect(schema(input).get('ab')).toBe(1)
 		})
 
 		test('rejects short key with piped validator', () => {
-			const schema = map(str(minLength(2)), num())
+			const schema = map(str(min(2)), num())
 			const input = new Map([['a', 1]])
 			expect(() => schema(input)).toThrow()
 		})
@@ -437,7 +437,7 @@ describe('map', () => {
 
 	describe('integration', () => {
 		test('works with complex key validator', () => {
-			const emailToNum = map(str(minLength(5)), num())
+			const emailToNum = map(str(min(5)), num())
 			const input = new Map([['hello', 1]])
 			expect(emailToNum(input).get('hello')).toBe(1)
 		})

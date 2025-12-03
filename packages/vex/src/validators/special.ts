@@ -2,25 +2,25 @@
 // Special Type Validators
 // ============================================================
 
-import type { Parser } from '../core'
+import type { Schema } from '../core'
 import { createValidator, ValidationError } from '../core'
 
 /** any - accepts any value */
-export const any: Parser<unknown> = createValidator(
+export const any: Schema<unknown> = createValidator(
 	(v) => v,
 	(v) => ({ ok: true, value: v }),
 	{ type: 'any' },
 )
 
 /** unknown - accepts any value (same as any but stricter type) */
-export const unknown: Parser<unknown> = createValidator(
+export const unknown: Schema<unknown> = createValidator(
 	(v) => v,
 	(v) => ({ ok: true, value: v }),
 	{ type: 'unknown' },
 )
 
 /** never - always fails */
-export const never: Parser<never> = createValidator(
+export const never: Schema<never> = createValidator(
 	() => {
 		throw new ValidationError('Value not allowed')
 	},
@@ -29,7 +29,7 @@ export const never: Parser<never> = createValidator(
 )
 
 /** void - accepts undefined */
-export const voidType: Parser<void> = createValidator(
+export const voidType: Schema<void> = createValidator(
 	(v) => {
 		if (v !== undefined) throw new ValidationError('Expected undefined')
 		return undefined
@@ -40,7 +40,7 @@ export const voidType: Parser<void> = createValidator(
 )
 
 /** null - accepts null */
-export const nullType: Parser<null> = createValidator(
+export const nullType: Schema<null> = createValidator(
 	(v) => {
 		if (v !== null) throw new ValidationError('Expected null')
 		return null
@@ -50,7 +50,7 @@ export const nullType: Parser<null> = createValidator(
 )
 
 /** undefined - accepts undefined */
-export const undefinedType: Parser<undefined> = createValidator(
+export const undefinedType: Schema<undefined> = createValidator(
 	(v) => {
 		if (v !== undefined) throw new ValidationError('Expected undefined')
 		return undefined
@@ -61,7 +61,7 @@ export const undefinedType: Parser<undefined> = createValidator(
 )
 
 /** NaN - accepts only NaN */
-export const nan: Parser<number> = createValidator(
+export const nan: Schema<number> = createValidator(
 	(v) => {
 		if (typeof v !== 'number' || !Number.isNaN(v)) throw new ValidationError('Expected NaN')
 		return v
@@ -74,7 +74,7 @@ export const nan: Parser<number> = createValidator(
 )
 
 /** symbol - accepts symbol */
-export const symbol: Parser<symbol> = createValidator(
+export const symbol: Schema<symbol> = createValidator(
 	(v) => {
 		if (typeof v !== 'symbol') throw new ValidationError('Expected symbol')
 		return v
@@ -85,7 +85,7 @@ export const symbol: Parser<symbol> = createValidator(
 
 /** function - accepts function */
 // biome-ignore lint/complexity/noBannedTypes: intentional for validator
-export const func: Parser<Function> = createValidator(
+export const func: Schema<Function> = createValidator(
 	(v) => {
 		if (typeof v !== 'function') throw new ValidationError('Expected function')
 		// biome-ignore lint/complexity/noBannedTypes: intentional for validator
@@ -99,7 +99,7 @@ export const func: Parser<Function> = createValidator(
 )
 
 /** promise - accepts Promise */
-export const promise: Parser<Promise<unknown>> = createValidator(
+export const promise: Schema<Promise<unknown>> = createValidator(
 	(v) => {
 		if (!(v instanceof Promise)) throw new ValidationError('Expected Promise')
 		return v
@@ -114,7 +114,7 @@ export const promise: Parser<Promise<unknown>> = createValidator(
  * const validateDate = instance(Date)
  * const validateError = instance(Error)
  */
-export const instance = <T>(ctor: new (...args: unknown[]) => T): Parser<T> => {
+export const instance = <T>(ctor: new (...args: unknown[]) => T): Schema<T> => {
 	const name = ctor.name || 'class'
 	const msg = `Expected instance of ${name}`
 	return createValidator(
@@ -127,7 +127,7 @@ export const instance = <T>(ctor: new (...args: unknown[]) => T): Parser<T> => {
 }
 
 /** blob - accepts Blob */
-export const blob: Parser<Blob> = createValidator(
+export const blob: Schema<Blob> = createValidator(
 	(v) => {
 		if (!(v instanceof Blob)) throw new ValidationError('Expected Blob')
 		return v
@@ -136,7 +136,7 @@ export const blob: Parser<Blob> = createValidator(
 )
 
 /** file - accepts File */
-export const file: Parser<File> = createValidator(
+export const file: Schema<File> = createValidator(
 	(v) => {
 		if (!(v instanceof File)) throw new ValidationError('Expected File')
 		return v
@@ -150,7 +150,7 @@ export const file: Parser<File> = createValidator(
  * @example
  * const validateImage = mimeType(['image/png', 'image/jpeg'])
  */
-export const mimeType = (types: readonly string[]): Parser<Blob> => {
+export const mimeType = (types: readonly string[]): Schema<Blob> => {
 	const typeSet = new Set(types)
 	const msg = `Expected MIME type: ${types.join(', ')}`
 	return createValidator(

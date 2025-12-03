@@ -2,7 +2,7 @@
 // Object Schema
 // ============================================================
 
-import type { MetaAction, Parser, Result, StandardSchemaV1 } from '../core'
+import type { MetaAction, Result, Schema, StandardSchemaV1 } from '../core'
 import {
 	addSchemaMetadata,
 	addStandardSchema,
@@ -14,7 +14,7 @@ import {
 
 const ERR_OBJECT: Result<never> = { ok: false, error: 'Expected object' }
 
-type Shape<T> = { [K in keyof T]: Parser<T[K]> }
+type Shape<T> = { [K in keyof T]: Schema<T[K]> }
 
 /**
  * Create an object validator from a shape
@@ -26,10 +26,10 @@ type Shape<T> = { [K in keyof T]: Parser<T[K]> }
 export const object = <T extends Record<string, unknown>>(
 	shape: Shape<T>,
 	...metaActions: MetaAction[]
-): Parser<T> => {
+): Schema<T> => {
 	// Pre-extract keys and validators for JIT-optimized indexed loops
 	const keys = Object.keys(shape) as (keyof T)[]
-	const validators = keys.map((k) => shape[k]) as Parser<unknown>[]
+	const validators = keys.map((k) => shape[k]) as Schema<unknown>[]
 	const len = keys.length
 
 	// Pre-compute safe methods for monomorphic path (avoids branch per field)
@@ -55,7 +55,7 @@ export const object = <T extends Record<string, unknown>>(
 		}
 
 		return result
-	}) as Parser<T>
+	}) as Schema<T>
 
 	// Monomorphic fast path when all validators have .safe (JIT can inline)
 	fn.safe = allHaveSafe
@@ -168,8 +168,8 @@ export const object = <T extends Record<string, unknown>>(
  * Make all properties optional
  */
 export const partial = <T extends Record<string, unknown>>(
-	schema: Parser<T>,
-): Parser<Partial<T>> => {
+	schema: Schema<T>,
+): Schema<Partial<T>> => {
 	const fn = ((value: unknown) => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
 			throw new ValidationError('Expected object')
@@ -181,7 +181,7 @@ export const partial = <T extends Record<string, unknown>>(
 		}
 
 		return value as Partial<T>
-	}) as Parser<Partial<T>>
+	}) as Schema<Partial<T>>
 
 	fn.safe = (value: unknown): Result<Partial<T>> => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -197,8 +197,8 @@ export const partial = <T extends Record<string, unknown>>(
  * Allow extra properties (passthrough mode)
  */
 export const passthrough = <T extends Record<string, unknown>>(
-	schema: Parser<T>,
-): Parser<T & Record<string, unknown>> => {
+	schema: Schema<T>,
+): Schema<T & Record<string, unknown>> => {
 	const fn = ((value: unknown) => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
 			throw new ValidationError('Expected object')
@@ -206,7 +206,7 @@ export const passthrough = <T extends Record<string, unknown>>(
 
 		const validated = schema(value)
 		return { ...value, ...validated } as T & Record<string, unknown>
-	}) as Parser<T & Record<string, unknown>>
+	}) as Schema<T & Record<string, unknown>>
 
 	fn.safe = (value: unknown): Result<T & Record<string, unknown>> => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -233,7 +233,7 @@ export const passthrough = <T extends Record<string, unknown>>(
 /**
  * Strip unknown properties (strict mode)
  */
-export const strict = <T extends Record<string, unknown>>(schema: Parser<T>): Parser<T> => {
+export const strict = <T extends Record<string, unknown>>(schema: Schema<T>): Schema<T> => {
 	return schema
 }
 
@@ -251,7 +251,7 @@ export { strict as strip }
  * const userShape = { name: str, age: num, email: pipe(str, email) }
  * const validateName = object(pick(userShape, ['name']))
  */
-export const pick = <T extends Record<string, Parser<unknown>>, K extends keyof T>(
+export const pick = <T extends Record<string, Schema<unknown>>, K extends keyof T>(
 	shape: T,
 	keys: readonly K[],
 ): Pick<T, K> => {
@@ -271,12 +271,12 @@ export const pick = <T extends Record<string, Parser<unknown>>, K extends keyof 
  * const userShape = { name: str, age: num, email: pipe(str, email) }
  * const validateWithoutEmail = object(omit(userShape, ['email']))
  */
-export const omit = <T extends Record<string, Parser<unknown>>, K extends keyof T>(
+export const omit = <T extends Record<string, Schema<unknown>>, K extends keyof T>(
 	shape: T,
 	keys: readonly K[],
 ): Omit<T, K> => {
 	const keysSet = new Set<string>(keys as unknown as string[])
-	const result = {} as Record<string, Parser<unknown>>
+	const result = {} as Record<string, Schema<unknown>>
 	for (const [key, value] of Object.entries(shape)) {
 		if (!keysSet.has(key)) {
 			result[key] = value
@@ -293,8 +293,8 @@ export const omit = <T extends Record<string, Parser<unknown>>, K extends keyof 
  * const adminShape = extend(userShape, { role: literal('admin') })
  */
 export const extend = <
-	T extends Record<string, Parser<unknown>>,
-	U extends Record<string, Parser<unknown>>,
+	T extends Record<string, Schema<unknown>>,
+	U extends Record<string, Schema<unknown>>,
 >(
 	base: T,
 	extension: U,
@@ -315,8 +315,8 @@ export const merge: typeof extend = extend
  * const fullUser = required(partialUser)
  */
 export const required = <T extends Record<string, unknown>>(
-	schema: Parser<Partial<T>>,
-): Parser<Required<T>> => {
+	schema: Schema<Partial<T>>,
+): Schema<Required<T>> => {
 	const fn = ((value: unknown) => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
 			throw new ValidationError('Expected object')
@@ -332,7 +332,7 @@ export const required = <T extends Record<string, unknown>>(
 		}
 
 		return result as Required<T>
-	}) as Parser<Required<T>>
+	}) as Schema<Required<T>>
 
 	fn.safe = (value: unknown): Result<Required<T>> => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -376,7 +376,7 @@ export const required = <T extends Record<string, unknown>>(
  * validateKey('name') // 'name'
  * validateKey('invalid') // throws
  */
-export const keyof = <T extends Record<string, Parser<unknown>>>(shape: T): Parser<keyof T> => {
+export const keyof = <T extends Record<string, Schema<unknown>>>(shape: T): Schema<keyof T> => {
 	const keys = Object.keys(shape) as (keyof T)[]
 	const keySet = new Set(keys as string[])
 	const msg = `Expected one of: ${keys.join(', ')}`
@@ -387,7 +387,7 @@ export const keyof = <T extends Record<string, Parser<unknown>>>(shape: T): Pars
 			throw new ValidationError(msg)
 		}
 		return value as keyof T
-	}) as Parser<keyof T>
+	}) as Schema<keyof T>
 
 	fn.safe = (value: unknown): Result<keyof T> => {
 		if (typeof value !== 'string' || !keySet.has(value)) {
@@ -413,10 +413,10 @@ export const strictObject: typeof object = object
  */
 export const looseObject = <T extends Record<string, unknown>>(
 	shape: Shape<T>,
-): Parser<T & Record<string, unknown>> => {
+): Schema<T & Record<string, unknown>> => {
 	// Pre-extract keys and validators for JIT-optimized indexed loops
 	const keys = Object.keys(shape) as (keyof T)[]
-	const validators = keys.map((k) => shape[k]) as Parser<unknown>[]
+	const validators = keys.map((k) => shape[k]) as Schema<unknown>[]
 	const len = keys.length
 
 	const fn = ((value: unknown) => {
@@ -438,7 +438,7 @@ export const looseObject = <T extends Record<string, unknown>>(
 		}
 
 		return result
-	}) as Parser<T & Record<string, unknown>>
+	}) as Schema<T & Record<string, unknown>>
 
 	fn.safe = (value: unknown): Result<T & Record<string, unknown>> => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -482,11 +482,11 @@ export const looseObject = <T extends Record<string, unknown>>(
  */
 export const objectWithRest = <T extends Record<string, unknown>, R>(
 	shape: Shape<T>,
-	rest: Parser<R>,
-): Parser<T & Record<string, R>> => {
+	rest: Schema<R>,
+): Schema<T & Record<string, R>> => {
 	// Pre-extract keys and validators for JIT-optimized indexed loops
 	const keys = Object.keys(shape) as (keyof T)[]
-	const validators = keys.map((k) => shape[k]) as Parser<unknown>[]
+	const validators = keys.map((k) => shape[k]) as Schema<unknown>[]
 	const len = keys.length
 	const knownKeys = new Set(keys as string[])
 	const hasRestSafe = rest.safe !== undefined
@@ -524,7 +524,7 @@ export const objectWithRest = <T extends Record<string, unknown>, R>(
 		}
 
 		return result as T & Record<string, R>
-	}) as Parser<T & Record<string, R>>
+	}) as Schema<T & Record<string, R>>
 
 	fn.safe = (value: unknown): Result<T & Record<string, R>> => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -596,11 +596,11 @@ export const objectWithRest = <T extends Record<string, unknown>, R>(
  *   object({ type: literal('keypress'), key: str }),
  * ])
  */
-export const variant = <K extends string, T extends Parser<Record<K, unknown>>[]>(
+export const variant = <K extends string, T extends Schema<Record<K, unknown>>[]>(
 	key: K,
 	options: T,
-): Parser<T[number] extends Parser<infer O> ? O : never> => {
-	type Output = T[number] extends Parser<infer O> ? O : never
+): Schema<T[number] extends Schema<infer O> ? O : never> => {
+	type Output = T[number] extends Schema<infer O> ? O : never
 
 	const fn = ((value: unknown) => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -624,7 +624,7 @@ export const variant = <K extends string, T extends Parser<Record<K, unknown>>[]
 		}
 
 		throw new ValidationError(`No matching variant for ${key}=${JSON.stringify(discriminant)}`)
-	}) as Parser<Output>
+	}) as Schema<Output>
 
 	fn.safe = (value: unknown): Result<Output> => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {

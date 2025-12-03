@@ -2,7 +2,7 @@
 // Tuple Schema
 // ============================================================
 
-import type { MetaAction, Parser, Result, SchemaOrMetaAction, StandardSchemaV1 } from '../core'
+import type { MetaAction, Result, Schema, SchemaOrMetaAction, StandardSchemaV1 } from '../core'
 import {
 	addSchemaMetadata,
 	applyMetaActions,
@@ -14,8 +14,8 @@ import {
 
 const ERR_ARRAY: Result<never> = { ok: false, error: 'Expected array' }
 
-type TupleOutput<T extends readonly Parser<unknown>[]> = {
-	[K in keyof T]: T[K] extends Parser<infer O> ? O : never
+type TupleOutput<T extends readonly Schema<unknown>[]> = {
+	[K in keyof T]: T[K] extends Schema<infer O> ? O : never
 }
 
 /**
@@ -26,30 +26,30 @@ type TupleOutput<T extends readonly Parser<unknown>[]> = {
  * tuple(str(), num(), bool())                  // [string, number, boolean]
  * tuple(str(), num(), description('Point'))   // with metadata
  */
-export function tuple<A>(a: Parser<A>, ...rest: MetaAction[]): Parser<[A]>
-export function tuple<A, B>(a: Parser<A>, b: Parser<B>, ...rest: MetaAction[]): Parser<[A, B]>
+export function tuple<A>(a: Schema<A>, ...rest: MetaAction[]): Schema<[A]>
+export function tuple<A, B>(a: Schema<A>, b: Schema<B>, ...rest: MetaAction[]): Schema<[A, B]>
 export function tuple<A, B, C>(
-	a: Parser<A>,
-	b: Parser<B>,
-	c: Parser<C>,
+	a: Schema<A>,
+	b: Schema<B>,
+	c: Schema<C>,
 	...rest: MetaAction[]
-): Parser<[A, B, C]>
+): Schema<[A, B, C]>
 export function tuple<A, B, C, D>(
-	a: Parser<A>,
-	b: Parser<B>,
-	c: Parser<C>,
-	d: Parser<D>,
+	a: Schema<A>,
+	b: Schema<B>,
+	c: Schema<C>,
+	d: Schema<D>,
 	...rest: MetaAction[]
-): Parser<[A, B, C, D]>
+): Schema<[A, B, C, D]>
 export function tuple<A, B, C, D, E>(
-	a: Parser<A>,
-	b: Parser<B>,
-	c: Parser<C>,
-	d: Parser<D>,
-	e: Parser<E>,
+	a: Schema<A>,
+	b: Schema<B>,
+	c: Schema<C>,
+	d: Schema<D>,
+	e: Schema<E>,
 	...rest: MetaAction[]
-): Parser<[A, B, C, D, E]>
-export function tuple(...args: SchemaOrMetaAction[]): Parser<unknown[]> {
+): Schema<[A, B, C, D, E]>
+export function tuple(...args: SchemaOrMetaAction[]): Schema<unknown[]> {
 	const { schemas, metaActions } = separateMetaActions(args)
 
 	if (schemas.length === 0) {
@@ -79,7 +79,7 @@ export function tuple(...args: SchemaOrMetaAction[]): Parser<unknown[]> {
 			}
 		}
 		return result as unknown[]
-	}) as Parser<unknown[]>
+	}) as Schema<unknown[]>
 
 	fn.safe = allHaveSafe
 		? (value: unknown): Result<unknown[]> => {
@@ -189,10 +189,10 @@ export const strictTuple: typeof tuple = tuple
  * looseTuple([num(), num()])                      // [number, number], ignores extras
  * looseTuple([num(), num()], description('Point')) // with metadata
  */
-export const looseTuple = <T extends readonly [Parser<unknown>, ...Parser<unknown>[]]>(
+export const looseTuple = <T extends readonly [Schema<unknown>, ...Schema<unknown>[]]>(
 	schemas: T,
 	...metaActions: MetaAction[]
-): Parser<TupleOutput<T>> => {
+): Schema<TupleOutput<T>> => {
 	const len = schemas.length
 
 	const fn = ((value: unknown) => {
@@ -212,7 +212,7 @@ export const looseTuple = <T extends readonly [Parser<unknown>, ...Parser<unknow
 			}
 		}
 		return result as TupleOutput<T>
-	}) as Parser<TupleOutput<T>>
+	}) as Schema<TupleOutput<T>>
 
 	fn.safe = (value: unknown): Result<TupleOutput<T>> => {
 		if (!Array.isArray(value)) return ERR_ARRAY as Result<TupleOutput<T>>
@@ -302,14 +302,14 @@ export const looseTuple = <T extends readonly [Parser<unknown>, ...Parser<unknow
  * tupleWithRest([str(), num()], str(), description('Args')) // with metadata
  */
 export const tupleWithRest = <
-	T extends readonly [Parser<unknown>, ...Parser<unknown>[]],
-	R extends Parser<unknown>,
+	T extends readonly [Schema<unknown>, ...Schema<unknown>[]],
+	R extends Schema<unknown>,
 >(
 	schemas: T,
 	rest: R,
 	...metaActions: MetaAction[]
-): Parser<[...TupleOutput<T>, ...(R extends Parser<infer O> ? O[] : never)]> => {
-	type Output = [...TupleOutput<T>, ...(R extends Parser<infer O> ? O[] : never)]
+): Schema<[...TupleOutput<T>, ...(R extends Schema<infer O> ? O[] : never)]> => {
+	type Output = [...TupleOutput<T>, ...(R extends Schema<infer O> ? O[] : never)]
 	const len = schemas.length
 	const hasRestSafe = rest.safe !== undefined
 
@@ -343,7 +343,7 @@ export const tupleWithRest = <
 		}
 
 		return result as Output
-	}) as Parser<Output>
+	}) as Schema<Output>
 
 	fn.safe = (value: unknown): Result<Output> => {
 		if (!Array.isArray(value)) return ERR_ARRAY as Result<Output>

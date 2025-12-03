@@ -9,6 +9,8 @@ import {
 	cuid,
 	cuid2,
 	date,
+	dateOnly,
+	datetime,
 	discriminatedUnion,
 	email,
 	emoji,
@@ -19,9 +21,6 @@ import {
 	ip,
 	ipv4,
 	ipv6,
-	isoDate,
-	isoDateTime,
-	isoTime,
 	len,
 	literal,
 	lte,
@@ -31,17 +30,18 @@ import {
 	minValue,
 	nanoid,
 	negative,
-	nonEmpty,
+	nonempty,
 	nullable,
 	num,
 	object,
 	optional,
+	pattern,
 	pick,
 	positive,
 	record,
-	regex,
 	safeParse,
 	str,
+	time,
 	transform,
 	tuple,
 	ulid,
@@ -120,8 +120,8 @@ const ipValidator = str(ip)
 const ipv4Validator = str(ipv4)
 const ipv6Validator = str(ipv6)
 const emojiValidator = str(emoji)
-const regexValidator = str(regex(/^[a-z]+$/))
-const nonemptyValidator = str(nonEmpty)
+const regexValidator = str(pattern(/^[a-z]+$/))
+const nonemptyValidator = str(nonempty)
 const minLenValidator = str(min(3))
 const maxLenValidator = str(max(100))
 const lenValidator = str(len(5))
@@ -149,7 +149,7 @@ results.push(bench('str(ipv4)', () => ipv4Validator('192.168.1.1')))
 results.push(bench('str(ipv6)', () => ipv6Validator('2001:0db8:85a3:0000:0000:8a2e:0370:7334')))
 results.push(bench('str(emoji)', () => emojiValidator('😀')))
 results.push(bench('str(regex)', () => regexValidator('hello')))
-results.push(bench('str(nonEmpty)', () => nonemptyValidator('hello')))
+results.push(bench('str(nonempty)', () => nonemptyValidator('hello')))
 results.push(bench('str(minLength(3))', () => minLenValidator('hello')))
 results.push(bench('str(maxLength(100))', () => maxLenValidator('hello')))
 results.push(bench('str(len(5))', () => lenValidator('hello')))
@@ -186,9 +186,9 @@ results.push(bench('num(int, gte, lte)', () => rangeValidator(42)))
 // ============================================================
 printSection('Date/Time Validators')
 
-const isoDateValidator = str(isoDate)
-const isoTimeValidator = str(isoTime)
-const isoDateTimeValidator = str(isoDateTime)
+const isoDateValidator = str(dateOnly)
+const isoTimeValidator = str(time)
+const isoDateTimeValidator = str(datetime)
 const dateValidator = date()
 
 results.push(bench('str(isoDate)', () => isoDateValidator('2024-01-15')))
@@ -203,12 +203,12 @@ printSection('Object Validation')
 
 const simpleObject = object({ name: str() })
 const mediumObject = object({
-	name: str(nonEmpty),
+	name: str(nonempty),
 	age: num(int, gte(0)),
 	email: str(email),
 })
 const complexObject = object({
-	name: str(nonEmpty),
+	name: str(nonempty),
 	age: num(int, gte(0), lte(150)),
 	email: str(email),
 	bio: optional(str()),
@@ -244,7 +244,7 @@ const nestedData = {
 results.push(bench('object (nested)', () => nestedObject(nestedData)))
 
 // Pick - pick works on shapes, not validators
-const userShape = { name: str(nonEmpty), email: str(email), age: num(int) }
+const userShape = { name: str(nonempty), email: str(email), age: num(int) }
 const pickedObject = object(pick(userShape, ['name', 'email']))
 results.push(
 	bench('pick (2 fields)', () => pickedObject({ name: 'John', email: 'john@example.com' })),

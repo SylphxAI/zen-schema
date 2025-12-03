@@ -4,7 +4,7 @@ import { pipe } from '../composition/pipe'
 import type { StandardSchemaV1 } from '../core'
 import { int } from '../validators/number'
 import { num } from '../validators/primitives'
-import { array, exactLength, maxLength, minLength, nonemptyArray } from './array'
+import { array, exactItems, maxItems, minItems, nonemptyArray } from './array'
 
 describe('Array Schema', () => {
 	test('array validates items', () => {
@@ -116,24 +116,24 @@ describe('Array Schema', () => {
 })
 
 describe('Array Length Validators', () => {
-	test('minLength validates minimum array length', () => {
-		const validate = pipe(array(num()), minLength(2))
+	test('minItems validates minimum array length', () => {
+		const validate = pipe(array(num()), minItems(2))
 		expect(validate([1, 2])).toEqual([1, 2])
 		expect(validate([1, 2, 3])).toEqual([1, 2, 3])
 		expect(() => validate([1])).toThrow('Array must have at least 2 items')
 		expect(() => validate([])).toThrow()
 	})
 
-	test('maxLength validates maximum array length', () => {
-		const validate = pipe(array(num()), maxLength(3))
+	test('maxItems validates maximum array length', () => {
+		const validate = pipe(array(num()), maxItems(3))
 		expect(validate([1, 2, 3])).toEqual([1, 2, 3])
 		expect(validate([1, 2])).toEqual([1, 2])
 		expect(validate([])).toEqual([])
 		expect(() => validate([1, 2, 3, 4])).toThrow('Array must have at most 3 items')
 	})
 
-	test('exactLength validates exact array length', () => {
-		const validate = pipe(array(num()), exactLength(3))
+	test('exactItems validates exact array length', () => {
+		const validate = pipe(array(num()), exactItems(3))
 		expect(validate([1, 2, 3])).toEqual([1, 2, 3])
 		expect(() => validate([1, 2])).toThrow('Array must have exactly 3 items')
 		expect(() => validate([1, 2, 3, 4])).toThrow()
@@ -147,39 +147,39 @@ describe('Array Length Validators', () => {
 	})
 
 	test('safe versions work', () => {
-		const validate = pipe(array(num()), minLength(2))
+		const validate = pipe(array(num()), minItems(2))
 		expect(validate.safe!([1, 2])).toEqual({ ok: true, value: [1, 2] })
 		expect(validate.safe!([1])).toHaveProperty('ok', false)
 	})
 
-	describe('minLength', () => {
+	describe('minItems', () => {
 		test('validates exact minimum', () => {
-			const validate = minLength(3)
+			const validate = minItems(3)
 			expect(validate([1, 2, 3])).toEqual([1, 2, 3])
 		})
 
 		test('validates above minimum', () => {
-			const validate = minLength(2)
+			const validate = minItems(2)
 			expect(validate([1, 2, 3, 4])).toEqual([1, 2, 3, 4])
 		})
 
 		test('throws on below minimum', () => {
-			const validate = minLength(3)
+			const validate = minItems(3)
 			expect(() => validate([1, 2])).toThrow('Array must have at least 3 items')
 		})
 
 		test('validates empty array with min 0', () => {
-			const validate = minLength(0)
+			const validate = minItems(0)
 			expect(validate([])).toEqual([])
 		})
 
 		test('safe version returns success', () => {
-			const validate = minLength(2)
+			const validate = minItems(2)
 			expect(validate.safe!([1, 2, 3])).toEqual({ ok: true, value: [1, 2, 3] })
 		})
 
 		test('safe version returns error', () => {
-			const validate = minLength(3)
+			const validate = minItems(3)
 			expect(validate.safe!([1, 2])).toEqual({
 				ok: false,
 				error: 'Array must have at least 3 items',
@@ -187,46 +187,46 @@ describe('Array Length Validators', () => {
 		})
 
 		test('Standard Schema support', () => {
-			const validate = minLength(2)
+			const validate = minItems(2)
 			expect(validate['~standard']).toBeDefined()
 			expect(validate['~standard']!.validate([1, 2])).toEqual({ value: [1, 2] })
 		})
 
 		test('Standard Schema returns issues', () => {
-			const validate = minLength(2)
+			const validate = minItems(2)
 			const result = validate['~standard']!.validate([1])
 			expect(result.issues![0].message).toBe('Array must have at least 2 items')
 		})
 	})
 
-	describe('maxLength', () => {
+	describe('maxItems', () => {
 		test('validates exact maximum', () => {
-			const validate = maxLength(3)
+			const validate = maxItems(3)
 			expect(validate([1, 2, 3])).toEqual([1, 2, 3])
 		})
 
 		test('validates below maximum', () => {
-			const validate = maxLength(5)
+			const validate = maxItems(5)
 			expect(validate([1, 2])).toEqual([1, 2])
 		})
 
 		test('throws on above maximum', () => {
-			const validate = maxLength(2)
+			const validate = maxItems(2)
 			expect(() => validate([1, 2, 3])).toThrow('Array must have at most 2 items')
 		})
 
 		test('validates empty array', () => {
-			const validate = maxLength(5)
+			const validate = maxItems(5)
 			expect(validate([])).toEqual([])
 		})
 
 		test('safe version returns success', () => {
-			const validate = maxLength(3)
+			const validate = maxItems(3)
 			expect(validate.safe!([1, 2])).toEqual({ ok: true, value: [1, 2] })
 		})
 
 		test('safe version returns error', () => {
-			const validate = maxLength(2)
+			const validate = maxItems(2)
 			expect(validate.safe!([1, 2, 3])).toEqual({
 				ok: false,
 				error: 'Array must have at most 2 items',
@@ -234,42 +234,42 @@ describe('Array Length Validators', () => {
 		})
 
 		test('Standard Schema support', () => {
-			const validate = maxLength(3)
+			const validate = maxItems(3)
 			expect(validate['~standard']).toBeDefined()
 			expect(validate['~standard']!.validate([1, 2])).toEqual({ value: [1, 2] })
 		})
 
 		test('Standard Schema returns issues', () => {
-			const validate = maxLength(2)
+			const validate = maxItems(2)
 			const result = validate['~standard']!.validate([1, 2, 3])
 			expect(result.issues![0].message).toBe('Array must have at most 2 items')
 		})
 	})
 
-	describe('exactLength', () => {
+	describe('exactItems', () => {
 		test('validates exact length', () => {
-			const validate = exactLength(3)
+			const validate = exactItems(3)
 			expect(validate([1, 2, 3])).toEqual([1, 2, 3])
 		})
 
 		test('throws on different length', () => {
-			const validate = exactLength(3)
+			const validate = exactItems(3)
 			expect(() => validate([1, 2])).toThrow('Array must have exactly 3 items')
 			expect(() => validate([1, 2, 3, 4])).toThrow('Array must have exactly 3 items')
 		})
 
 		test('validates empty array with exact 0', () => {
-			const validate = exactLength(0)
+			const validate = exactItems(0)
 			expect(validate([])).toEqual([])
 		})
 
 		test('safe version returns success', () => {
-			const validate = exactLength(2)
+			const validate = exactItems(2)
 			expect(validate.safe!([1, 2])).toEqual({ ok: true, value: [1, 2] })
 		})
 
 		test('safe version returns error for too few', () => {
-			const validate = exactLength(3)
+			const validate = exactItems(3)
 			expect(validate.safe!([1, 2])).toEqual({
 				ok: false,
 				error: 'Array must have exactly 3 items',
@@ -277,7 +277,7 @@ describe('Array Length Validators', () => {
 		})
 
 		test('safe version returns error for too many', () => {
-			const validate = exactLength(2)
+			const validate = exactItems(2)
 			expect(validate.safe!([1, 2, 3])).toEqual({
 				ok: false,
 				error: 'Array must have exactly 2 items',
@@ -285,13 +285,13 @@ describe('Array Length Validators', () => {
 		})
 
 		test('Standard Schema support', () => {
-			const validate = exactLength(2)
+			const validate = exactItems(2)
 			expect(validate['~standard']).toBeDefined()
 			expect(validate['~standard']!.validate([1, 2])).toEqual({ value: [1, 2] })
 		})
 
 		test('Standard Schema returns issues', () => {
-			const validate = exactLength(2)
+			const validate = exactItems(2)
 			const result = validate['~standard']!.validate([1])
 			expect(result.issues![0].message).toBe('Array must have exactly 2 items')
 		})

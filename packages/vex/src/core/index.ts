@@ -35,7 +35,7 @@ export {
 	wrapMeta,
 } from './metadata'
 export type { StandardSchemaV1 } from './standard'
-export type { Parser, Result, StandardValidator, Validator } from './types'
+export type { Parser, Result, Schema, StandardValidator, Validator } from './types'
 
 // Type inference utilities (Valibot compatibility)
 import type { StandardSchemaV1 } from './standard'

@@ -18,10 +18,23 @@
     },
     "packages/vex": {
       "name": "@sylphx/vex",
-      "version": "0.1.6",
+      "version": "0.1.8",
       "devDependencies": {
         "bunup": "^0.16.10",
         "valibot": "^1.2.0",
+      },
+      "peerDependencies": {
+        "typescript": ">=5.0.0",
+      },
+    },
+    "packages/vex-json-schema": {
+      "name": "@sylphx/vex-json-schema",
+      "version": "0.1.0",
+      "dependencies": {
+        "@sylphx/vex": "workspace:*",
+      },
+      "devDependencies": {
+        "bunup": "^0.16.10",
       },
       "peerDependencies": {
         "typescript": ">=5.0.0",
@@ -176,6 +189,8 @@
     "@sylphx/tsconfig": ["@sylphx/tsconfig@0.3.1", "", {}, "sha512-S7JAV9OEt3LUChz1jmFMG2coJGYdmSF+n4x6lPK9JziykFCvS37d4G5uoBS2kWVW4grnZa+WRmAtZkE9oMFi0Q=="],
 
     "@sylphx/vex": ["@sylphx/vex@workspace:packages/vex"],
+
+    "@sylphx/vex-json-schema": ["@sylphx/vex-json-schema@workspace:packages/vex-json-schema"],
 
     "@tybys/wasm-util": ["@tybys/wasm-util@0.10.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg=="],
 

@@ -2,7 +2,7 @@
 // Array Schema
 // ============================================================
 
-import type { MetaAction, Parser, Result, StandardSchemaV1, Validator } from '../core'
+import type { MetaAction, Result, Schema, StandardSchemaV1, Validator } from '../core'
 import {
 	addSchemaMetadata,
 	applyMetaActions,
@@ -22,7 +22,7 @@ const ERR_NONEMPTY: Result<never> = { ok: false, error: 'Array must not be empty
  * array(num())                              // number[]
  * array(str(), description('Names'))        // string[] with metadata
  */
-export const array = <T>(itemValidator: Parser<T>, ...metaActions: MetaAction[]): Parser<T[]> => {
+export const array = <T>(itemValidator: Schema<T>, ...metaActions: MetaAction[]): Schema<T[]> => {
 	// Pre-compute safe method for monomorphic path
 	const itemSafe = itemValidator.safe
 
@@ -41,7 +41,7 @@ export const array = <T>(itemValidator: Parser<T>, ...metaActions: MetaAction[])
 		}
 
 		return result
-	}) as Parser<T[]>
+	}) as Schema<T[]>
 
 	// Monomorphic path split at initialization time
 	fn.safe = itemSafe
@@ -133,8 +133,8 @@ export const array = <T>(itemValidator: Parser<T>, ...metaActions: MetaAction[])
 // Array Length Validators
 // ============================================================
 
-/** Array minimum length validator */
-export const minLength = <T>(n: number): Validator<T[], T[]> => {
+/** Array minimum items validator */
+export const minItems = <T>(n: number): Validator<T[], T[]> => {
 	const msg = `Array must have at least ${n} items`
 	const err: Result<never> = { ok: false, error: msg }
 	return createValidator(
@@ -147,8 +147,8 @@ export const minLength = <T>(n: number): Validator<T[], T[]> => {
 	)
 }
 
-/** Array maximum length validator */
-export const maxLength = <T>(n: number): Validator<T[], T[]> => {
+/** Array maximum items validator */
+export const maxItems = <T>(n: number): Validator<T[], T[]> => {
 	const msg = `Array must have at most ${n} items`
 	const err: Result<never> = { ok: false, error: msg }
 	return createValidator(
@@ -161,8 +161,8 @@ export const maxLength = <T>(n: number): Validator<T[], T[]> => {
 	)
 }
 
-/** Array exact length validator */
-export const exactLength = <T>(n: number): Validator<T[], T[]> => {
+/** Array exact items validator */
+export const exactItems = <T>(n: number): Validator<T[], T[]> => {
 	const msg = `Array must have exactly ${n} items`
 	const err: Result<never> = { ok: false, error: msg }
 	return createValidator(

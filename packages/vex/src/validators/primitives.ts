@@ -2,7 +2,7 @@
 // Primitive Type Validators (Factory Pattern)
 // ============================================================
 
-import type { MetaAction, Parser, Result, SchemaMetadata, Validator } from '../core'
+import type { MetaAction, Result, Schema, SchemaMetadata, Validator } from '../core'
 import {
 	addSchemaMetadata,
 	addStandardSchema,
@@ -31,7 +31,7 @@ const ERR_FUNCTION: Result<never> = { ok: false, error: 'Expected function' }
 // Base Validators (internal)
 // ============================================================
 
-const baseStr: Parser<string> = createValidator(
+const baseStr: Schema<string> = createValidator(
 	(v) => {
 		if (typeof v !== 'string') throw new ValidationError('Expected string')
 		return v
@@ -40,7 +40,7 @@ const baseStr: Parser<string> = createValidator(
 	{ type: 'string' },
 )
 
-const baseNum: Parser<number> = createValidator(
+const baseNum: Schema<number> = createValidator(
 	(v) => {
 		if (typeof v !== 'number' || Number.isNaN(v)) throw new ValidationError('Expected number')
 		return v
@@ -49,7 +49,7 @@ const baseNum: Parser<number> = createValidator(
 	{ type: 'number' },
 )
 
-const baseBool: Parser<boolean> = createValidator(
+const baseBool: Schema<boolean> = createValidator(
 	(v) => {
 		if (typeof v !== 'boolean') throw new ValidationError('Expected boolean')
 		return v
@@ -58,7 +58,7 @@ const baseBool: Parser<boolean> = createValidator(
 	{ type: 'boolean' },
 )
 
-const baseBigInt: Parser<bigint> = createValidator(
+const baseBigInt: Schema<bigint> = createValidator(
 	(v) => {
 		if (typeof v !== 'bigint') throw new ValidationError('Expected bigint')
 		return v
@@ -67,7 +67,7 @@ const baseBigInt: Parser<bigint> = createValidator(
 	{ type: 'bigint' },
 )
 
-const baseDate: Parser<Date> = createValidator(
+const baseDate: Schema<Date> = createValidator(
 	(v) => {
 		if (!(v instanceof Date) || Number.isNaN(v.getTime()))
 			throw new ValidationError('Expected Date')
@@ -77,7 +77,7 @@ const baseDate: Parser<Date> = createValidator(
 	{ type: 'date' },
 )
 
-const baseArr: Parser<unknown[]> = createValidator(
+const baseArr: Schema<unknown[]> = createValidator(
 	(v) => {
 		if (!Array.isArray(v)) throw new ValidationError('Expected array')
 		return v
@@ -86,7 +86,7 @@ const baseArr: Parser<unknown[]> = createValidator(
 	{ type: 'array' },
 )
 
-const baseObj: Parser<Record<string, unknown>> = createValidator(
+const baseObj: Schema<Record<string, unknown>> = createValidator(
 	(v) => {
 		if (typeof v !== 'object' || v === null || Array.isArray(v))
 			throw new ValidationError('Expected object')
@@ -99,7 +99,7 @@ const baseObj: Parser<Record<string, unknown>> = createValidator(
 	{ type: 'object' },
 )
 
-const baseSymbol: Parser<symbol> = createValidator(
+const baseSymbol: Schema<symbol> = createValidator(
 	(v) => {
 		if (typeof v !== 'symbol') throw new ValidationError('Expected symbol')
 		return v
@@ -108,7 +108,7 @@ const baseSymbol: Parser<symbol> = createValidator(
 	{ type: 'symbol' },
 )
 
-const baseFunc: Parser<(...args: unknown[]) => unknown> = createValidator(
+const baseFunc: Schema<(...args: unknown[]) => unknown> = createValidator(
 	(v) => {
 		if (typeof v !== 'function') throw new ValidationError('Expected function')
 		return v as (...args: unknown[]) => unknown
@@ -145,7 +145,7 @@ function separateArgs<T>(args: SchemaArg<T>[]): {
 	return { validators, metaActions }
 }
 
-function composeWithBase<T>(base: Parser<T>, args: SchemaArg<T>[], baseType: string): Parser<T> {
+function composeWithBase<T>(base: Schema<T>, args: SchemaArg<T>[], baseType: string): Schema<T> {
 	// Separate validators from MetaActions
 	const { validators: constraints, metaActions } = separateArgs(args)
 
@@ -157,7 +157,7 @@ function composeWithBase<T>(base: Parser<T>, args: SchemaArg<T>[], baseType: str
 	// If only MetaActions, create wrapper with metadata (don't mutate base)
 	if (constraints.length === 0) {
 		// Create a new function that delegates to base
-		const fn = ((value: unknown) => base(value)) as Parser<T>
+		const fn = ((value: unknown) => base(value)) as Schema<T>
 		// biome-ignore lint/style/noNonNullAssertion: safe is always defined on Parser
 		fn.safe = base.safe!
 
@@ -180,11 +180,11 @@ function composeWithBase<T>(base: Parser<T>, args: SchemaArg<T>[], baseType: str
 	}
 
 	// JIT-optimized fast paths for common cases
-	let fn: Parser<T>
+	let fn: Schema<T>
 
 	if (len === 1) {
 		const c0 = constraints[0]!
-		fn = ((value: unknown) => c0(base(value))) as Parser<T>
+		fn = ((value: unknown) => c0(base(value))) as Schema<T>
 		fn.safe = (value: unknown): Result<T> => {
 			// biome-ignore lint/style/noNonNullAssertion: safe is always defined on Parser
 			const r0 = base.safe!(value)
@@ -193,7 +193,7 @@ function composeWithBase<T>(base: Parser<T>, args: SchemaArg<T>[], baseType: str
 		}
 	} else if (len === 2) {
 		const [c0, c1] = constraints as [Validator<T, T>, Validator<T, T>]
-		fn = ((value: unknown) => c1(c0(base(value)))) as Parser<T>
+		fn = ((value: unknown) => c1(c0(base(value)))) as Schema<T>
 		fn.safe = (value: unknown): Result<T> => {
 			// biome-ignore lint/style/noNonNullAssertion: safe is always defined on Parser
 			const r0 = base.safe!(value)
@@ -204,7 +204,7 @@ function composeWithBase<T>(base: Parser<T>, args: SchemaArg<T>[], baseType: str
 		}
 	} else if (len === 3) {
 		const [c0, c1, c2] = constraints as [Validator<T, T>, Validator<T, T>, Validator<T, T>]
-		fn = ((value: unknown) => c2(c1(c0(base(value))))) as Parser<T>
+		fn = ((value: unknown) => c2(c1(c0(base(value))))) as Schema<T>
 		fn.safe = (value: unknown): Result<T> => {
 			// biome-ignore lint/style/noNonNullAssertion: safe is always defined on Parser
 			const r0 = base.safe!(value)
@@ -224,7 +224,7 @@ function composeWithBase<T>(base: Parser<T>, args: SchemaArg<T>[], baseType: str
 				result = constraints[i]!(result)
 			}
 			return result
-		}) as Parser<T>
+		}) as Schema<T>
 
 		fn.safe = (value: unknown): Result<T> => {
 			// biome-ignore lint/style/noNonNullAssertion: safe is always defined on Parser
@@ -279,7 +279,7 @@ function composeWithBase<T>(base: Parser<T>, args: SchemaArg<T>[], baseType: str
  * str(min(3), max(20))               // string + length constraints
  * str(email, description('Email'))   // string + metadata
  */
-export const str = (...args: SchemaArg<string>[]): Parser<string> => {
+export const str = (...args: SchemaArg<string>[]): Schema<string> => {
 	return composeWithBase(baseStr, args, 'string')
 }
 
@@ -293,7 +293,7 @@ export const str = (...args: SchemaArg<string>[]): Parser<string> => {
  * num(gte(0), lte(100))              // number between 0-100
  * num(int, description('Age'))       // number + metadata
  */
-export const num = (...args: SchemaArg<number>[]): Parser<number> => {
+export const num = (...args: SchemaArg<number>[]): Schema<number> => {
 	return composeWithBase(baseNum, args, 'number')
 }
 
@@ -304,7 +304,7 @@ export const num = (...args: SchemaArg<number>[]): Parser<number> => {
  * bool()                             // base boolean
  * bool(description('Is active'))     // boolean + metadata
  */
-export const bool = (...args: SchemaArg<boolean>[]): Parser<boolean> => {
+export const bool = (...args: SchemaArg<boolean>[]): Schema<boolean> => {
 	return composeWithBase(baseBool, args, 'boolean')
 }
 
@@ -315,7 +315,7 @@ export const bool = (...args: SchemaArg<boolean>[]): Parser<boolean> => {
  * bigInt()                           // base bigint
  * bigInt(description('Large ID'))    // bigint + metadata
  */
-export const bigInt = (...args: SchemaArg<bigint>[]): Parser<bigint> => {
+export const bigInt = (...args: SchemaArg<bigint>[]): Schema<bigint> => {
 	return composeWithBase(baseBigInt, args, 'bigint')
 }
 
@@ -326,7 +326,7 @@ export const bigInt = (...args: SchemaArg<bigint>[]): Parser<bigint> => {
  * date()                             // base Date
  * date(description('Created at'))    // Date + metadata
  */
-export const date = (...args: SchemaArg<Date>[]): Parser<Date> => {
+export const date = (...args: SchemaArg<Date>[]): Schema<Date> => {
 	return composeWithBase(baseDate, args, 'date')
 }
 
@@ -337,7 +337,7 @@ export const date = (...args: SchemaArg<Date>[]): Parser<Date> => {
  * arr()                              // base array
  * arr(description('Items'))          // array + metadata
  */
-export const arr = (...args: SchemaArg<unknown[]>[]): Parser<unknown[]> => {
+export const arr = (...args: SchemaArg<unknown[]>[]): Schema<unknown[]> => {
 	return composeWithBase(baseArr, args, 'array')
 }
 
@@ -350,7 +350,7 @@ export const arr = (...args: SchemaArg<unknown[]>[]): Parser<unknown[]> => {
  */
 export const obj = (
 	...args: SchemaArg<Record<string, unknown>>[]
-): Parser<Record<string, unknown>> => {
+): Schema<Record<string, unknown>> => {
 	return composeWithBase(baseObj, args, 'object')
 }
 
@@ -361,7 +361,7 @@ export const obj = (
  * sym()                              // base symbol
  * sym(description('Unique key'))     // symbol + metadata
  */
-export const sym = (...args: SchemaArg<symbol>[]): Parser<symbol> => {
+export const sym = (...args: SchemaArg<symbol>[]): Schema<symbol> => {
 	return composeWithBase(baseSymbol, args, 'symbol')
 }
 
@@ -374,6 +374,6 @@ export const sym = (...args: SchemaArg<symbol>[]): Parser<symbol> => {
  */
 export const func = (
 	...args: SchemaArg<(...args: unknown[]) => unknown>[]
-): Parser<(...args: unknown[]) => unknown> => {
+): Schema<(...args: unknown[]) => unknown> => {
 	return composeWithBase(baseFunc, args, 'function')
 }

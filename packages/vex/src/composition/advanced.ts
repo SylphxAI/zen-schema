@@ -2,7 +2,7 @@
 // Advanced Composition Functions (Valibot Parity)
 // ============================================================
 
-import type { Parser, Result, Validator } from '../core'
+import type { Result, Schema, Validator } from '../core'
 import { addStandardSchema, getSchemaMetadata, ValidationError } from '../core'
 
 /**
@@ -209,7 +209,7 @@ export const forward = <I, O>(validator: Validator<I, O>, path: PropertyKey[]): 
  * @example
  * const validateArgs = args(tuple([str, num]))
  */
-export const args = <T extends unknown[]>(schema: Parser<T>): Parser<T> => schema
+export const args = <T extends unknown[]>(schema: Schema<T>): Schema<T> => schema
 
 /**
  * Function return value validator
@@ -217,12 +217,12 @@ export const args = <T extends unknown[]>(schema: Parser<T>): Parser<T> => schem
  * @example
  * const validateReturn = returns(str)
  */
-export const returns = <T>(schema: Parser<T>): Parser<T> => schema
+export const returns = <T>(schema: Schema<T>): Schema<T> => schema
 
 /**
  * Get default value from a schema (if set via withDefault)
  */
-export const getDefault = <T>(schema: Parser<T>): T | undefined => {
+export const getDefault = <T>(schema: Schema<T>): T | undefined => {
 	const metadata = getSchemaMetadata(schema)
 	if (metadata?.type === 'default' && metadata.constraints) {
 		return metadata.constraints['default'] as T
@@ -234,7 +234,7 @@ export const getDefault = <T>(schema: Parser<T>): T | undefined => {
  * Get all defaults from an object schema
  */
 export const getDefaults = <T extends Record<string, unknown>>(
-	schema: Parser<T>,
+	schema: Schema<T>,
 ): Partial<T> | undefined => {
 	const metadata = getSchemaMetadata(schema)
 	if (metadata?.type !== 'object' || !metadata.inner) {
@@ -246,7 +246,7 @@ export const getDefaults = <T extends Record<string, unknown>>(
 	let hasDefaults = false
 
 	for (const [key, fieldSchema] of Object.entries(shape)) {
-		const fieldMeta = getSchemaMetadata(fieldSchema as Parser<unknown>)
+		const fieldMeta = getSchemaMetadata(fieldSchema as Schema<unknown>)
 		if (fieldMeta?.type === 'default' && fieldMeta.constraints) {
 			;(defaults as Record<string, unknown>)[key] = fieldMeta.constraints['default']
 			hasDefaults = true
@@ -259,7 +259,7 @@ export const getDefaults = <T extends Record<string, unknown>>(
 /**
  * Get fallback value from a schema (if set via fallback)
  */
-export const getFallback = <T>(schema: Parser<T>): T | undefined => {
+export const getFallback = <T>(schema: Schema<T>): T | undefined => {
 	const metadata = getSchemaMetadata(schema)
 	if (metadata?.type === 'fallback' && metadata.constraints) {
 		return metadata.constraints['fallback'] as T
@@ -271,7 +271,7 @@ export const getFallback = <T>(schema: Parser<T>): T | undefined => {
  * Get all fallbacks from an object schema
  */
 export const getFallbacks = <T extends Record<string, unknown>>(
-	schema: Parser<T>,
+	schema: Schema<T>,
 ): Partial<T> | undefined => {
 	const metadata = getSchemaMetadata(schema)
 	if (metadata?.type !== 'object' || !metadata.inner) {
@@ -283,7 +283,7 @@ export const getFallbacks = <T extends Record<string, unknown>>(
 	let hasFallbacks = false
 
 	for (const [key, fieldSchema] of Object.entries(shape)) {
-		const fieldMeta = getSchemaMetadata(fieldSchema as Parser<unknown>)
+		const fieldMeta = getSchemaMetadata(fieldSchema as Schema<unknown>)
 		if (fieldMeta?.type === 'fallback' && fieldMeta.constraints) {
 			;(fallbacks as Record<string, unknown>)[key] = fieldMeta.constraints['fallback']
 			hasFallbacks = true
@@ -297,10 +297,10 @@ export const getFallbacks = <T extends Record<string, unknown>>(
  * Unwrap a wrapped schema (optional, nullable, etc.)
  * Returns the inner schema if the schema is wrapped in optional, nullable, nullish, etc.
  */
-export const unwrap = <T>(schema: Parser<T>): Parser<NonNullable<T>> => {
+export const unwrap = <T>(schema: Schema<T>): Schema<NonNullable<T>> => {
 	const metadata = getSchemaMetadata(schema)
 	if (!metadata) {
-		return schema as unknown as Parser<NonNullable<T>>
+		return schema as unknown as Schema<NonNullable<T>>
 	}
 
 	// If this is a wrapped type, extract the inner schema
@@ -313,10 +313,10 @@ export const unwrap = <T>(schema: Parser<T>): Parser<NonNullable<T>> => {
 		'nonOptional',
 	]
 	if (wrappedTypes.includes(metadata.type) && metadata.inner) {
-		return metadata.inner as Parser<NonNullable<T>>
+		return metadata.inner as Schema<NonNullable<T>>
 	}
 
-	return schema as unknown as Parser<NonNullable<T>>
+	return schema as unknown as Schema<NonNullable<T>>
 }
 
 /**
@@ -355,7 +355,7 @@ export const flatten = <_T>(
  * console.log(summarize(schema))
  * // { type: 'object', entries: { name: { type: 'string' }, age: { type: 'number' } } }
  */
-export const summarize = <T>(schema: Parser<T>): Record<string, unknown> => {
+export const summarize = <T>(schema: Schema<T>): Record<string, unknown> => {
 	// Check for Standard Schema support
 	const std = (schema as unknown as { '~standard'?: { vendor: string } })['~standard']
 	if (std) {
@@ -371,7 +371,7 @@ export const summarize = <T>(schema: Parser<T>): Record<string, unknown> => {
  * Get all defaults from an object schema (async version)
  */
 export const getDefaultsAsync = async <T extends Record<string, unknown>>(
-	_schema: Parser<T>,
+	_schema: Schema<T>,
 ): Promise<Partial<T> | undefined> => {
 	return undefined // Object schemas don't store defaults in vex
 }
@@ -380,7 +380,7 @@ export const getDefaultsAsync = async <T extends Record<string, unknown>>(
  * Get all fallbacks from an object schema (async version)
  */
 export const getFallbacksAsync = async <T extends Record<string, unknown>>(
-	_schema: Parser<T>,
+	_schema: Schema<T>,
 ): Promise<Partial<T> | undefined> => {
 	return undefined
 }

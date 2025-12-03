@@ -2,7 +2,7 @@
 // Record Schema
 // ============================================================
 
-import type { MetaAction, Parser, Result, StandardSchemaV1 } from '../core'
+import type { MetaAction, Result, Schema, StandardSchemaV1 } from '../core'
 import {
 	addSchemaMetadata,
 	applyMetaActions,
@@ -21,10 +21,10 @@ const ERR_OBJECT: Result<never> = { ok: false, error: 'Expected object' }
  * record(str(), num(), description('Scores'))   // with metadata
  */
 export const record = <K extends string, V>(
-	keyValidator: Parser<K>,
-	valueValidator: Parser<V>,
+	keyValidator: Schema<K>,
+	valueValidator: Schema<V>,
 	...metaActions: MetaAction[]
-): Parser<Record<K, V>> => {
+): Schema<Record<K, V>> => {
 	// Cache safe method lookups for JIT
 	const hasKeySafe = keyValidator.safe !== undefined
 	const hasValSafe = valueValidator.safe !== undefined
@@ -58,7 +58,7 @@ export const record = <K extends string, V>(
 		}
 
 		return result
-	}) as Parser<Record<K, V>>
+	}) as Schema<Record<K, V>>
 
 	fn.safe = (value: unknown): Result<Record<K, V>> => {
 		if (typeof value !== 'object' || value === null || Array.isArray(value)) {

@@ -2,7 +2,7 @@
 // Lazy Schema (for recursive types)
 // ============================================================
 
-import type { Parser, Result, StandardSchemaV1 } from '../core'
+import type { Result, Schema, StandardSchemaV1 } from '../core'
 import { addSchemaMetadata, getErrorMsg } from '../core'
 
 /**
@@ -10,13 +10,13 @@ import { addSchemaMetadata, getErrorMsg } from '../core'
  *
  * @example
  * type Node = { value: number; children: Node[] }
- * const nodeValidator: Parser<Node> = lazy(() => object({
+ * const nodeValidator: Schema<Node> = lazy(() => object({
  *   value: num,
  *   children: array(nodeValidator),
  * }))
  */
-export const lazy = <T>(factory: () => Parser<T>): Parser<T> => {
-	let cached: Parser<T> | null = null
+export const lazy = <T>(factory: () => Schema<T>): Schema<T> => {
+	let cached: Schema<T> | null = null
 
 	const getValidator = () => {
 		if (!cached) cached = factory()
@@ -25,7 +25,7 @@ export const lazy = <T>(factory: () => Parser<T>): Parser<T> => {
 
 	const fn = ((value: unknown) => {
 		return getValidator()(value)
-	}) as Parser<T>
+	}) as Schema<T>
 
 	fn.safe = (value: unknown): Result<T> => {
 		const validator = getValidator()

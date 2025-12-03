@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { describe, expect, test } from 'bun:test'
-import { minLength, pipe, positive } from '..'
+import { min, pipe, positive } from '..'
 import { num, str } from '../validators/primitives'
 import { set } from './set'
 
@@ -144,7 +144,7 @@ describe('set', () => {
 		})
 
 		test('works with string validators', () => {
-			const nonEmptyStrSet = set(str(minLength(1)))
+			const nonEmptyStrSet = set(str(min(1)))
 			expect(nonEmptyStrSet(new Set(['a', 'bc']))).toEqual(new Set(['a', 'bc']))
 			expect(() => nonEmptyStrSet(new Set(['a', '']))).toThrow()
 		})
@@ -429,7 +429,7 @@ describe('set', () => {
 		})
 
 		test('validates real-world tag set', () => {
-			const tagSet = set(str(minLength(1)))
+			const tagSet = set(str(min(1)))
 			const tags = new Set(['javascript', 'typescript', 'testing'])
 			expect(tagSet(tags)).toEqual(tags)
 		})

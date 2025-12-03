@@ -2,7 +2,7 @@
 // JSON Transforms
 // ============================================================
 
-import type { Parser, Result, Validator } from '../core'
+import type { Result, Schema, Validator } from '../core'
 import { addStandardSchema, ValidationError } from '../core'
 
 /**
@@ -37,7 +37,7 @@ export const parseJson: Validator<string, unknown> = (() => {
  * @example
  * const validateConfig = parseJsonWith(object({ name: str, value: num }))
  */
-export const parseJsonWith = <T>(schema: Parser<T>): Validator<string, T> => {
+export const parseJsonWith = <T>(schema: Schema<T>): Validator<string, T> => {
 	const fn = ((v: string) => {
 		let parsed: unknown
 		try {
