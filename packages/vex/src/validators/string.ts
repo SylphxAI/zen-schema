@@ -516,11 +516,17 @@ const HASH_LENGTHS: Record<string, number> = {
 
 // Cache for hash regexes by length (avoids repeated regex compilation)
 const HASH_REGEX_CACHE: Record<number, RegExp> = {}
-const getHashRegex = (length: number): RegExp =>
-	(HASH_REGEX_CACHE[length] ??= new RegExp(`^[a-f0-9]{${length}}$`, 'i'))
+const getHashRegex = (length: number): RegExp => {
+	let cached = HASH_REGEX_CACHE[length]
+	if (!cached) {
+		cached = new RegExp(`^[a-f0-9]{${length}}$`, 'i')
+		HASH_REGEX_CACHE[length] = cached
+	}
+	return cached
+}
 
 export const hash = (algorithm: keyof typeof HASH_LENGTHS): Validator<string> => {
-	const length = HASH_LENGTHS[algorithm]
+	const length = HASH_LENGTHS[algorithm]!
 	const re = getHashRegex(length)
 	const msg = `Invalid ${algorithm} hash`
 	const err: Result<never> = { ok: false, error: msg }

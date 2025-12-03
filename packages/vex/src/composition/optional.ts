@@ -3,7 +3,14 @@
 // ============================================================
 
 import type { Result, Validator } from '../core'
-import { addStandardSchema, getErrorMsg, getMeta, setMeta, ValidationError, wrapMeta } from '../core'
+import {
+	addStandardSchema,
+	getErrorMsg,
+	getMeta,
+	setMeta,
+	ValidationError,
+	wrapMeta,
+} from '../core'
 
 /**
  * Make a validator optional (allows undefined)

@@ -62,8 +62,13 @@ export function intersect(...args: SchemaOrMetaAction[]): Parser<unknown> {
 
 		for (const schema of schemas) {
 			const validated = schema(value)
-			if (typeof validated === 'object' && validated !== null && typeof result === 'object') {
-				Object.assign(result, validated)
+			if (
+				typeof validated === 'object' &&
+				validated !== null &&
+				typeof result === 'object' &&
+				result !== null
+			) {
+				Object.assign(result as object, validated)
 			} else {
 				result = validated
 			}
@@ -79,16 +84,26 @@ export function intersect(...args: SchemaOrMetaAction[]): Parser<unknown> {
 			if (schema.safe) {
 				const r = schema.safe(value)
 				if (!r.ok) return { ok: false, error: r.error }
-				if (typeof r.value === 'object' && r.value !== null && typeof result === 'object') {
-					Object.assign(result, r.value)
+				if (
+					typeof r.value === 'object' &&
+					r.value !== null &&
+					typeof result === 'object' &&
+					result !== null
+				) {
+					Object.assign(result as object, r.value)
 				} else {
 					result = r.value
 				}
 			} else {
 				try {
 					const validated = schema(value)
-					if (typeof validated === 'object' && validated !== null && typeof result === 'object') {
-						Object.assign(result, validated)
+					if (
+						typeof validated === 'object' &&
+						validated !== null &&
+						typeof result === 'object' &&
+						result !== null
+					) {
+						Object.assign(result as object, validated)
 					} else {
 						result = validated
 					}
@@ -113,24 +128,39 @@ export function intersect(...args: SchemaOrMetaAction[]): Parser<unknown> {
 				if (std) {
 					const r = std.validate(value) as StandardSchemaV1.Result<unknown>
 					if (r.issues) return r
-					if (typeof r.value === 'object' && r.value !== null && typeof result === 'object') {
-						Object.assign(result, r.value)
+					if (
+						typeof r.value === 'object' &&
+						r.value !== null &&
+						typeof result === 'object' &&
+						result !== null
+					) {
+						Object.assign(result as object, r.value)
 					} else {
 						result = r.value
 					}
 				} else if (schema.safe) {
 					const r = schema.safe(value)
 					if (!r.ok) return { issues: [{ message: r.error }] }
-					if (typeof r.value === 'object' && r.value !== null && typeof result === 'object') {
-						Object.assign(result, r.value)
+					if (
+						typeof r.value === 'object' &&
+						r.value !== null &&
+						typeof result === 'object' &&
+						result !== null
+					) {
+						Object.assign(result as object, r.value)
 					} else {
 						result = r.value
 					}
 				} else {
 					try {
 						const validated = schema(value)
-						if (typeof validated === 'object' && validated !== null && typeof result === 'object') {
-							Object.assign(result, validated)
+						if (
+							typeof validated === 'object' &&
+							validated !== null &&
+							typeof result === 'object' &&
+							result !== null
+						) {
+							Object.assign(result as object, validated)
 						} else {
 							result = validated
 						}
