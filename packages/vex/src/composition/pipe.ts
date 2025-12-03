@@ -3,7 +3,14 @@
 // ============================================================
 
 import type { Result, Validator } from '../core'
-import { addStandardSchema, getErrorMsg, getMeta, mergeMeta, META_KEY, type Metadata } from '../core'
+import {
+	addStandardSchema,
+	getErrorMsg,
+	getMeta,
+	META_KEY,
+	type Metadata,
+	mergeMeta,
+} from '../core'
 
 /**
  * Pipe validators together (left to right)

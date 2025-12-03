@@ -3,7 +3,13 @@
 // ============================================================
 
 import type { MetaAction, Parser, Result, StandardSchemaV1 } from '../core'
-import { addSchemaMetadata, applyMetaActions, getErrorMsg, type Metadata, ValidationError } from '../core'
+import {
+	addSchemaMetadata,
+	applyMetaActions,
+	getErrorMsg,
+	type Metadata,
+	ValidationError,
+} from '../core'
 
 const ERR_OBJECT: Result<never> = { ok: false, error: 'Expected object' }
 

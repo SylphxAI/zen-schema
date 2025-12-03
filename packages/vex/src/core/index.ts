@@ -1,6 +1,12 @@
 // Core exports
 
-export { getErrorMsg, type PathSegment, ValidationError, type ValidationIssue, ValiError } from './error'
+export {
+	getErrorMsg,
+	type PathSegment,
+	ValidationError,
+	type ValidationIssue,
+	ValiError,
+} from './error'
 export {
 	addStandardSchema,
 	createValidator,
