@@ -1,7 +1,10 @@
 // @ts-nocheck
 import { describe, expect, test } from 'bun:test'
 import { num, str } from '..'
-import { catchError, refine, transform } from './refine'
+import { gte, int, positive } from '../validators/number'
+import { datetime, email, nonempty } from '../validators/string'
+import { pipe } from './pipe'
+import { catchError, codec, overwrite, preprocess, refine, to, transform, tryTransform } from './refine'
 
 describe('refine', () => {
 	test('adds custom validation check', () => {
@@ -201,5 +204,418 @@ describe('catchError', () => {
 			expect(safeNum['~standard']).toBeDefined()
 			expect(safeNum['~standard']?.version).toBe(1)
 		})
+	})
+})
+
+// ============================================================
+// New Advanced Transform Functions (Zod Parity)
+// ============================================================
+
+describe('preprocess', () => {
+	test('transforms before validation', () => {
+		const trimmedStr = preprocess((v) => String(v).trim(), str(nonempty))
+		expect(trimmedStr('  hello  ')).toBe('hello')
+	})
+
+	test('validation fails after preprocess', () => {
+		const trimmedStr = preprocess((v) => String(v).trim(), str(nonempty))
+		expect(() => trimmedStr('   ')).toThrow()
+	})
+
+	test('coerces to number then validates', () => {
+		const coercedNum = preprocess((v) => Number(v), num(positive))
+		expect(coercedNum('123')).toBe(123)
+		expect(() => coercedNum('-5')).toThrow()
+	})
+
+	test('accepts any input type', () => {
+		const toStr = preprocess((v) => String(v), str())
+		expect(toStr(123)).toBe('123')
+		expect(toStr(true)).toBe('true')
+		expect(toStr(null)).toBe('null')
+	})
+
+	describe('safe', () => {
+		test('returns ok for valid value', () => {
+			const trimmedStr = preprocess((v) => String(v).trim(), str(nonempty))
+			expect(trimmedStr.safe!('  hello  ')).toEqual({ ok: true, value: 'hello' })
+		})
+
+		test('returns error for invalid value', () => {
+			const trimmedStr = preprocess((v) => String(v).trim(), str(nonempty))
+			expect(trimmedStr.safe!('   ')).toHaveProperty('ok', false)
+		})
+
+		test('handles preprocess errors', () => {
+			const failing = preprocess(() => {
+				throw new Error('Preprocess failed')
+			}, str())
+			expect(failing.safe!('test')).toEqual({ ok: false, error: 'Preprocess failed' })
+		})
+	})
+
+	describe('Standard Schema', () => {
+		test('has ~standard property', () => {
+			const trimmedStr = preprocess((v) => String(v).trim(), str())
+			expect(trimmedStr['~standard']).toBeDefined()
+		})
+	})
+})
+
+describe('to', () => {
+	test('converts anything to string', () => {
+		const toStr = to((v) => String(v))
+		expect(toStr(123)).toBe('123')
+		expect(toStr(true)).toBe('true')
+		expect(toStr(null)).toBe('null')
+	})
+
+	test('converts to number', () => {
+		const toNum = to((v) => Number(v))
+		expect(toNum('123')).toBe(123)
+		expect(toNum('3.14')).toBe(3.14)
+	})
+
+	test('parses JSON', () => {
+		const parseJson = to((v) => JSON.parse(v as string))
+		expect(parseJson('{"a":1}')).toEqual({ a: 1 })
+		expect(parseJson('[1,2,3]')).toEqual([1, 2, 3])
+	})
+
+	test('can be chained with pipe', () => {
+		const toPositiveNum = pipe(to(Number), num(positive))
+		expect(toPositiveNum('123')).toBe(123)
+		expect(() => toPositiveNum('-5')).toThrow()
+	})
+
+	test('can chain multiple transforms', () => {
+		const pipeline = pipe(
+			to((v) => String(v).trim()),
+			to((v) => (v as string).toUpperCase()),
+		)
+		expect(pipeline('  hello  ')).toBe('HELLO')
+	})
+
+	describe('safe', () => {
+		test('returns ok for successful transform', () => {
+			const toStr = to((v) => String(v))
+			expect(toStr.safe!(123)).toEqual({ ok: true, value: '123' })
+		})
+
+		test('handles transform errors', () => {
+			const parseJson = to((v) => JSON.parse(v as string))
+			expect(parseJson.safe!('invalid json')).toHaveProperty('ok', false)
+		})
+	})
+
+	describe('Standard Schema', () => {
+		test('has ~standard property', () => {
+			const toStr = to((v) => String(v))
+			expect(toStr['~standard']).toBeDefined()
+		})
+	})
+})
+
+describe('overwrite', () => {
+	test('type-preserving transform', () => {
+		const normalized = pipe(
+			str(),
+			overwrite((s) => s.trim().toLowerCase()),
+		)
+		expect(normalized('  HELLO  ')).toBe('hello')
+	})
+
+	test('clamps number in range', () => {
+		const clamped = pipe(
+			num(),
+			overwrite((n) => Math.max(0, Math.min(100, n))),
+		)
+		expect(clamped(150)).toBe(100)
+		expect(clamped(-10)).toBe(0)
+		expect(clamped(50)).toBe(50)
+	})
+
+	describe('safe', () => {
+		test('returns ok for successful overwrite', () => {
+			const normalized = pipe(
+				str(),
+				overwrite((s) => s.trim()),
+			)
+			expect(normalized.safe!('  hello  ')).toEqual({ ok: true, value: 'hello' })
+		})
+
+		test('handles overwrite errors', () => {
+			const failing = overwrite<string>(() => {
+				throw new Error('Overwrite failed')
+			})
+			expect(failing.safe!('test')).toEqual({ ok: false, error: 'Overwrite failed' })
+		})
+	})
+
+	describe('Standard Schema', () => {
+		test('has ~standard property', () => {
+			const normalized = overwrite((s: string) => s.trim())
+			expect(normalized['~standard']).toBeDefined()
+		})
+	})
+})
+
+describe('codec', () => {
+	test('decodes during parse', () => {
+		const dateCodec = codec(str(), {
+			decode: (s) => new Date(s),
+			encode: (d) => d.toISOString(),
+		})
+
+		const result = dateCodec('2024-01-15T00:00:00.000Z')
+		expect(result).toBeInstanceOf(Date)
+		expect(result.getFullYear()).toBe(2024)
+	})
+
+	test('encodes back to string', () => {
+		const dateCodec = codec(str(), {
+			decode: (s) => new Date(s),
+			encode: (d) => d.toISOString(),
+		})
+
+		const date = new Date('2024-01-15T00:00:00.000Z')
+		expect(dateCodec.encode(date)).toBe('2024-01-15T00:00:00.000Z')
+	})
+
+	test('validates intermediate type', () => {
+		const dateCodec = codec(str(datetime), {
+			decode: (s) => new Date(s),
+			encode: (d) => d.toISOString(),
+		})
+
+		expect(() => dateCodec('invalid-date')).toThrow()
+	})
+
+	test('exposes schema property', () => {
+		const dateCodec = codec(str(), {
+			decode: (s) => new Date(s),
+			encode: (d) => d.toISOString(),
+		})
+
+		expect(dateCodec.schema).toBeDefined()
+		expect(dateCodec.schema('test')).toBe('test')
+	})
+
+	test('number codec example', () => {
+		const percentCodec = codec(num(gte(0)), {
+			decode: (n) => n / 100,
+			encode: (n) => n * 100,
+		})
+
+		expect(percentCodec(50)).toBe(0.5)
+		expect(percentCodec.encode(0.5)).toBe(50)
+	})
+
+	test('JSON codec example', () => {
+		const jsonCodec = codec(str(), {
+			decode: (s) => JSON.parse(s) as unknown,
+			encode: (v) => JSON.stringify(v),
+		})
+
+		expect(jsonCodec('{"a":1}')).toEqual({ a: 1 })
+		expect(jsonCodec.encode({ a: 1 })).toBe('{"a":1}')
+	})
+
+	test('round-trip encoding', () => {
+		const dateCodec = codec(str(), {
+			decode: (s) => new Date(s),
+			encode: (d) => d.toISOString(),
+		})
+
+		const original = '2024-01-15T00:00:00.000Z'
+		const decoded = dateCodec(original)
+		const encoded = dateCodec.encode(decoded)
+		expect(encoded).toBe(original)
+	})
+
+	describe('safe', () => {
+		test('returns ok for valid decode', () => {
+			const dateCodec = codec(str(), {
+				decode: (s) => new Date(s),
+				encode: (d) => d.toISOString(),
+			})
+
+			const result = dateCodec.safe!('2024-01-15T00:00:00.000Z')
+			expect(result.ok).toBe(true)
+			if (result.ok) {
+				expect(result.value).toBeInstanceOf(Date)
+			}
+		})
+
+		test('handles decode errors', () => {
+			const failingCodec = codec(str(), {
+				decode: () => {
+					throw new Error('Decode failed')
+				},
+				encode: (v) => String(v),
+			})
+
+			expect(failingCodec.safe!('test')).toEqual({ ok: false, error: 'Decode failed' })
+		})
+
+		test('handles validation errors', () => {
+			const dateCodec = codec(num(), {
+				decode: (n) => new Date(n),
+				encode: (d) => d.getTime(),
+			})
+
+			expect(dateCodec.safe!('not a number')).toHaveProperty('ok', false)
+		})
+	})
+
+	describe('Standard Schema', () => {
+		test('has ~standard property', () => {
+			const dateCodec = codec(str(), {
+				decode: (s) => new Date(s),
+				encode: (d) => d.toISOString(),
+			})
+			expect(dateCodec['~standard']).toBeDefined()
+		})
+	})
+})
+
+describe('tryTransform', () => {
+	test('transforms successfully', () => {
+		const parseNum = tryTransform<string, number>((value) => {
+			return parseInt(value, 10)
+		})
+		expect(parseNum('123')).toBe(123)
+	})
+
+	test('can fail with custom error', () => {
+		const parseDate = tryTransform<string, Date>((value, ctx) => {
+			const date = new Date(value)
+			if (isNaN(date.getTime())) {
+				ctx.fail('Invalid date format')
+			}
+			return date
+		})
+
+		expect(() => parseDate('invalid')).toThrow('Invalid date format')
+	})
+
+	test('complex validation in transform', () => {
+		const parseEmail = tryTransform<unknown, { local: string; domain: string }>((value, ctx) => {
+			const str = String(value)
+			const parts = str.split('@')
+			if (parts.length !== 2) {
+				ctx.fail('Invalid email format')
+			}
+			return { local: parts[0]!, domain: parts[1]! }
+		})
+
+		expect(parseEmail('user@example.com')).toEqual({ local: 'user', domain: 'example.com' })
+		expect(() => parseEmail('invalid')).toThrow('Invalid email format')
+	})
+
+	describe('safe', () => {
+		test('returns ok for successful transform', () => {
+			const parseNum = tryTransform<string, number>((value) => {
+				return parseInt(value, 10)
+			})
+
+			expect(parseNum.safe!('123')).toEqual({ ok: true, value: 123 })
+		})
+
+		test('returns error on fail', () => {
+			const parseDate = tryTransform<string, Date>((value, ctx) => {
+				const date = new Date(value)
+				if (isNaN(date.getTime())) {
+					ctx.fail('Invalid date format')
+				}
+				return date
+			})
+
+			expect(parseDate.safe!('invalid')).toEqual({ ok: false, error: 'Invalid date format' })
+		})
+
+		test('handles thrown errors', () => {
+			const failing = tryTransform<string, number>(() => {
+				throw new Error('Unexpected error')
+			})
+
+			expect(failing.safe!('test')).toEqual({ ok: false, error: 'Unexpected error' })
+		})
+	})
+
+	describe('Standard Schema', () => {
+		test('has ~standard property', () => {
+			const parseNum = tryTransform<string, number>((value) => parseInt(value, 10))
+			expect(parseNum['~standard']).toBeDefined()
+		})
+	})
+})
+
+// ============================================================
+// Integration Tests
+// ============================================================
+
+describe('transform integration', () => {
+	test('preprocess + validate + transform chain', () => {
+		// preprocess → validate email → extract domain with 'to'
+		const emailDomain = pipe(
+			preprocess((v) => String(v).trim().toLowerCase(), str(email)),
+			to((s) => (s as string).split('@')[1]),
+		)
+
+		expect(emailDomain('  USER@EXAMPLE.COM  ')).toBe('example.com')
+	})
+
+	test('to + validate chain', () => {
+		// Using Number() so 3.14 stays as float and fails int check
+		const toIntPositive = pipe(
+			to((v) => Number(v)),
+			num(int, positive),
+		)
+
+		expect(toIntPositive('42')).toBe(42)
+		expect(() => toIntPositive('-5')).toThrow()
+		expect(() => toIntPositive('3.14')).toThrow()
+	})
+
+	test('multiple overwrites', () => {
+		const normalized = pipe(
+			str(),
+			overwrite((s) => s.trim()),
+			overwrite((s) => s.toLowerCase()),
+			overwrite((s) => s.replace(/\s+/g, '-')),
+		)
+
+		expect(normalized('  Hello World  ')).toBe('hello-world')
+	})
+
+	test('tryTransform with URL parsing', () => {
+		interface ParsedUrl {
+			protocol: string
+			host: string
+			path: string
+		}
+
+		const parseUrl = tryTransform<string, ParsedUrl>((value, ctx) => {
+			try {
+				const url = new URL(value)
+				return {
+					protocol: url.protocol,
+					host: url.host,
+					path: url.pathname,
+				}
+			} catch {
+				ctx.fail('Invalid URL')
+				return { protocol: '', host: '', path: '' }
+			}
+		})
+
+		expect(parseUrl('https://example.com/path')).toEqual({
+			protocol: 'https:',
+			host: 'example.com',
+			path: '/path',
+		})
+
+		expect(() => parseUrl('invalid')).toThrow('Invalid URL')
 	})
 })

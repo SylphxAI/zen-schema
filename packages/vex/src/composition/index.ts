@@ -65,5 +65,15 @@ export {
 	withDefault,
 } from './optional'
 export { pipe } from './pipe'
-export { catchError, refine, transform } from './refine'
+export {
+	type Codec,
+	catchError,
+	codec,
+	overwrite,
+	preprocess,
+	refine,
+	to,
+	transform,
+	tryTransform,
+} from './refine'
 export { discriminatedUnion, union } from './union'
